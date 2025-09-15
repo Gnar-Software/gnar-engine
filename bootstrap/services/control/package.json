@@ -1,0 +1,16 @@
+{
+  "name": "gnar_engine_control",
+  "version": "1.0.0",
+  "description": "Gnar Engine - Control Service",
+  "type": "module",
+  "scripts": {
+    "start": "node ./src/app.js",
+    "start:dev": "nodemon --watch ./src ./src/app.js",
+    "test": "jest --watchAll --verbose"
+  },
+  "author": "Gnar Software Ltd",
+  "license": "ISC",
+  "dependencies": {
+    "gnarengine-service-core": "file:/usr/gnar_engine/app/gnarengine-service-core"
+  }
+}

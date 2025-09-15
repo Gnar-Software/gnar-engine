@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Order Received</title>
+<style>
+  body { 
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .container { 
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #eee;
+  }
+
+  .logo { 
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .logo img { 
+    max-height: 60px;
+  }
+
+  .header { 
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  table { 
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  th, td { 
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th { 
+    background-color: #f8f8f8;
+  }
+
+  .totals td { 
+    font-weight: bold;
+  }
+
+  .footer { 
+    font-size: 12px;
+    color: #777;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="{{ logoUrl }}" alt="Logo">
+    </div>
+
+    <div class="header">
+      Thank you for your order, {{order.billingAddress.firstName}}!
+    </div>
+
+    <p>We've received your order and are now processing it. Here are the details:</p>
+
+    <h3>Order Summary</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Type</th>
+          <th>Price</th>
+          <th>Qty</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each order.lineItems}}
+          <tr>
+            <td>{{sku}}</td>
+            <td>{{type}}</td>
+            <td>{{currencySymbol}} {{price.price}}</td>
+            <td>{{quantity}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td>Subtotal:</td>
+        <td style="text-align: right;">{{currencySymbol}} {{order.subTotal}}</td>
+      </tr>
+      <tr>
+        <td>Tax:</td>
+        <td style="text-align: right;">{{currencySymbol}} {{order.tax}}</td>
+      </tr>
+      <tr>
+        <td>Shipping:</td>
+        <td style="text-align: right;">{{currencySymbol}} {{order.shipping}}</td>
+      </tr>
+      <tr>
+        <td>Total:</td>
+        <td style="text-align: right;"><strong>{{currencySymbol}} {{order.total}}</strong></td>
+      </tr>
+    </table>
+
+    <h3>Billing Information</h3>
+    <p>
+      {{order.billingAddress.firstName}} {{order.billingAddress.lastName}}<br>
+      {{order.billingAddress.addressLine1}}<br>
+      {{order.billingAddress.addressLine2}}<br>
+      {{order.billingAddress.city}}, {{order.billingAddress.county}}<br>
+      {{order.billingAddress.postcode}}<br>
+      {{order.billingAddress.country}}<br>
+      Phone: {{order.billingAddress.phone}}<br>
+      Email: {{order.billingAddress.email}}
+    </p>
+
+    <div class="footer">
+      If you have any questions, please contact us at support@gnar.co.uk
+    </div>
+  </div>
+</body>
+</html>

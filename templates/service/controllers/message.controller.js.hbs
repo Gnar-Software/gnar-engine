@@ -1,0 +1,51 @@
+import { commands } from 'gnarengine-service-core';
+
+export const messageHandlers = {
+
+    get{{pascalCase serviceName}}: async (payload) => {
+        let result;
+        if (payload.data?.id) {
+            result = await commands.execute('getSingle{{pascalCase serviceName}}', {
+                id: payload.data.id
+            });
+        } else if (payload.data?.email) {
+            result = await commands.execute('getSingle{{pascalCase serviceName}}', {
+                email: payload.data.email
+            });
+        } else {
+            throw new Error('No {{serviceName}} ID or email provided');
+        }
+        if (!result) {
+            throw new Error('{{pascalCase serviceName}} not found');
+        }
+        return { {{serviceName}}: result };
+    },
+
+    getMany{{pascalCasePlural serviceName}}: async (payload) => {
+        const results = await commands.execute('getMany{{pascalCasePlural serviceName}}', {});
+        return { {{lowerCasePlural serviceName}}: results };
+    },
+
+    create{{pascalCase serviceName}}: async (payload) => {
+        const results = await commands.execute('create{{pascalCasePlural serviceName}}', {
+            {{lowerCasePlural serviceName}}: [payload.data.{{serviceName}}]
+        });
+        return { {{lowerCasePlural serviceName}}: results };
+    },
+
+    update{{pascalCase serviceName}}: async (payload) => {
+        const result = await commands.execute('update{{pascalCase serviceName}}', {
+            id: payload.data.id,
+            new{{pascalCase serviceName}}Data: payload.data
+        });
+        return { {{serviceName}}: result };
+    },
+
+    delete{{pascalCase serviceName}}: async (payload) => {
+        await commands.execute('delete{{pascalCase serviceName}}', {
+            id: payload.data.id
+        });
+        return { message: '{{pascalCase serviceName}} deleted' };
+    },
+
+};

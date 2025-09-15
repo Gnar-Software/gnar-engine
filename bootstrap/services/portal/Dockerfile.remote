@@ -1,0 +1,40 @@
+# Step 1: Build the application
+FROM node:20-alpine AS build
+
+# Set working directory
+WORKDIR /usr/gnar_engine/app
+
+# Copy package.json and package-lock.json
+COPY ./Services/Portal/package*.json ./
+
+# Copy local Lib packages
+COPY ./Lib ./Lib
+
+# Copy the rest of the application code
+COPY ./Services/Portal/src ./src
+COPY ./Services/Portal/public ./public
+
+# Copy front-end environment variables
+ARG ENV_ENV=production
+COPY .env.public.${ENV_ENV} ./.env
+
+# Install app dependencies
+RUN npm install
+
+# Build the React application
+RUN npm run build
+
+# Step 2: Serve the application with Nginx
+FROM nginx:alpine
+
+# Copy custom Nginx config
+COPY ./Services/Portal/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy the built assets from the build step
+COPY --from=build /usr/gnar_engine/app/build /usr/share/nginx/html
+
+# Expose the port for the web server
+EXPOSE 3000
+
+# Start the Nginx server to serve the app
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,36 @@
+{
+    "name": "gnar-engine",
+    "version": "1.0.1",
+    "description": "Gnar Engine - Monorepo",
+    "author": "Gnar Software Ltd.",
+    "license": "ISC",
+    "workspaces": [
+        "Services/*",
+        "Lib/*",
+        "CLI"
+    ],
+    "scripts": {
+        "cli:init": "cd src/cli && npm install -g",
+        
+        "dev": "docker-compose -f ./docker-compose.dev.yml up",
+        "down:dev": "docker-compose -f ./docker-compose.dev.yml down",
+        "core:dev": "docker-compose -f ./docker-compose.core.dev.yml up",
+        "core:down:dev": "docker-compose -f ./docker-compose.core.dev.yml down",
+        
+        "build:core:dev": "docker-compose -f ./docker-compose.core.dev.yml build",
+        "build:dev": "docker-compose -f ./docker-compose.dev.yml build",
+        "build:dev:nocache": "docker-compose -f ./docker-compose.dev.yml build --no-cache",
+        "build:production": "docker-compose -f ./docker-compose.prod.yml build",
+        "build:production:nocache": "docker-compose -f ./docker-compose.prod.yml build --no-cache",
+        
+        "deploy:production": "ansible-playbook Deploy/ecs/deploy.yml"
+    },
+    "bin": {
+        "gnarengine": "./CLI/src/cli.js"
+    },
+    "dependencies": {
+        "@fastify/rate-limit": "^10.2.2",
+        "handlebars": "^4.7.8",
+        "k6": "^0.0.0"
+    }
+}

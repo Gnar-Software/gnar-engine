@@ -1,0 +1,21 @@
+# deploy.localdev.yml
+
+# - This file is used to orchestrate locally running containers for development
+# - environment: localdev is a named convention required for local development 
+
+config:
+  architecture: microservice
+  region: eu-west-1
+  environment: localdev
+  namespace: my-project
+
+  services:
+    - name: control
+      min-tasks: 1
+      max-tasks: 1
+      depends_on:
+        - control-db
+      command: ["npm", "run", "start:dev"]
+      ports: 
+        - "4001:3000"
+

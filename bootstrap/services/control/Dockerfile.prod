@@ -1,0 +1,37 @@
+# Stage 1: Builder
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy app source
+COPY ./Services/Control/src ./src
+COPY ./Lib ./Lib
+
+# Copy environment variables (do this later in build only if needed)
+COPY ./.env.production .env
+
+# Copy package files and install deps
+COPY ./Services/Control/package*.json ./
+RUN npm install --omit=dev
+
+# Stage 2: Runtime
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy built app from builder stage
+COPY --from=builder /app /app
+
+# Install system deps
+RUN apk add --no-cache ca-certificates wget
+
+# Install AWS DocumentDB CA certificates
+RUN mkdir -p /usr/local/share/ca-certificates && \
+    wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /usr/local/share/ca-certificates/aws-docdb.pem && \
+    update-ca-certificates
+
+# Expose port
+EXPOSE 4000
+
+# Start app
+CMD ["npm", "run", "start"]

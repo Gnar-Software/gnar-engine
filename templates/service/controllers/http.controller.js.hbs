@@ -1,0 +1,87 @@
+import { commands } from 'gnarengine-service-core';
+import { authorise } from '../policies/{{serviceName}}.policy.js';
+
+/**
+ * HTTP controller
+ */
+export const httpController = {
+
+	/**
+	 * Get single {{serviceName}}
+	 */
+	getSingle: {
+		method: 'GET',
+		url: '/{{lowerCasePlural serviceName}}/:id',
+		preHandler: async (request, reply) => authorise.getSingle(request, reply),
+		handler: async (request, reply) => {
+			const params = {
+				id: request.params.id
+			};
+			const result = await commands.execute('getSingle{{pascalCase serviceName}}', params);
+			reply.code(200).send({ {{serviceName}}: result });
+		}
+	},
+
+	/**
+	 * Get multiple {{lowerCasePlural serviceName}}
+	 */
+	getMany: {
+		method: 'GET',
+		url: '/{{lowerCasePlural serviceName}}/',
+		preHandler: async (request, reply) => authorise.getMany(request, reply),
+		handler: async (request, reply) => {
+			const params = {};
+			const results = await commands.execute('getMany{{pascalCasePlural serviceName}}', params);
+			reply.code(200).send({ {{lowerCasePlural serviceName}}: results });
+		}
+	},
+
+	/**
+	 * Create new {{serviceName}}
+	 */
+	create: {
+		method: 'POST',
+		url: '/{{lowerCasePlural serviceName}}/',
+		preHandler: async (request, reply) => authorise.create(request, reply),
+		handler: async (request, reply) => {
+			const params = {
+				{{lowerCasePlural serviceName}}: [request.body.{{serviceName}}]
+			};
+			const results = await commands.execute('create{{pascalCasePlural serviceName}}', params);
+			reply.code(200).send({ {{lowerCasePlural serviceName}}: results });
+		},
+	},
+
+	/**
+	 * Update {{serviceName}}
+	 */
+	update: {
+		method: 'POST',
+		url: '/{{lowerCasePlural serviceName}}/:id',
+		preHandler: async (request, reply) => authorise.update(request, reply),
+		handler: async (request, reply) => {
+			const params = {
+				id: request.params.id,
+				new{{pascalCase serviceName}}Data: request.body
+			};
+			const result = await commands.execute('update{{pascalCase serviceName}}', params);
+			reply.code(200).send({ {{serviceName}}: result });
+		},
+	},
+
+	/**
+	 * Delete {{serviceName}}
+	 */
+	delete: {
+		method: 'DELETE',
+		url: '/{{lowerCasePlural serviceName}}/:id',
+		preHandler: async (request, reply) => authorise.delete(request, reply),
+		handler: async (request, reply) => {
+			const params = {
+				id: request.params.id
+			};
+			await commands.execute('delete{{pascalCase serviceName}}', params);
+			reply.code(200).send({ message: '{{pascalCase serviceName}} deleted' });
+		},
+	},
+}

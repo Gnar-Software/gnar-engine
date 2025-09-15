@@ -1,0 +1,23 @@
+import { logger, db } from 'gnarengine-service-core';
+
+/**
+ * Up
+ */
+export const up = async () => {
+    logger.info('Creating table: {{lowerCasePlural serviceName}}');
+    await db.query(`
+        CREATE TABLE {{lowerCasePlural serviceName}} (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+    `);
+}
+
+/**
+ * Down
+ */
+export const down = async () => {
+    logger.info('Dropping table: {{lowerCasePlural serviceName}}');
+    await db.query('DROP TABLE IF EXISTS {{lowerCasePlural serviceName}}');
+}

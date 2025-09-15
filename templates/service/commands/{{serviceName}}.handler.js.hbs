@@ -1,0 +1,97 @@
+import { commands, logger, error } from 'gnarengine-service-core';
+import { auth } from '../services/authentication.service.js';
+import { {{serviceName}} } from '../services/{{serviceName}}.service.js';
+import { config } from '../config.js';
+import { validate{{pascalCase serviceName}}, validateServiceAdmin{{pascalCase serviceName}}, validate{{pascalCase serviceName}}Update, validateServiceAdmin{{pascalCase serviceName}}Update } from '../schema/{{serviceName}}.schema.js';
+
+
+/**
+ * Get single {{serviceName}}
+ */
+commands.register('{{serviceName}}Service.getSingle{{pascalCase serviceName}}', async ({id}) => {
+    if (id) {
+        return await {{serviceName}}.getById({id: id});
+    } else {
+        throw new error.badRequest('{{pascalCase serviceName}} email or id required');
+    }
+});
+
+/**
+ * Get many {{lowerCasePlural serviceName}}
+ */
+commands.register('{{serviceName}}Service.getMany{{pascalCasePlural serviceName}}', async ({}) => {
+    return await {{serviceName}}.getAll();
+});
+
+/**
+ * Create {{lowerCasePlural serviceName}}
+ */
+commands.register('{{serviceName}}Service.create{{pascalCasePlural serviceName}}', async ({ {{lowerCasePlural serviceName}} }) => {
+    const validationErrors = [];
+    let createdNew{{pascalCasePlural serviceName}} = [];
+
+    for (const newData of {{lowerCasePlural serviceName}}) {
+        const { errors } = validate{{pascalCase serviceName}}(newData);
+        if (errors?.length) {
+            validationErrors.push(errors);
+            continue;
+        }
+
+        const created = await {{serviceName}}.create(newData);
+        createdNew{{pascalCasePlural serviceName}}.push(created);
+    }
+
+    if (validationErrors.length) {
+        throw new error.badRequest(`Invalid {{serviceName}} data: ${validationErrors}`);
+    }
+
+    return createdNew{{pascalCasePlural serviceName}};
+});
+
+/**
+ * Update {{serviceName}}
+ */
+commands.register('{{serviceName}}Service.update{{pascalCase serviceName}}', async ({id, new{{pascalCase serviceName}}Data}) => {
+    
+    const validationErrors = [];
+    
+    if (!id) {
+        throw new error.badRequest('{{pascalCase serviceName}} ID required');
+    
+    }
+    
+    const obj = await {{serviceName}}.getById({id: id});
+    
+    if (!obj) {
+        throw new error.notFound('{{pascalCase serviceName}} not found');
+    
+    }
+    
+    delete new{{pascalCase serviceName}}Data.id;
+    
+    const { errors } = validate{{pascalCase serviceName}}Update(new{{pascalCase serviceName}}Data);
+    
+    if (errors?.length) {
+        validationErrors.push(errors);
+    }
+    
+    if (validationErrors.length) {
+        throw new error.badRequest(`Invalid {{serviceName}} data: ${validationErrors}`);
+    }
+    
+    return await {{serviceName}}.update({
+        id: id,
+        ...new{{pascalCase serviceName}}Data
+    });
+});
+
+/**
+ * Delete {{serviceName}}
+ */
+commands.register('{{serviceName}}Service.delete{{pascalCase serviceName}}', async ({id}) => {
+    const obj = await {{serviceName}}.getById({id: id});
+    if (!obj) {
+        throw new error.notFound('{{pascalCase serviceName}} not found');
+    }
+    return await {{serviceName}}.delete({id: id});
+});

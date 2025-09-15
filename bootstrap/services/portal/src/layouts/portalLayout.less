@@ -1,0 +1,67 @@
+.portal-layout {
+    min-height: 101vh;
+    background: linear-gradient(to right, #E7E7E7 0%, #E7E7E7 49%, #f7f7f7 51%, #f7f7f7 100%);
+
+    .header {
+        background: @dark-grey-1;
+        height: 30px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        .content-wrap {
+            max-height: 100%;
+        }
+        .content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            max-height: 100%;
+            align-items: center;
+        }
+    }
+
+    .main {
+        min-height: calc(100vh - 197px);
+        position: relative;
+
+        .content-wrap,
+        .content {
+            height: 100%;
+            min-height: 100%;
+        }
+        .content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        .main-page {
+            background: #f7f7f7;
+            width: 100%;
+            height: 100%;
+            min-height: calc(100vh - 100px);
+            padding: 30px 40px;
+
+            .header-details {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding-bottom: 20px;
+            }
+
+            .header-logo {
+                max-height: 100%;
+                width: 180px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    }
+}

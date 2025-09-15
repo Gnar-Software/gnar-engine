@@ -1,0 +1,10 @@
+{
+    "name": "@gnar-engine/js-client",
+    "version": "1.0.0",
+    "main": "src/app.js",
+    "type": "module",
+    "dependencies": {
+        "amqplib": "^0.10.5",
+        "dotenv": "^16.4.7"
+    }
+}

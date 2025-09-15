@@ -1,0 +1,230 @@
+.crud-edit {
+    .edit-heading {
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+.single-edit {
+    .single-edit-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    &.subscriptions {
+        .subscriptions-table {
+            width: 100%;
+            border-collapse: collapse;
+
+            thead {
+                border-bottom: 1px solid @dark-grey-1;
+            }
+
+            th, td {
+                padding: 8px;
+                text-align: left;
+            }
+        }
+    }
+
+    &.order,
+    &.subscriptions {
+        .billing-shipping-cont {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+
+            .billing-cont,
+            .shipping-cont {
+                width: 50%;
+                padding-right: 20px;
+            }
+        }
+
+        
+        .line-items-totals-cont {
+            .line-items-cont {
+                margin-bottom: 40px;
+    
+                .line-items-table,
+                .totals-table {
+                    width: 100%;
+                    border-collapse: collapse;
+
+                    th {
+                        border-bottom: 1px solid @dark-grey-1;
+                    }
+
+                    th, td {
+                        padding: 8px;
+                        text-align: left;
+                    }
+                }
+            }
+        }
+    
+        .totals-cont {
+            display: flex;
+            justify-content: flex-end;
+
+            .totals-table {
+                tr {
+                    td {
+                        padding: 8px 0px 8px 15px;
+                        text-align: right;
+                    }
+                }
+                .order-total {
+                    font-weight: bold;
+                }
+            }
+        }
+
+        .subscription-details-cont {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .order-notes-cont {
+            .note-item {
+                display: flex;
+                margin-bottom: 20px;
+                width: 100%;
+                justify-content: space-between;
+
+                .note-item-body {
+                    flex: 1;
+                    display: flex;
+
+                    textarea {
+                        width: 100%;
+                        flex-grow: 1;
+                    }
+                }
+
+
+            }
+        }
+    }
+
+    .account,
+    .contacts {
+        form {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+        }
+    }
+
+    .user-form {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+    }
+
+    .api-key {
+        form {
+            width: 100%;
+
+            input {
+                width: 100%;
+            }
+        }
+    }
+
+    .single-inner-cont {
+        position: relative;
+
+        .repeater-cont {
+            width: 100%;
+            margin-top: 15px;
+        
+            table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 10px;
+
+                th {
+                    min-width: 100%;
+                    color: @dark-1;
+                    opacity: 0.5;
+                    font-size: 10px;
+                    line-height: 1.1em;
+                    font-style: italic;
+                }
+
+                .contacts-bin-icon {
+                    cursor: pointer;
+                    margin-top: 15px;
+                }
+        
+                th, td {
+                    text-align: left;
+                    vertical-align: top;
+                }
+        
+                th input,
+                td input {
+                    width: 100%;
+                }
+
+                .react-datepicker-wrapper {
+                    width: 100%;
+                }
+            }
+
+            td.period-name {
+                width: 100%;
+                display: block;  
+            }
+        }
+
+        .react-datepicker-popper {
+            z-index: 99;
+        }
+    }
+
+
+    .field-instruction {
+        min-width: 100%;
+        display: inline-block;
+        color: @dark-1;
+        opacity: 0.5;
+        font-size: 10px;
+        line-height: 1.1em;
+        font-style: italic;
+    }
+
+    .error-messages {
+        width: 100%;
+        background: @red-2;
+        border: 1px solid @red-1;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+
+        p {
+            color: @red-1;
+            line-height: 1em;
+            margin-top: 3px;
+            margin-bottom: 3px;
+        }
+    }
+
+    form {
+        label {
+            display: block;
+        }
+        input {
+            width: 300px;
+
+            &#marketingOptIn {
+                width: 15px;
+                height: 15px;
+            }
+        }
+    }
+}

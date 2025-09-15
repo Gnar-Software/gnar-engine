@@ -1,0 +1,9 @@
+# From RabbitMQ official image
+FROM rabbitmq:management
+
+# # Copy shared Erlang cookie
+# COPY .erlang.cookie /var/lib/rabbitmq/.erlang.cookie
+
+# # Set correct permissions
+# RUN chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie && \
+#     chmod 400 /var/lib/rabbitmq/.erlang.cookie

@@ -1,0 +1,13 @@
+{
+    "name": "@gnar-engine/cli",
+    "version": "1.0.0",
+    "description": "Gnar Engine CLI",
+    "author": "Gnar Software Ltd",
+    "license": "MIT",
+    "scripts": {
+        "cli:init": "cd ./cli && npm install -g",
+    },
+    "bin": {
+        "gnarengine": "./cli/cli.js"
+    }
+}

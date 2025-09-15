@@ -1,5 +1,3 @@
-# Gnar Engine
-
 ![Gnar Engine Logo](assets/gnar-engine-logo-white.svg)
 
 [![NPM Version](https://img.shields.io/npm/v/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)

@@ -4,8 +4,9 @@
 # - environment: localdev is a named convention required for local development 
 
 config:
+  core-version: 1.0
   architecture: microservice
-  region: eu-west-1
+  region: eu-west-2
   environment: localdev
   namespace: my-project
 

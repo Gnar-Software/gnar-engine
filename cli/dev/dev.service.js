@@ -26,6 +26,13 @@ export async function up({ projectDir, noCache = false, detached = false }) {
     const gnarHiddenDir = path.join(projectDir, ".gnarengine");
     await assertGnarEngineHiddenDir(gnarHiddenDir);
 
+    // create nginx.conf dynamically from configPath
+    const nginxConfPath = path.join(gnarHiddenDir, "nginx", "nginx.conf");
+    const nginxConf = await createDynamicNginxConf({
+        config: parsedConfig.config
+    });
+    await fs.writeFile(nginxConfPath, nginxConf);
+
     // create docker-compose.yml dynamically from parsed config and secrets
     const dockerComposePath = path.join(gnarHiddenDir, "docker-compose.dev.yml");
     const dockerCompose = await createDynamicDockerCompose({
@@ -68,6 +75,53 @@ export async function up({ projectDir, noCache = false, detached = false }) {
 }
 
 /**
+ * Create dynamic nginx.conf file for running application locally
+ * 
+ * @param {object} config
+ * @param {string} outputPath - where to write nginx.conf
+ */
+export async function createDynamicNginxConf({ config, outputPath }) {
+    // Start with the static parts of nginx.conf
+    let nginxConf = `events {}
+
+    http {
+        server {
+            listen 80;
+            server_name ${config.namespace}.gnar.co.uk;
+    `;
+
+    // Loop over each service
+    for (const service of config.services || []) {
+        const serviceName = service.name;
+        const paths = service.listener_rules?.paths || [];
+        const containerPort = service.ports && service.ports.length > 0 ? service.ports[0].split(':')[1] : '3000';
+
+        for (const p of paths) {
+            // normalize path without trailing slash
+            const cleanPath = p.replace(/\/+$/, '');
+            const containerPort = 
+
+            // build location block
+            nginxConf += `
+                # ${serviceName} service
+                location ${cleanPath} {
+                    rewrite ^${cleanPath}$ ${cleanPath}/ break;
+                    proxy_pass http://${serviceName}-service:${containerPort}${cleanPath};
+                }
+            `;
+        }
+    }
+
+    // Close server and http blocks
+    nginxConf += `
+        }
+    }
+    `;
+
+    return nginxConf;
+}
+
+/**
  * Create dynamic docker compose file for running application locally
  * 
  * @param {object} config
@@ -88,7 +142,7 @@ async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, proj
             "443:443"
         ],
         volumes: [
-            `${projectDir}/Nginx/nginx.conf:/etc/nginx/nginx.conf`
+            `${gnarHiddenDir}/nginx/nginx.conf:/etc/nginx/nginx.conf`
         ],
         restart: 'always'
     }

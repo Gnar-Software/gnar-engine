@@ -1,13 +1,19 @@
 {
     "name": "@gnar-engine/cli",
     "version": "1.0.0",
-    "description": "Gnar Engine CLI",
-    "author": "Gnar Software Ltd",
-    "license": "MIT",
-    "scripts": {
-        "cli:init": "cd ./cli && npm install -g",
-    },
+    "description": "Gnar Engine Development Framework CLI: Project bootstrap, scaffolder & control plane.",
+    "type": "module",
     "bin": {
-        "gnarengine": "./cli/cli.js"
+        "gnar": "./cli/cli.js"
+    },
+    "dependencies": {
+        "axios": "^1.8.1",
+        "commander": "^7.2.0",
+        "dotenv": "^16.4.7",
+        "fs-extra": "^11.3.0",
+        "handlebars": "^4.7.8",
+        "inquirer": "^12.5.2",
+        "js-yaml": "^4.1.0",
+        "uuid": "^11.1.0"
     }
 }

@@ -3,7 +3,7 @@
 
 # Environment files
 **/.env
-secrets*
+#secrets*
 
 # Lock files
 **/package-lock.json

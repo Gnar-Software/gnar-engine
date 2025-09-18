@@ -8,7 +8,7 @@ import path from 'path';
 
 
 export function registerProfileCommand(program) {
-    const profile = new Command('profile').description('Manage CLI profiles');
+    const profile = new Command('profile').description('👤 Manage CLI profiles');
 
     // profile get all
     profile
@@ -46,14 +46,35 @@ export function registerProfileCommand(program) {
 
     // profile set active <profileName>
     profile
-        .command('set-active <profileName>')
-        .description('Set a profile as active')
-        .action((profileName) => {
+        .command('set-active')
+        .description('Select active profile')
+        .action(() => {
             try {
-                profiles.setActiveProfile({
-                    profileName: profileName
+                const allProfiles = profiles.getAllProfiles();
+                const choices = Object.keys(allProfiles.profiles).map((p) => {
+                    if (allProfiles.activeProfile == p) {
+                        return { name: p + ' (active)', value: p };
+                    } else {
+                        return { name: p, value: p };
+                    }
                 });
-                console.log(`✅ Profile "${profileName}" set as active.`);
+
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'profileName',
+                        message: 'Select a profile to set as active:',
+                        choices: choices
+                    }
+                ]).then((answers) => {
+                    const profileName = answers.profileName;
+                    profiles.setActiveProfile({
+                        profileName: profileName
+                    });
+                    console.log(`✅ Profile "${profileName}" set as active.`);
+                });
+
+                return;
             } catch (error) {
                 console.error(`❌ Error setting active profile: ${error.message}`);
             }

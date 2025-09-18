@@ -5,11 +5,11 @@ import { agent } from './agent.client.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export function registerAgentCommands(program) {
-	const agentCmd = new Command('agent').description('LLM Agent Commands');
+	const agentCmd = new Command('agent').description('🤖 LLM Agent Commands');
 
 	agentCmd
 		.command('session')
-		.description('📦 Prompt the Engine Agent')
+		.description('🤖 Prompt the Engine Agent')
 		.action(async (options) => {
             let chatId;
 

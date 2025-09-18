@@ -4,7 +4,7 @@ import { control } from './control.client.js';
 import inquirer from 'inquirer';
 
 export function registerControlCommands(program) {
-	const controlCmd = new Command('control').description('Control related commands');
+	const controlCmd = new Command('control').description('🎛️  Control related commands');
 
 	controlCmd
 		.command('migrate')

@@ -17,5 +17,14 @@ registerControlCommands(program);
 registerScaffolderCommands(program);
 registerAgentCommands(program);
 
+// Help
+program
+  .command('help [command]')
+  .description('❓ Display help for command');
+
+program.addHelpText('beforeAll', `
+G n a r  E n g i n e -  A powerful, AI ready microservice framework for modern applications.
+`);
+
 // Parse CLI input
 program.parse(process.argv);

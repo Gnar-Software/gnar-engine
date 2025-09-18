@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
+let client;
 let profile;
 let profileName;
 let baseApiUrl;
@@ -11,75 +12,83 @@ let authToken;
 let username;
 let apiKey;
 
-// Determine the correct API URL based on the environment
-try {
-    profile = profiles.getActiveProfile();
-    baseApiUrl = profile.profile.CLI_API_URL;
-    username = profile.profile.CLI_API_USERNAME;
-    apiKey = profile.profile.CLI_API_KEY;
-    profileName = profile.name;
+/**
+ * Initialise the profile
+ */
+export const initAxiosClient = () => {
+    // Determine the correct API URL based on the environment
+    try {
+        profile = profiles.getActiveProfile();
+        baseApiUrl = profile.profile.CLI_API_URL;
+        username = profile.profile.CLI_API_USERNAME;
+        apiKey = profile.profile.CLI_API_KEY;
+        profileName = profile.name;
 
-    console.log('Using profile: ' + profile.name + ' with API URL: ' + baseApiUrl);
-} catch (error) {
-    console.error('Error retrieving active profile:', error.message);
-    throw new Error('Active profile not found. Please set an active profile using `gnar profile set-active <profileName>`');
+        console.log('Profile: ' + profile.name + ' | ' + baseApiUrl);
+
+    } catch (error) {
+        console.error('Error retrieving active profile:', error.message);
+        throw new Error('Active profile not found. Please set an active profile using `gnar profile set-active <profileName>`');
+    }
+
+    // Create axios client
+    client = axios.create({
+        baseURL: baseApiUrl,
+        withCredentials: true,
+    });
+
+    // Request interceptors
+    client.interceptors.request.use(
+        async (config) => {
+
+            // Return pre-existing acces token if we have one
+            try {
+                authToken = await getAccessToken({activeProfileName: profileName});
+
+                if (authToken) {
+                    config.headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                return config;
+            } catch (error) {
+                //console.log('No access token found, authenticating...');
+            }
+
+            // Authenticate if no token is found
+            try {
+                const authResponse = await axios.post(`${baseApiUrl}/authenticate/`, {
+                    username: username,
+                    apiKey: apiKey
+                });          
+
+                if (!authResponse.data?.token) {
+                    throw new Error('Authentication failed', authResponse.data?.error || 'No token received');
+                }
+
+                authToken = authResponse.data.token;
+
+                setAccessToken({
+                    activeProfileName: profileName,
+                    accessToken: authToken,
+                    accessTokenExpires: new Date(Date.now() + 3600000).toISOString()
+                });
+
+                if (authToken) {
+                    config.headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                return config;
+            } catch (error) {
+                console.error('Authentication failed:', error.response?.data?.message || error.message);
+                throw error;
+            }
+        },
+        (error) => {
+            return Promise.reject(error);
+        }
+    );
 }
 
-const client = axios.create({
-    baseURL: baseApiUrl,
-    withCredentials: true,
-});
-
-// Request interceptors
-client.interceptors.request.use(
-    async (config) => {
-
-        // Return pre-existing acces token if we have one
-        try {
-            authToken = await getAccessToken({activeProfileName: profileName});
-
-            if (authToken) {
-                config.headers['Authorization'] = `Bearer ${authToken}`;
-            }
-
-            return config;
-        } catch (error) {
-            //console.log('No access token found, authenticating...');
-        }
-
-        // Authenticate if no token is found
-        try {
-            const authResponse = await axios.post(`${baseApiUrl}/authenticate/`, {
-                username: username,
-                apiKey: apiKey
-            });          
-
-            if (!authResponse.data?.token) {
-                throw new Error('Authentication failed', authResponse.data?.error || 'No token received');
-            }
-
-            authToken = authResponse.data.token;
-
-            setAccessToken({
-                activeProfileName: profileName,
-                accessToken: authToken,
-                accessTokenExpires: new Date(Date.now() + 3600000).toISOString()
-            });
-
-            if (authToken) {
-                config.headers['Authorization'] = `Bearer ${authToken}`;
-            }
-
-            return config;
-        } catch (error) {
-            console.error('Authentication failed:', error.response?.data?.message || error.message);
-            throw error;
-        }
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
 export default client;
 

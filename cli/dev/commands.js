@@ -5,11 +5,11 @@ import { up } from './dev.service.js';
 import path from 'path';
 
 export function registerDevCommands(program) {
-	const devCmd = new Command('dev').description('📦 Start Gnar Engine Development Environment');
+	const devCmd = new Command('dev').description('🛠️  Start Gnar Engine Development Environment');
 
 	devCmd
 		.command('up')
-		.description('📦 Up Gnar Engine Development Containers')
+		.description('🛠️ Up Gnar Engine Development Containers')
 		.option('-b, --build', 'Ruild without cache')
         .option('-d, --detach', 'Run containers in background')
         .action(async (options) => {

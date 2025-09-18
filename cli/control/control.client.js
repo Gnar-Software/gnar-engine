@@ -1,4 +1,4 @@
-import client from '../services/client.js';
+import client, { initAxiosClient } from '../services/client.js';
 import { profiles } from "../profiles/profiles.client.js";
 
 export const control = {
@@ -6,6 +6,7 @@ export const control = {
     // Run all migrations
     runMigrations: async () => {    
         try {
+            await initAxiosClient();
             const response = await client.post('/control/migrations', {});
 
             if (response.status !== 200) {
@@ -21,6 +22,7 @@ export const control = {
     // Run seeders
     runSeeders: async () => {
         try {
+            await initAxiosClient();
             const response = await client.post('/control/seeders', {});
 
             if (response.status !== 200) {
@@ -36,6 +38,7 @@ export const control = {
     // Run full reset
     runReset: async () => {    
         try {
+            await initAxiosClient();
             const response = await client.post('/control/reset', {});
 
             if (response.status !== 200) {
@@ -51,6 +54,7 @@ export const control = {
     // Get tasks
     getTasks: async (status) => {
         try {
+            await initAxiosClient();
             const response = await client.get(`/tasks/?status=${status}`);
 
             if (response.status !== 200) {
@@ -66,6 +70,7 @@ export const control = {
     // Execute tasks
     handleTaskBatch: async (status) => {
         try {
+            await initAxiosClient();
             console.log(`Executing task batch...`);
             const response = await client.post(`/tasks/execute-batch`, {
                 status: status
@@ -89,6 +94,7 @@ export const control = {
     // Delete task by id
     deleteTask: async (id) => {
         try {
+            await initAxiosClient();
             console.log(`Deleting task with id ${id}...`);
             const response = await client.delete(`/tasks/${id}`);
 
@@ -105,6 +111,7 @@ export const control = {
     // Delete failed tasks
     deleteFailedTasks: async () => {
         try {
+            await initAxiosClient();
             console.log(`Deleting failed tasks...`);
             const response = await client.post(`/tasks/delete-failed`, {});
 

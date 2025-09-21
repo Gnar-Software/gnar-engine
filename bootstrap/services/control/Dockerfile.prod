@@ -4,14 +4,14 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy app source
-COPY ./Services/Control/src ./src
+COPY ./services/control/src ./src
 COPY ./Lib ./Lib
 
 # Copy environment variables (do this later in build only if needed)
 COPY ./.env.production .env
 
 # Copy package files and install deps
-COPY ./Services/Control/package*.json ./
+COPY ./services/control/package*.json ./
 RUN npm install --omit=dev
 
 # Stage 2: Runtime

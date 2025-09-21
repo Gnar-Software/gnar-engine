@@ -5,10 +5,10 @@ FROM node:20-alpine
 WORKDIR /usr/gnar_engine/app
 
 # Copy package.json and package-lock.json
-COPY ./Services/Portal/package*.json ./
+COPY ./services/portal/package*.json ./
 
 # Copy public directory
-COPY ./Services/Portal/public ./public
+COPY ./services/portal/public ./public
 
 # Copy local Lib packages
 COPY ./Lib ./Lib

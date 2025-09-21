@@ -1,7 +1,7 @@
 // control/commands.js
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { profiles } from '../profiles/profiles.client.js';
-import { up } from './dev.service.js';
+import { up, down } from './dev.service.js';
 import path from 'path';
 
 export function registerDevCommands(program) {
@@ -9,9 +9,10 @@ export function registerDevCommands(program) {
 
 	devCmd
 		.command('up')
-		.description('🛠️ Up Gnar Engine Development Containers')
+		.description('🛠️  Up Development Containers')
 		.option('-b, --build', 'Ruild without cache')
         .option('-d, --detach', 'Run containers in background')
+        .addOption(new Option('--core-dev').hideHelp())
         .action(async (options) => {
 			let response = {};
 
@@ -29,14 +30,40 @@ export function registerDevCommands(program) {
 			try {
 				up({
                     projectDir: projectDir,
-                    noCache: options.build || false,
-                    detach: options.detach || false
+                    build: options.build || false,
+                    detach: options.detach || false,
+                    coreDev: options.coreDev || false
                 });
 			} catch (err) {
 				console.error("❌ Error running containers:", err.message);
 				process.exit(1);
 			}
 		});
+
+    devCmd
+        .command('down')
+        .description('🛠️  Down Development Containers')
+        .action(async () => {
+            // Get active profile directory
+            const { profile: activeProfile } = profiles.getActiveProfile();
+
+            if (!activeProfile) {
+                console.error('No active profile found');
+                return;
+            }
+
+            // Change to the active profile directory
+            const projectDir = activeProfile.PROJECT_DIR;
+
+            try {
+				down({
+                    projectDir: projectDir
+                });
+			} catch (err) {
+				console.error("❌ Error running containers:", err.message);
+				process.exit(1);
+			}
+        });
 
 	program.addCommand(devCmd);
 }

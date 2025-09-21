@@ -3,6 +3,7 @@ import process from "process";
 import fs from "fs/promises";
 import path from "path";
 import yaml from "js-yaml";
+import { gnarEngineCliConfig } from "../config.js";
 
 /**
  * Start the application locally
@@ -11,10 +12,11 @@ import yaml from "js-yaml";
  *
  * @param {object} options
  * @param {string} options.projectDir - The project directory
- * @param {boolean} [options.noCache=false] - Whether to build images without cache
+ * @param {boolean} [options.build=false] - Whether to re-build images
  * @param {boolean} [options.detached=false] - Whether to run containers in background
+ * @param {boolean} [options.coreDev=false] - Whether to run in core development mode (requires access to core source)
  */
-export async function up({ projectDir, noCache = false, detached = false }) {
+export async function up({ projectDir, build = false, detached = false, coreDev = false }) {
     // parse config
     const configPath = path.join(projectDir, "deploy.localdev.yml");
     const secretsPath = path.join(projectDir, "secrets.localdev.yml");
@@ -39,14 +41,15 @@ export async function up({ projectDir, noCache = false, detached = false }) {
         config: parsedConfig.config,
         secrets: parsedSecrets,
         gnarHiddenDir: gnarHiddenDir,
-        projectDir: projectDir
+        projectDir: projectDir,
+        coreDev: coreDev
     });
     await fs.writeFile(dockerComposePath, yaml.dump(dockerCompose));
 
     // up docker-compose
     const args = ["-f", dockerComposePath, "up"];
 
-    if (noCache) {
+    if (build) {
         args.push("--build");
     }
 
@@ -75,6 +78,41 @@ export async function up({ projectDir, noCache = false, detached = false }) {
 }
 
 /**
+ * Down the containers
+ *
+ * @param {object} options
+ * @param {string} options.projectDir - The project directory
+ */
+export async function down({ projectDir }) {
+    // assert .gnarengine directory in projectDir
+    const gnarHiddenDir = path.join(projectDir, ".gnarengine");
+    await assertGnarEngineHiddenDir(gnarHiddenDir);
+
+    // down docker-compose
+    const dockerComposePath = path.join(gnarHiddenDir, "docker-compose.dev.yml");
+    const args = ["-f", dockerComposePath, "down"];
+
+    const processRef = spawn(
+        "docker-compose",
+        args,
+        {
+            cwd: projectDir,
+            stdio: "inherit",
+            shell: "/bin/sh"
+        }
+    );
+
+    // handle exit
+    const exitCode = await new Promise((resolve) => {
+        processRef.on("close", resolve);
+    });
+
+    if (exitCode !== 0) {
+        throw new Error(`docker-compose down exited with code ${exitCode}`);
+    }
+}
+
+/**
  * Create dynamic nginx.conf file for running application locally
  * 
  * @param {object} config
@@ -99,7 +137,6 @@ export async function createDynamicNginxConf({ config, outputPath }) {
         for (const p of paths) {
             // normalize path without trailing slash
             const cleanPath = p.replace(/\/+$/, '');
-            const containerPort = 
 
             // build location block
             nginxConf += `
@@ -127,8 +164,10 @@ export async function createDynamicNginxConf({ config, outputPath }) {
  * @param {object} config
  * @param {object} secrets
  * @param {string} gnarHiddenDir
+ * @param {string} projectDir
+ * @param {boolean} coreDev - Whether to volume mount the core source code
  */
-async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, projectDir }) {
+async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, projectDir, coreDev = false }) {
     let mysqlPortsCounter = 3306;
     let mongoPortsCounter = 27017;
     const services = {};
@@ -156,8 +195,8 @@ async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, proj
             "15672:15672"
         ],
         environment: {
-            RABBITMQ_DEFAULT_USER: secrets.global.RABBITMQ_DEFAULT_USER || '',
-            RABBITMQ_DEFAULT_PASS: secrets.global.RABBITMQ_DEFAULT_PASS || ''
+            RABBITMQ_DEFAULT_USER: secrets.global.RABBITMQ_USER || '',
+            RABBITMQ_DEFAULT_PASS: secrets.global.RABBITMQ_PASS || ''
         },
         restart: 'always'
     }
@@ -165,15 +204,18 @@ async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, proj
     // services
     for (const svc of config.services) {
 
-        // service name snake case
-        const serviceNameSnakeCase = svc.name.charAt(0).toUpperCase() + svc.name.slice(1);
-
         // env variables
+        const serviceEnvVars = secrets.services?.[svc.name] || {};
+        const localisedServiceEnvVars = {};
+        
+        for (const [key, value] of Object.entries(serviceEnvVars)) {
+            localisedServiceEnvVars[svc.name.toUpperCase() + '_' + key] = value;
+        }
+
         const env = {
             ...(secrets.global || {}),
-            ...(secrets.services?.[svc.name] || {})
+            ...(localisedServiceEnvVars || {})
         };
-        const serviceEnvVars = secrets.services?.[svc.name] || {};
 
         // service block
         services[`${svc.name}-service`] = {
@@ -181,17 +223,22 @@ async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, proj
             image: `ge-${config.environment}-${config.namespace}-${svc.name}`,
             build: {
                 context: projectDir,
-                dockerfile: `./Services/${serviceNameSnakeCase}/Dockerfile`
+                dockerfile: `./services/${svc.name}/Dockerfile`
             },
             command: svc.command || [],
             environment: env,
             ports: svc.ports || [],
             depends_on: svc.depends_on || [],
             volumes: [
-                `${projectDir}/Services/${serviceNameSnakeCase}/src:/usr/gnar_engine/app/src`
+                `${projectDir}/services/${svc.name}/src:/usr/gnar_engine/app/src`
             ],
             restart: 'always'
         };
+
+        // add the core source code mount if in coreDeve mode
+        if (coreDev) {
+            services[`${svc.name}-service`].volumes.push(`../../../gnar-engine-core:${gnarEngineCliConfig.corePath}`);
+        }
 
         // add a mysql instance if required
         if (
@@ -216,7 +263,7 @@ async function createDynamicDockerCompose({ config, secrets, gnarHiddenDir, proj
                     MYSQL_RANDOM_ROOT_PASSWORD: serviceEnvVars.MYSQL_RANDOM_ROOT_PASSWORD,
                 },
                 volumes: [
-                    `${gnarHiddenDir}/Data/${svc.name}-db-data:/var/lib/mysql`
+                    `${gnarHiddenDir}/data/${svc.name}-db-data:/var/lib/mysql`
                 ]
             }; 
 

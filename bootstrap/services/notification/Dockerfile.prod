@@ -4,14 +4,14 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy app source
-COPY ./Services/Notification/src ./src
+COPY ./services/notification/src ./src
 COPY ./Lib ./Lib
 
 # Copy environment variables (do this later in build only if needed)
 COPY ./.env.production .env
 
 # Copy package files and install deps
-COPY ./Services/Notification/package*.json ./
+COPY ./services/notification/package*.json ./
 RUN npm install --omit=dev
 
 # Stage 2: Runtime

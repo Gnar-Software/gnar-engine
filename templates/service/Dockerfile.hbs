@@ -5,7 +5,7 @@ FROM gnarengine/service-core:1.0.0
 WORKDIR /usr/gnar_engine/app
 
 # Copy package.json and package-lock.json
-COPY ./Services/{{pascalCase serviceName}}/package*.json ./
+COPY ./services/{{serviceName}}/package*.json ./
 
 # Install nodemon
 RUN npm install -g nodemon

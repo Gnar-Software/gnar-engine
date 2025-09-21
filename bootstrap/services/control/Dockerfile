@@ -1,14 +1,14 @@
 # Dockerfile for Control Service
-FROM gnarengine/service-core:1.0.0
+FROM gnarengine/gnarengine-service-core:1.0
 
 # Set the working directory
 WORKDIR /usr/gnar_engine/app
 
-# Copy local Lib packages
-# COPY ./Lib ./Lib
+# Define a global env var
+ENV GLOBAL_SERVICE_BASE_DIR=/usr/gnar_engine/app/src/
 
 # Copy package.json and package-lock.json
-COPY ./Services/Control/package*.json ./
+COPY ./services/control/package*.json ./
 
 # Install nodemon
 RUN npm install -g nodemon

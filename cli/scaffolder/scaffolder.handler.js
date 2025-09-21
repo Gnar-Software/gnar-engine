@@ -18,16 +18,7 @@ export const scaffolder = {
      * @returns {object} - An object containing a success message and the service path
      */
     createNewService: function ({serviceName, database, projectDir}) {
-        if (!serviceName) {
-            throw new Error('Service name is required');
-        }
-
-        // assert trailing slash in projectDir
-        projectDir = helpers.assertTrailingSlash(projectDir);
-
-        // Define the service directory
-        const capitalisedServiceName = helpers.capitaliseFirstLetter(serviceName);
-        const serviceDir = projectDir + 'Services/' + capitalisedServiceName;
+        const serviceDir = projectDir + 'services/' + serviceName;
         console.log('Service directory:', serviceDir);
 
         // Check if the service directory already exists

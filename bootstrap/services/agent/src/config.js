@@ -14,8 +14,8 @@ export const config = {
         allowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         rateLimiting: {
-			max: 5,
-			timeWindow: '1 minute',
+			max: 3,
+			timeWindow: '1 second',
 		}
     },
 
@@ -40,11 +40,13 @@ export const config = {
 
     // message broker
     message: {
+        url: process.env.RABBITMQ_URL,
         queueName: 'agentServiceQueue',
         prefetch: 20
     },
 
     hashNameSpace: '',
 
-    agent: 'chatgpt' // Default agent type
+    // Default agent type
+    agent: 'chatgpt'
 }

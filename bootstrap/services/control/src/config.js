@@ -42,7 +42,8 @@ export const config = {
 
     // message broker
     message: {
+        url: process.env.RABBITMQ_URL,
         queueName: 'controlServiceQueue',
-        prefetch: 20
+        prefetch: 20,
     }
 }

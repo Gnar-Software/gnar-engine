@@ -1,9 +1,12 @@
 import { spawn } from "child_process";
+import Docker from "dockerode";
 import process from "process";
 import fs from "fs/promises";
 import path from "path";
 import yaml from "js-yaml";
 import { gnarEngineCliConfig } from "../config.js";
+
+const docker = new Docker();
 
 /**
  * Start the application locally
@@ -82,34 +85,36 @@ export async function up({ projectDir, build = false, detached = false, coreDev 
  *
  * @param {object} options
  * @param {string} options.projectDir - The project directory
+ * @param {boolean} [options.allContainers=false] - Stop all running containers (not just Gnar Engine ones)
  */
-export async function down({ projectDir }) {
-    // assert .gnarengine directory in projectDir
-    const gnarHiddenDir = path.join(projectDir, ".gnarengine");
-    await assertGnarEngineHiddenDir(gnarHiddenDir);
+export async function down({ projectDir, allContainers = false }) {
+    // list all containers
+    const containers = await docker.listContainers();
 
-    // down docker-compose
-    const dockerComposePath = path.join(gnarHiddenDir, "docker-compose.dev.yml");
-    const args = ["-f", dockerComposePath, "down"];
+    // filter containers by image name
+    if (!allContainers) {
+        const containers = containers.filter(c => c.Image.includes("ge-dev"));
+    }
 
-    const processRef = spawn(
-        "docker-compose",
-        args,
-        {
-            cwd: projectDir,
-            stdio: "inherit",
-            shell: "/bin/sh"
-        }
-    );
+    if (containers.length === 0) {
+        console.log("No running containers found.");
+        return;
+    }
 
-    // handle exit
-    const exitCode = await new Promise((resolve) => {
-        processRef.on("close", resolve);
+    console.log('Stopping containers...');
+    containers.forEach(c => {
+        console.log(` - ${c.Names[0]} (${c.Id})`);
     });
 
-    if (exitCode !== 0) {
-        throw new Error(`docker-compose down exited with code ${exitCode}`);
-    }
+    // stop each container
+    await Promise.all(
+        containers.map(c => {
+            const container = docker.getContainer(c.Id);
+            return container.stop().catch(err => {
+                console.error(`Failed to stop ${c.Names[0]}: ${err.message}`);
+            });
+        })
+    );
 }
 
 /**

@@ -10,7 +10,7 @@ import { httpController as userPlatformHttpController } from './controllers/http
 export const initService = async () => {
 
 	// Run migrations
-	db.migrations.runMigrations({config});
+	await db.migrations.runMigrations({config});
 	db.seeders.runSeeders({config});
 
 	// Import command handlers after the command bus is initialised

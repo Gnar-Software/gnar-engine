@@ -43,7 +43,8 @@ export function registerDevCommands(program) {
     devCmd
         .command('down')
         .description('🛠️  Down Development Containers')
-        .action(async () => {
+        .option('-a, --all-containers', 'Stop all running containers (not just Gnar Engine ones)')
+        .action(async (options) => {
             // Get active profile directory
             const { profile: activeProfile } = profiles.getActiveProfile();
 
@@ -57,7 +58,8 @@ export function registerDevCommands(program) {
 
             try {
 				down({
-                    projectDir: projectDir
+                    projectDir: projectDir,
+                    allContainers: options.allContainers || false 
                 });
 			} catch (err) {
 				console.error("❌ Error running containers:", err.message);

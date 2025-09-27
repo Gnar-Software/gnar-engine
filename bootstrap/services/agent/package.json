@@ -11,9 +11,6 @@
     "gnarengine-service-core": "file:/usr/gnar_engine/app/gnarengine-service-core",
     "openai": "5.13.1"
   },
-  "devDependencies": {
-    "nodemon": "^3.0.0"
-  },
   "author": "Gnar Software",
   "license": "MIT"
 }

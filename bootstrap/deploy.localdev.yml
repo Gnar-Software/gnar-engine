@@ -24,28 +24,28 @@ config:
       ports: 
         - "4001:3000"
 
-    # - name: user
-    #   listener_rules:
-    #     paths:
-    #       - /authenticate
-    #       - /users
-    #   min-tasks: 1
-    #   max-tasks: 1
-    #   depends_on:
-    #     - control-db
-    #   command: ["npm", "run", "start:dev"]
-    #   ports: 
-    #     - "4002:3000"
-    #
-    # - name: agent
-    #   listener_rules:
-    #     paths:
-    #       - /agent
-    #   min-tasks: 1
-    #   max-tasks: 1
-    #   depends_on:
-    #     - agent-db
-    #   command: ["npm", "run", "start:dev"]
-    #   ports: 
-    #     - "4003:3000"
+    - name: user
+      listener_rules:
+        paths:
+          - /authenticate
+          - /users
+      min-tasks: 1
+      max-tasks: 1
+      depends_on:
+        - control-db
+      command: ["npm", "run", "start:dev"]
+      ports: 
+        - "4002:3000"
+
+    - name: agent
+      listener_rules:
+        paths:
+          - /agent
+      min-tasks: 1
+      max-tasks: 1
+      depends_on:
+        - agent-db
+      command: ["npm", "run", "start:dev"]
+      ports: 
+        - "4003:3000"
 

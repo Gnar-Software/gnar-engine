@@ -46,6 +46,11 @@ export const config = {
         prefetch: 20
     },
 
+    webSockets: {
+        reconnectInterval: 5000,
+        maxInitialConnectionAttempts: 5
+    },
+
     // service specific config
     userRoles: [
         'service_admin',

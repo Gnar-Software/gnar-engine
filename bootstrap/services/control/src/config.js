@@ -45,5 +45,11 @@ export const config = {
         url: process.env.RABBITMQ_URL,
         queueName: 'controlServiceQueue',
         prefetch: 20,
+    },
+
+    // web socket client & server
+    webSockets: {
+        reconnectInterval: 5000,
+        maxInitialConnectionAttempts: 5
     }
 }

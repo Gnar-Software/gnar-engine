@@ -1,4 +1,4 @@
-import { message, http, logger, db, registerService } from 'gnarengine-service-core';
+import { message, http, logger, db, registerService, webSockets } from 'gnarengine-service-core';
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
 import { httpController as controlPlatformHttpController } from './controllers/http.controller.js';
@@ -22,6 +22,10 @@ export const initService = async () => {
         config: config.message,
         handlers: messageHandlers
     });
+
+    // Initialise websocket client & server
+    await webSockets.server.init(config.webSockets);
+    await webSockets.client.init(config.webSockets);
 
     // Register http routes
     await http.registerRoutes({

@@ -3,7 +3,7 @@
 [![NPM Version](hhttps://discord.gg/ZwdvJkj2ttps://img.shields.io/npm/v/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
 [![NPM Downloads](https://img.shields.io/npm/dt/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
 [![License](https://img.shields.io/npm/l/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![Discord](https://img.shields.io/discord/1123196227936483880?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/ZwdvJkj2)
+[![Discord](https://img.shields.io/discord/1123196227936483880?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/channels/1423275646804693012)
 
 ### What is Gnar Engine?
 

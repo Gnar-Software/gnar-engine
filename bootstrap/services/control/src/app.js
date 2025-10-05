@@ -24,8 +24,7 @@ export const initService = async () => {
     });
 
     // Initialise websocket client & server
-    await webSockets.server.init(config.webSockets);
-    await webSockets.client.init(config.webSockets);
+    await webSockets.init(config.webSockets, config.serviceName);
 
     // Register http routes
     await http.registerRoutes({

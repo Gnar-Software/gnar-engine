@@ -44,13 +44,19 @@ commands.register('controlService.registerService', async ({service}) => {
 
 /**
  * Get all registered services
- * 
+ *
+ * @param {Object} params
+ * @param {boolean} params.includeManifests Whether to include service manifests
  * @returns {Promise<Array>} List of services
  */
-commands.register('controlService.getServices', async () => {
+commands.register('controlService.getServices', async ({includeManifests}) => {
     let services;
     try {
-        services = await registry.getServices();
+        if (includeManifests) {
+            services = await registry.getServicesWithManifests();
+        } else {
+            services = await registry.getServices();
+        }
     } catch (error) {
         throw error;
     }

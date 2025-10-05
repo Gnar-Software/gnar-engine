@@ -38,6 +38,22 @@ export const registry = {
     getServices: async () => {
         try {
             const [result] = await db.execute(
+                'SELECT name FROM `service_registry`'
+            );
+
+            return result;
+        } catch (error) {
+            logger.error("Error getting services: " + error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get services with manifests
+     */
+    getServicesWithManifests: async () => {
+        try {
+            const [result] = await db.execute(
                 'SELECT * FROM `service_registry`'
             );
 
@@ -47,6 +63,7 @@ export const registry = {
             throw error;
         }
     },
+
 
     /**
      * Get manifests

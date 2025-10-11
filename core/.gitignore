@@ -1,0 +1,14 @@
+# Node modules
+**/node_modules/
+
+# Environment files
+**/.env
+secrets*
+
+# Lock files
+**/package-lock.json
+
+# Build output
+**/dist/
+
+

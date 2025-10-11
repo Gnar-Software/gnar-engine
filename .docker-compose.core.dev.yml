@@ -1,0 +1,218 @@
+version: '3.9'
+
+services:
+  # User Service
+  user-service:
+    image: ge-dev-${GLOBAL_CLUSTER_NAME}-user-service
+    container_name: ge-user-service
+    build:
+      context: .
+      dockerfile: ./Services/User/Dockerfile
+    ports:
+      - "4001:3000"
+    volumes:
+      - ./Services/User/src:/usr/gnar_engine/app/src
+      - ../../ServiceCore:/usr/gnar_engine/app/gnarengine-service-core
+    restart: always
+    depends_on:
+      - user-db
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - NODE_ENV=${USER_NODE_ENV}
+      - USER_MYSQL_HOST=${USER_MYSQL_HOST}
+      - USER_MYSQL_DATABASE=${USER_MYSQL_DATABASE}
+      - USER_MYSQL_USER=${USER_MYSQL_USER}
+      - USER_MYSQL_PASSWORD=${USER_MYSQL_PASSWORD}
+      - USER_MYSQL_ROOT_PASSWORD=${USER_MYSQL_ROOT_PASSWORD}
+      - USER_ROOT_ADMIN_EMAIL=${USER_ROOT_ADMIN_EMAIL}
+      - USER_ROOT_ADMIN_PASSWORD=${USER_ROOT_ADMIN_PASSWORD}
+      - USER_ROOT_ADMIN_USERNAME=${USER_ROOT_ADMIN_USERNAME}
+      - USER_ROOT_ADMIN_API_KEY=${USER_ROOT_ADMIN_API_KEY}
+      - ALLOWED_DOMAINS=${ALLOWED_DOMAINS}
+      - GLOBAL_SERVICE_BASE_DIR=${GLOBAL_SERVICE_BASE_DIR}
+      - USER_PORT=${USER_PORT}
+    command: ["npm", "run", "start:dev"]
+
+  user-db:
+    image: mysql
+    container_name: ge-user-db
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_DATABASE=${USER_MYSQL_DATABASE}
+      - MYSQL_USER=${USER_MYSQL_USER}
+      - MYSQL_PASSWORD=${USER_MYSQL_PASSWORD}
+      - MYSQL_RANDOM_ROOT_PASSWORD=${USER_MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./Data/user-db-data:/var/lib/mysql
+    restart: always
+    logging:
+      driver: "none"
+
+  # Control Service
+  control-service:
+    image: ge-dev-${GLOBAL_CLUSTER_NAME}-control-service
+    container_name: ge-control-service
+    build:
+      context: .
+      dockerfile: ./Services/Control/Dockerfile
+    ports:
+      - "4002:3000"
+    volumes:
+      - ./Services/Control/src:/usr/gnar_engine/app/src
+      - ../../ServiceCore:/usr/gnar_engine/app/gnarengine-service-core
+    restart: always
+    depends_on:
+      - control-db
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - NODE_ENV=${CONTROL_NODE_ENV}
+      - CONTROL_MYSQL_HOST=${CONTROL_MYSQL_HOST}
+      - CONTROL_MYSQL_DATABASE=${CONTROL_MYSQL_DATABASE}
+      - CONTROL_MYSQL_USER=${CONTROL_MYSQL_USER}
+      - CONTROL_MYSQL_PASSWORD=${CONTROL_MYSQL_PASSWORD}
+      - CONTROL_MYSQL_ROOT_PASSWORD=${CONTROL_MYSQL_ROOT_PASSWORD}
+      - CONTROL_PORT=${CONTROL_PORT}
+      - CONTROL_MONGO_URL=${CONTROL_MONGO_URL}
+      - GLOBAL_SERVICE_BASE_DIR=${GLOBAL_SERVICE_BASE_DIR}
+    command: ["npm", "run", "start:dev"]
+
+  control-db:
+    image: mysql
+    container_name: ge-control-db
+    ports:
+      - 3307:3307
+    environment:
+      MYSQL_DATABASE: ${CONTROL_MYSQL_DATABASE}
+      MYSQL_USER: ${CONTROL_MYSQL_USER}
+      MYSQL_PASSWORD: ${CONTROL_MYSQL_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: ${CONTROL_MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./Data/control-db-data:/var/lib/mysql
+    restart: always
+
+  # Agent Service
+  agent-service:
+    image: ge-dev-${GLOBAL_CLUSTER_NAME}-agent-service
+    container_name: ge-agent-service
+    build:
+      context: .
+      dockerfile: ./Services/Agent/Dockerfile
+    ports:
+      - "4003:3000"
+    volumes:
+      - ./Services/Agent/src:/usr/gnar_engine/app/src
+      - ../../ServiceCore:/usr/gnar_engine/app/gnarengine-service-core
+    restart: always
+    depends_on:
+      - agent-db
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - NODE_ENV=${AGENT_NODE_ENV}
+      - AGENT_MYSQL_HOST=${AGENT_MYSQL_HOST}
+      - AGENT_MYSQL_DATABASE=${AGENT_MYSQL_DATABASE}
+      - AGENT_MYSQL_USER=${AGENT_MYSQL_USER}
+      - AGENT_MYSQL_PASSWORD=${AGENT_MYSQL_PASSWORD}
+      - AGENT_MYSQL_ROOT_PASSWORD=${AGENT_MYSQL_ROOT_PASSWORD}
+      - AGENT_PORT=${AGENT_PORT}
+      - AGENT_MONGO_URL=${AGENT_MONGO_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL}
+      - GLOBAL_SERVICE_BASE_DIR=${GLOBAL_SERVICE_BASE_DIR}
+    command: ["npm", "run", "start:dev"]
+
+  agent-db:
+    image: mysql
+    container_name: ge-agent-db
+    ports:
+      - 3308:3308
+    environment:
+      MYSQL_DATABASE: ${AGENT_MYSQL_DATABASE}
+      MYSQL_USER: ${AGENT_MYSQL_USER}
+      MYSQL_PASSWORD: ${AGENT_MYSQL_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: ${AGENT_MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./Data/agent-db-data:/var/lib/mysql
+    restart: always
+  
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: ge-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    restart: always
+    # tmpfs:
+    #   - /var/lib/rabbitmq
+
+  portal:
+    image: ge-dev-${GLOBAL_CLUSTER_NAME}-portal
+    container_name: ge-portal
+    build:
+      context: .
+      dockerfile: ./Services/Portal/Dockerfile
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./Services/Portal/src:/usr/gnar_engine/app/src
+    restart: always
+    depends_on:
+      - user-service
+      - control-service
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - NODE_ENV=${REACT_APP_PORTAL_NODE_ENV}
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+    command: ["npm", "run", "start"]
+
+  # Nginx
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Nginx/nginx.conf:/etc/nginx/nginx.conf
+    restart: always
+
+  # # Notification Service
+  # notification-service:
+  #   image: ge-dev-${GLOBAL_CLUSTER_NAME}-notification-service
+  #   container_name: ge-notification-service
+  #   build:
+  #     context: .
+  #     dockerfile: ./Services/Notification/Dockerfile
+  #   ports:
+  #     - "4008:4008"
+  #   volumes:
+  #     - ./Services/Notification/src:/usr/gnar_engine/app/src
+  #     # - ./Lib:/usr/gnar_engine/app/Lib
+  #   restart: always
+  #   environment:
+  #     - RABBITMQ_URL=${RABBITMQ_URL}
+  #     - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+  #     - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+  #     - NODE_ENV=${NOTIFICATION_NODE_ENV}
+  #     - ALLOWED_DOMAINS=${ALLOWED_DOMAINS}
+  #     - NOTIFICATION_SMTP_HOST=${NOTIFICATION_SMTP_HOST}
+  #     - NOTIFICATION_SMTP_PORT=${NOTIFICATION_SMTP_PORT}
+  #     - NOTIFICATION_SMTP_USER=${NOTIFICATION_SMTP_USER}
+  #     - NOTIFICATION_SMTP_PASSWORD=${NOTIFICATION_SMTP_PASSWORD}
+  #     - NOTIFICATION_SES_SOURCE_EMAIL=${NOTIFICATION_SES_SOURCE_EMAIL}
+  #     - NOTIFICATION_AWS_REGION=${NOTIFICATION_AWS_REGION}
+  #     - NOTIFICATION_AWS_ACCESS_KEY_ID=${NOTIFICATION_AWS_ACCESS_KEY_ID}
+  #     - NOTIFICATION_AWS_SECRET_ACCESS_KEY=${NOTIFICATION_AWS_SECRET_ACCESS_KEY}
+  #   command: ["npm", "run", "start:dev"]

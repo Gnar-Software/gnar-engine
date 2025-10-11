@@ -4,7 +4,7 @@
     "description": "Gnar Engine Development Framework CLI: Project bootstrap, scaffolder & control plane.",
     "type": "module",
     "bin": {
-        "gnar": "./cli/cli.js"
+        "gnar": "./src/cli.js"
     },
     "dependencies": {
         "axios": "^1.8.1",

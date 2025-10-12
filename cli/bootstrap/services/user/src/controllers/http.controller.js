@@ -1,4 +1,4 @@
-import { commands } from 'gnarengine-service-core';
+import { commands } from '@gnar-engine/core';
 import { authorise } from '../policies/user.policy.js';
 
 

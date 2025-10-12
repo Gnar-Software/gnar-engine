@@ -1,4 +1,4 @@
-import { commands, logger, message, db } from 'gnarengine-service-core';
+import { commands, logger, message, db } from '@gnar-engine/core';
 import { registry } from "../services/registry.service.js";
 import { task } from "../services/task.service.js";
 import { reset } from "../services/reset.service.js";

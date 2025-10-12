@@ -1,4 +1,4 @@
-import { db, utils, logger } from 'gnarengine-service-core';
+import { db, utils, logger } from '@gnar-engine/core';
 
 
 /**

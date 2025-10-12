@@ -1,4 +1,4 @@
-import { commands, logger, error } from 'gnarengine-service-core';
+import { commands, logger, error } from '@gnar-engine/core';
 import { auth } from '../services/authentication.service.js';
 import { user } from '../services/user.service.js';
 import { config } from '../config.js';

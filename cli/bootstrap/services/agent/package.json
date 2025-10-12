@@ -1,16 +1,16 @@
 {
-  "name": "agent-service",
-  "version": "1.0.0",
-  "description": "LLM Agent microservice for Gnar Engine",
-  "type": "module",
-  "scripts": {
-    "start": "node ./src/app.js",
-    "start:dev": "nodemon --watch ./src ./src/app.js"
-  },
-  "dependencies": {
-    "gnarengine-service-core": "file:/usr/gnar_engine/app/gnarengine-service-core",
-    "openai": "5.13.1"
-  },
-  "author": "Gnar Software",
-  "license": "MIT"
+    "name": "agent-service",
+    "version": "1.0.0",
+    "description": "LLM Agent microservice for Gnar Engine",
+    "type": "module",
+    "scripts": {
+        "start": "node ./src/app.js",
+        "start:dev": "nodemon --watch ./src ./src/app.js"
+    },
+    "dependencies": {
+        "@gnar-engine/core": "^1.0.1",
+        "openai": "5.13.1"
+    },
+    "author": "Gnar Software",
+    "license": "MIT"
 }

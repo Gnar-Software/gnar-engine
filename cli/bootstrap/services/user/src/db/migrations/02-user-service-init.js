@@ -1,4 +1,4 @@
-import { logger, db } from 'gnarengine-service-core';
+import { logger, db } from '@gnar-engine/core';
 import { config } from '../../config.js';
 
 

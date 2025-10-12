@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { logger } from "gnarengine-service-core";
+import { logger } from "@gnar-engine/core";
 
 
 export const chatGptAgent = {

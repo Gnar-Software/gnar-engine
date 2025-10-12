@@ -1,4 +1,4 @@
-import { message, commands, logger } from 'gnarengine-service-core';
+import { message, commands, logger } from '@gnar-engine/core';
 import { task } from '../services/task.service.js';
 import { validateTask } from '../schema/control.schema.js';
 

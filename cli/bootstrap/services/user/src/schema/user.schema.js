@@ -1,4 +1,4 @@
-import { schema } from 'gnarengine-service-core';
+import { schema } from '@gnar-engine/core';
 import { config } from '../config.js';
 
 

@@ -1,4 +1,4 @@
-import { commands, logger } from 'gnarengine-service-core';
+import { commands, logger } from '@gnar-engine/core';
 import { Agent } from '../services/agent.service.js';
 import { config } from '../config.js';
 

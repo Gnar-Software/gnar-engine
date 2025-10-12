@@ -1,4 +1,4 @@
-import { commands, logger } from 'gnarengine-service-core';
+import { commands, logger } from '@gnar-engine/core';
 import { registry } from '../services/registry.service.js';
 import { validateService } from '../schema/control.schema.js';
 

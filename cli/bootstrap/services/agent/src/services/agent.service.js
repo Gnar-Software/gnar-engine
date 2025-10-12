@@ -1,4 +1,4 @@
-import { db, logger, utils } from 'gnarengine-service-core';
+import { db, logger, utils } from '@gnar-engine/core';
 import { config } from '../config.js';
 import { chatGptAgent } from '../services/chatgpt.service.js';
 

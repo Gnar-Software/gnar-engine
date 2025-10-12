@@ -1,5 +1,5 @@
 # Dockerfile for Product Service
-FROM gnarengine/gnarengine-service-core:1.0
+FROM node:20-alpine 
 
 # Set the working directory
 WORKDIR /usr/gnar_engine/app

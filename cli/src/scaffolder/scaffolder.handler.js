@@ -122,16 +122,21 @@ export const scaffolder = {
         entries.forEach(entry => {
             const fullPath = path.join(dir, entry.name);
             if (entry.isDirectory()) {
-                if (!entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== 'data') {
-                    scaffolder.getAllTemplateFiles({
-                        dir: fullPath,
-                        baseDir,
-                        fileList
-                    });
+                if (entry.name !== 'node_modules' && entry.name !== 'data') {
+                    if (!entry.name.startsWith('.') || entry.name == '.gnarengine') {
+                        scaffolder.getAllTemplateFiles({
+                            dir: fullPath,
+                            baseDir,
+                            fileList
+                        });
+                    }
                 }
             } else {
                 const relativePath = path.relative(baseDir, fullPath);
-                fileList.push({ fullPath, relativePath, extension: path.extname(entry.name) });
+
+                if (entry.name !== 'docker-compose.dev.yml') {
+                    fileList.push({ fullPath, relativePath, extension: path.extname(entry.name) });
+                }
             }
         });
 
@@ -144,16 +149,28 @@ export const scaffolder = {
      * @param {object} param 
      * @param {string} param.projectName - The name of the project to create
      * @param {string} param.projectDir - The directory where the project will be created
+     * @param {string} param.rootAdminEmail - The email for the root admin user
      */
-    createNewProject: function ({projectName, projectDir}) {
+    createNewProject: function ({projectName, projectDir, rootAdminEmail}) {
         projectName = projectName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
 
         const fullProjectPath = path.join(projectDir, projectName);
         console.log('Creating project in:', fullProjectPath);
 
+        // Check to make sure there isn't already a profile with this project name
+        const profileName = projectName + ':local';
+        const allProfiles = profiles.getAllProfiles();
+
+        if (allProfiles && allProfiles.profiles) {
+            if (allProfiles.profiles[profileName]) {
+                throw new Error(`A profile with the name "${projectName}:local" already exists. Please choose a different project name or delete the existing profile.`);
+            }
+        }
+
         // Create the project directory
         if (!fs.existsSync(fullProjectPath)) {
             fs.mkdirSync(fullProjectPath, { recursive: true });
+            fs.mkdirSync(path.join(fullProjectPath, 'data'), { recursive: true });
         }
 
         // Copy bootstrap
@@ -166,12 +183,17 @@ export const scaffolder = {
         let cliApiKey = '';
 
         console.log('Copying bootstrap');
+        
+        if (!bootstrapFiles || bootstrapFiles.length === 0) {
+            throw new Error('No bootstrap files found');
+        }
+
         bootstrapFiles.forEach(file => {
             let sourcePath;
             let targetPath;
 
             sourcePath = file.fullPath;
-            targetPath = path.join(projectDir, file.relativePath);
+            targetPath = path.join(fullProjectPath, file.relativePath);
 
             // create random secrets
             if (file.relativePath === 'secrets.localdev.yml') {
@@ -183,7 +205,7 @@ export const scaffolder = {
                 // generate random passwords
                 Object.keys(parsedSecrets.services).forEach(serviceName => {
                     Object.keys(parsedSecrets.services[serviceName]).forEach(key => {
-                        if (key.toLowerCase().includes('password') && (!parsedSecrets.services[serviceName][key] || parsedSecrets.services[serviceName][key] === 'changeme')) {
+                        if (key.toLowerCase().includes('pass')) {
                             parsedSecrets.services[serviceName][key] = helpers.generateRandomString(16);
                         }
                     });
@@ -192,6 +214,7 @@ export const scaffolder = {
                 // set random root api key
                 cliApiKey = helpers.generateRandomString(32);
                 parsedSecrets.services.user.ROOT_ADMIN_API_KEY = cliApiKey;
+                parsedSecrets.services.user.ROOT_ADMIN_EMAIL = rootAdminEmail || 'admin@' + projectName + '.local';
 
                 // save updated secrets file
                 const newSecretsContent = yaml.dump(parsedSecrets);
@@ -203,7 +226,7 @@ export const scaffolder = {
         });
 
         // Create the profile
-        console.log('Creating new CLI profile: ' + projectName + ':local');
+        console.log('Creating new CLI profile: ' + profileName);
         const config = {
             CLI_API_URL: 'http://localhost',
             CLI_API_USERNAME: 'gnarlyroot',
@@ -223,5 +246,7 @@ export const scaffolder = {
             profileName: profileName
         });
 
+        console.log('g n a r  e n g i n e - Created new project: ' + projectName);
+        console.log('Run `gnar dev up` to start the development server');
     }
 }

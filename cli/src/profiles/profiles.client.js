@@ -70,8 +70,6 @@ export const profiles = {
 
         allProfiles[profileName] = config;
 
-        console.log('config', config);
-
         this.saveProfiles(allProfiles);
         return allProfiles[profileName];
     },
@@ -99,6 +97,5 @@ export const profiles = {
         }
 
         fs.writeFileSync(this.configPath, JSON.stringify({profiles: profilesObj}, null, 2));
-        console.log(`✅ Profile saved`);
     }
 };

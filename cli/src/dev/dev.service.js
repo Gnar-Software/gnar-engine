@@ -125,12 +125,11 @@ export async function down({ projectDir, allContainers = false }) {
  */
 export async function createDynamicNginxConf({ config, outputPath }) {
     // Start with the static parts of nginx.conf
-    let nginxConf = `events {}
-
+    let nginxConf = `
     http {
         server {
             listen 80;
-            server_name ${config.namespace}.gnar.co.uk;
+            server_name ${config.namespace};
     `;
 
     // Loop over each service

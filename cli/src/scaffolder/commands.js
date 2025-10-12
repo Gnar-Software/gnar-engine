@@ -24,6 +24,12 @@ export const registerScaffolderCommands = (program) => {
                     name: 'projectDir',
                     message: 'Choose directory to create project in',
                     default: path.join(process.cwd())
+                },
+                {
+                    type: 'input',
+                    name: 'rootAdminEmail',
+                    message: 'Root Admin Email',
+                    default: ''
                 }
             ]);
 
@@ -31,7 +37,8 @@ export const registerScaffolderCommands = (program) => {
             try {
                 scaffolder.createNewProject({
                     projectName: projectName,
-                    projectDir: answers.projectDir
+                    projectDir: answers.projectDir,
+                    rootAdminEmail: answers.rootAdminEmail
                 });
             } catch (error) {
                 console.error('❌ Error creating project:', error.message);

@@ -1,33 +1,7 @@
-# Gnar Engine - Service Core / Base Image
+![Gnar Engine Logo](cli/assets/gnar-engine-logo-white.svg)
 
-The Gnar Engine Service Core bootstraps:
+### Gnar Engine - Service Core
 
-- Fastify Web Server
-- AJV schema validation
-- A command bus providing a single abstraction layer for executing functions within or between services
-- Inter service messaging (Rabbit MQ)
-- Logging
-- Errors
-- Database initialisation
-- Handling for seeders & migrations
-- Health checks
+This is the Gnar Engine service core package. This should be used as a dependency for all Gnar Engine back-end services.
 
-
-### message controller example implementation
-
-``` javascript
-    import { messageController } from './controllers/message-controller.js';
-
-    await messageController.init({
-        config: {
-            queueName: 'userServiceQueue',
-            prefetch: 20
-        },
-        handlers: {
-            customJob: async (payload) => {
-                console.log('Handling customJob:', payload);
-                return { received: true };
-            }
-        }
-    });
-```
+To get started please do not download this package directly, but instead use the [Gnar CLI](@gnar-engine/cli) to create a new project.

@@ -1,11 +1,26 @@
 {
     "name": "@gnar-engine/cli",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "Gnar Engine Development Framework CLI: Project bootstrap, scaffolder & control plane.",
     "type": "module",
     "bin": {
         "gnar": "./src/cli.js"
     },
+    "main": "./src/cli.js",
+    "author": "Gnar Software Ltd.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Gnar-Software/gnar-engine"
+    },
+    "keywords": [
+        "gnar",
+        "engine",
+        "core",
+        "node",
+        "microservice",
+        "framework"
+    ],
     "dependencies": {
         "axios": "^1.8.1",
         "commander": "^14.0.0",

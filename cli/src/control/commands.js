@@ -126,7 +126,7 @@ export function registerControlCommands(program) {
 	controlCmd
 		.command('delete-task')
 		.description('🛠️  Delete task')
-		.requiredOption('-id, --id <id>', 'Task ID')
+		.requiredOption('--id <id>', 'Task ID')
 		.action(async (options) => {
 			console.log('🛠️  Deleting task with id: ' + options.id);
 			const response = await control.deleteTask(options.id);

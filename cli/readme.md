@@ -1,11 +1,4 @@
-![Gnar Engine Logo](cli/assets/gnar-engine-logo-white.svg)
-
-[![NPM Version](https://img.shields.io/npm/v/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![NPM Downloads](https://img.shields.io/npm/dt/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![License](https://img.shields.io/npm/l/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![Discord](https://img.shields.io/discord/1423275646804693012?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/VBh8QmU82X)
-
-### What is Gnar Engine?
+# Gnar Engine
 
 Gnar Engine is a micro-service, NodeJS, web-application development framework. Build modern, scalable & deeply AI integrated applications.
 
@@ -35,9 +28,6 @@ Create your first Gnar Engine project:
 gnar create project my-first-gnar-project
 ```
 
-Ensure you have Docker & Docker Compose installed on your machine.
 Start your Gnar Engine project:
 ``` bash
 gnar dev up --build
-```
-

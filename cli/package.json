@@ -1,6 +1,6 @@
 {
     "name": "@gnar-engine/cli",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Gnar Engine Development Framework CLI: Project bootstrap, scaffolder & control plane.",
     "type": "module",
     "bin": {

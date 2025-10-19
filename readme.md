@@ -25,9 +25,9 @@ Opinionated, but flexible: Prescribed Node.js runtime, Fastify HTTP, MySQL/Mongo
 
 ### Get Started
 
-Firstly install the Gnar Engine CLI globally using npm:
+Firstly install the Gnar Engine CLI using:
 ``` bash
-npm install -g @gnar-engine/cli
+curl -fsSL https://gnarengine.com/install.sh | bash
 ```
 
 Create your first Gnar Engine project:

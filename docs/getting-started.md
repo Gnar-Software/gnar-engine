@@ -4,10 +4,10 @@ Welcome to Gnar Engine! This guide will help you get started with the basics of 
 
 ## Step 1: Install the CLI
 
-Install the CLI globally on your machine using npm.
+Install the CLI globally on your machine.
 
 ```bash
-npm install -g @gnar-engine/cli
+curl -fsSL https://gnarengine.com/install.sh | bash
 ```
 
 ## Step 2: Create a New project

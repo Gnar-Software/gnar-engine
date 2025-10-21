@@ -1,8 +1,11 @@
 # Dockerfile for {{pascalCase serviceName}} Service
-FROM gnarengine/service-core:1.0.0
+FROM node:20-alpine 
 
 # Set the working directory
 WORKDIR /usr/gnar_engine/app
+
+# Define a global env var
+ENV GLOBAL_SERVICE_BASE_DIR=/usr/gnar_engine/app/src/
 
 # Copy package.json and package-lock.json
 COPY ./services/{{serviceName}}/package*.json ./

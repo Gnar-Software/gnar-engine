@@ -4,6 +4,7 @@
 # Environment files
 **/.env
 #secrets*
+**/.*
 
 # Lock files
 **/package-lock.json
@@ -17,3 +18,5 @@ bootstrap/.gnarengine
 bootstrap/data/*
 docker-compose*.yml
 
+# Temp files
+**.temp

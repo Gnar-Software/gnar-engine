@@ -48,9 +48,9 @@ export const registerScaffolderCommands = (program) => {
     create
         .command('service <service>')
         .description('📦 Create a new service: back-end|front-end')
-        .action(async (options) => {
+        .action(async (service) => {
             // validate
-            if (!options.service) {
+            if (!service) {
                 console.error('❌ Please specify a service name using gnar create service <serviceName>');
             }
 
@@ -95,10 +95,17 @@ export const registerScaffolderCommands = (program) => {
                 try {
                     console.log('Creating new service in... ' + activeProfile.profile.PROJECT_DIR);
 
+                    // add trailing slash to project dir if missing
+                    let projectDir = activeProfile.profile.PROJECT_DIR;
+
+                    if (!activeProfile.profile.PROJECT_DIR.endsWith(path.sep)) {
+                         projectDir += path.sep;
+                    }
+
                     scaffolder.createNewService({
-                        serviceName: options.service,
+                        serviceName: service,
                         database: backendAnswers.database,
-                        projectDir: activeProfile.profile.PROJECT_DIR
+                        projectDir: projectDir
                     });
 
                 } catch (error) {

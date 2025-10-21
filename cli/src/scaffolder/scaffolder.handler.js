@@ -38,47 +38,59 @@ export const scaffolder = {
             baseDir: templatesDir
         }); 
 
-        console.log('Template files:', templateFiles);
-
         // Register Handlebars helpers
         Object.entries(helpers).forEach(([name, fn]) => {
             Handlebars.registerHelper(name, fn);
         });
 
-            // Write the files to the service directory
-            templateFiles.forEach(file => {
-                let sourcePath;
-                let targetPath;
-                const templateArgs = {
-                    serviceName,
-                    database
-                };
+        // Write the files to the service directory
+        templateFiles.forEach(file => {
+            let sourcePath;
+            let targetPath;
+            const templateArgs = {
+                serviceName,
+                database
+            };
 
-                switch (file.extension) {
-                    case '.hbs':
-                        // Compile the Handlebars template for content
-                        const templateContent = fs.readFileSync(file.fullPath, 'utf8');
-                        const compiledTemplate = Handlebars.compile(templateContent);
-                        const renderedContent = compiledTemplate(templateArgs);
+            switch (file.extension) {
+                case '.hbs':
+                    // Compile the Handlebars template for content
+                    const templateContent = fs.readFileSync(file.fullPath, 'utf8');
+                    const compiledTemplate = Handlebars.compile(templateContent);
+                    const renderedContent = compiledTemplate(templateArgs);
 
-                        // Compile the Handlebars template for the filename (excluding .hbs)
-                        const filenameTemplate = Handlebars.compile(file.relativePath.replace(/\.hbs$/, ''));
-                        const renderedFilename = filenameTemplate(templateArgs);
-                        targetPath = path.join(serviceDir, renderedFilename);
+                    // Compile the Handlebars template for the filename (excluding .hbs)
+                    const filenameTemplate = Handlebars.compile(file.relativePath.replace(/\.hbs$/, ''));
+                    const renderedFilename = filenameTemplate(templateArgs);
+                    targetPath = path.join(serviceDir, renderedFilename);
 
-                        // Ensure directory exists
-                        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-                        fs.writeFileSync(targetPath, renderedContent, 'utf8');
-                        break;
-                    default:
-                        // By default, copy the file to the service directory
-                        sourcePath = file.fullPath;
-                        targetPath = path.join(serviceDir, file.relativePath);
-                        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-                        fs.copyFileSync(sourcePath, targetPath);
-                        break;
-                }
-            });
+                    // Ensure directory exists
+                    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+                    fs.writeFileSync(targetPath, renderedContent, 'utf8');
+                    break;
+                default:
+                    // By default, copy the file to the service directory
+                    sourcePath = file.fullPath;
+                    targetPath = path.join(serviceDir, file.relativePath);
+                    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+                    fs.copyFileSync(sourcePath, targetPath);
+                    break;
+            }
+        });
+
+        // Scaffold deploy.yml
+        scaffolder.scaffoldServiceDeployYml({
+            deployPath: path.join(projectDir, 'deploy.localdev.yml'),
+            serviceName: serviceName,
+            database: database
+        });
+
+        // Scaffold secrets.yml
+        scaffolder.scaffoldServiceSecrets({
+            secretsPath: path.join(projectDir, 'secrets.localdev.yml'),
+            serviceName: serviceName,
+            database: database
+        });
 
         return {
             message: `Service "${serviceName}" created successfully at ${serviceDir}`,
@@ -198,27 +210,15 @@ export const scaffolder = {
             // create random secrets
             if (file.relativePath === 'secrets.localdev.yml') {
                 console.log('Creating random secrets: secrets.localdev.yml');
-                const secretsPath = path.join(bootstrapDir, 'secrets.localdev.yml');
-                const rawSecrets = fs.readFileSync(secretsPath, 'utf8');
-                const parsedSecrets = yaml.load(rawSecrets);
 
-                // generate random passwords
-                Object.keys(parsedSecrets.services).forEach(serviceName => {
-                    Object.keys(parsedSecrets.services[serviceName]).forEach(key => {
-                        if (key.toLowerCase().includes('pass')) {
-                            parsedSecrets.services[serviceName][key] = helpers.generateRandomString(16);
-                        }
-                    });
+                const scaffoldedSecrets = scaffolder.scaffoldProjectSecrets({
+                    secretsPath: sourcePath,
+                    bootstrapDir: path.dirname(sourcePath),
+                    projectName: projectName,
+                    rootAdminEmail: rootAdminEmail
                 });
-
-                // set random root api key
-                cliApiKey = helpers.generateRandomString(32);
-                parsedSecrets.services.user.ROOT_ADMIN_API_KEY = cliApiKey;
-                parsedSecrets.services.user.ROOT_ADMIN_EMAIL = rootAdminEmail || 'admin@' + projectName + '.local';
-
-                // save updated secrets file
-                const newSecretsContent = yaml.dump(parsedSecrets);
-                fs.writeFileSync(secretsPath, newSecretsContent, 'utf8');
+                cliApiKey = scaffoldedSecrets.cliApiKey;
+                sourcePath = path.join(path.dirname(sourcePath), 'secrets.localdev.yml.temp');
             }
 
             fs.mkdirSync(path.dirname(targetPath), { recursive: true });
@@ -248,5 +248,143 @@ export const scaffolder = {
 
         console.log('g n a r  e n g i n e - Created new project: ' + projectName);
         console.log('Run `gnar dev up` to start the development server');
+    },
+
+    /**
+     * Scaffold secrets for a new project
+     *
+     * @param {object} param
+     * @param {string} param.bootstrapDir - The bootstrap directory path
+     * @param {string} param.projectName - The project name
+     * @param {string} param.rootAdminEmail - The root admin email
+     * @returns {object} - An object containing the CLI API key
+     */
+    scaffoldProjectSecrets: function ({bootstrapDir, projectName, rootAdminEmail}) {
+        const secretsPath = path.join(bootstrapDir, 'secrets.localdev.yml');
+        const rawSecrets = fs.readFileSync(secretsPath, 'utf8');
+        const parsedSecrets = yaml.load(rawSecrets);
+
+        // generate random passwords
+        Object.keys(parsedSecrets.services).forEach(serviceName => {
+            Object.keys(parsedSecrets.services[serviceName]).forEach(key => {
+                if (key.toLowerCase().includes('pass')) {
+                    parsedSecrets.services[serviceName][key] = helpers.generateRandomString(16);
+                }
+            });
+        });
+
+        // set random root api key
+        const cliApiKey = helpers.generateRandomString(32);
+        parsedSecrets.services.user.ROOT_ADMIN_API_KEY = cliApiKey;
+        parsedSecrets.services.user.ROOT_ADMIN_EMAIL = rootAdminEmail || 'admin@' + projectName + '.local';
+
+        // save updated secrets file to a temp file version (so we don't overwrite the original in templates)
+        const newSecretsContent = yaml.dump(parsedSecrets);
+        fs.writeFileSync(secretsPath + '.temp', newSecretsContent, 'utf8');
+
+        return { cliApiKey };
+    },
+
+    /**
+     * Scaffold secrets for a new service
+     *
+     * @param {object} param
+     * @param {string} param.secretsPath - The path to the secrets file
+     * @param {string} param.serviceName - The service name
+     * @param {string} param.database - The database type
+     */
+    scaffoldServiceSecrets: function ({secretsPath, serviceName, database}) {
+        const rawSecrets = fs.readFileSync(secretsPath, 'utf8');
+        const parsedSecrets = yaml.load(rawSecrets);
+
+        if (!parsedSecrets.services) {
+            parsedSecrets.services = {};
+        }
+
+        parsedSecrets.services[serviceName] = {};
+
+        // generate random passwords
+        switch (database) {
+            case 'mysql':
+                parsedSecrets.services[serviceName]['MYSQL_USER'] = serviceName + '_user';
+                parsedSecrets.services[serviceName]['MYSQL_PASSWORD'] = helpers.generateRandomString(16);
+                parsedSecrets.services[serviceName]['MYSQL_DATABASE'] = serviceName + '_db';
+                parsedSecrets.services[serviceName]['MYSQL_HOST'] = serviceName + '-db';
+                parsedSecrets.services[serviceName]['MYSQL_RANDOM_ROOT_PASSWORD'] = helpers.generateRandomString(16);
+                break;
+            case 'mongodb':
+                parsedSecrets.services[serviceName]['MONGO_USER'] = serviceName + '_user';
+                parsedSecrets.services[serviceName]['MONGO_PASSWORD'] = helpers.generateRandomString(16);
+                parsedSecrets.services[serviceName]['MONGO_NAME'] = serviceName + '_db';
+                parsedSecrets.services[serviceName]['MONGO_HOST'] = serviceName + '-db';
+                break;
+            default:
+                throw new Error(`Unsupported database type in secret scaffolder: ${database}`);
+        }
+
+        // save updated secrets file
+        const newSecretsContent = yaml.dump(parsedSecrets);
+        fs.writeFileSync(secretsPath, newSecretsContent, 'utf8');
+    },
+
+    /**
+     * Scaffold deploy.yml for a new service
+     *
+     * @param {object} param
+     * @param {string} param.deployPath - The path to the deploy.yml file
+     * @param {string} param.serviceName - The service name
+     * @param {string} param.database - The database type
+     * @param {number} [param.hostPort=null] - The host port (optional)
+     */
+    scaffoldServiceDeployYml: function ({deployPath, serviceName, database, hostPort = null}) {
+        // parse existing deploy.yml
+        let deploy = yaml.load(fs.readFileSync(deployPath, 'utf8'));
+
+        if (!hostPort) {
+            // get next available host port
+            const hostPorts = [];
+
+            deploy.config.services.forEach(svc => {
+                if (svc.ports && svc.ports.length > 0) {
+                    svc.ports.forEach(portMapping => {
+                        const [hostPort, containerPort] = portMapping.split(':').map(p => parseInt(p, 10));
+                        hostPorts.push(hostPort);
+                    });
+                }
+            });
+
+            hostPorts.sort((a, b) => a - b);
+            hostPort = hostPorts[hostPorts.length - 1] + 1;
+        }
+
+        // prepare new service config
+        const serviceConfig = {
+            name: serviceName,
+            listener_rules: {
+                paths: [
+                    `/${serviceName}`
+                ]
+            },
+            min_tasks: 1,
+            max_tasks: 1,
+            command: ["npm", "run", "start:dev"],
+            ports: [
+                `${hostPort}:3000`
+            ]
+        }
+
+        // add database service if required
+        if (database) {
+            serviceConfig.depends_on = [
+                `${serviceName}-db`
+            ]
+        }
+
+        // add to deploy config
+        deploy.config.services.push(serviceConfig);
+
+        // write deploy.yml file
+        const deployYmlContent = yaml.dump(deploy);
+        fs.writeFileSync(deployPath, deployYmlContent, 'utf8');
     }
 }

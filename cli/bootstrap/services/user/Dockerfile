@@ -1,4 +1,4 @@
-# Dockerfile for Product Service
+# Dockerfile for User Service
 FROM node:20-alpine 
 
 # Set the working directory

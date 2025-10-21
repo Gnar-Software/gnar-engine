@@ -126,10 +126,12 @@ export async function down({ projectDir, allContainers = false }) {
 export async function createDynamicNginxConf({ config, outputPath }) {
     // Start with the static parts of nginx.conf
     let nginxConf = `
-    http {
-        server {
-            listen 80;
-            server_name ${config.namespace};
+        events { worker_connections 1024; }
+
+        http {
+            server {
+                listen 80;
+                server_name ${config.namespace};
     `;
 
     // Loop over each service
@@ -155,8 +157,8 @@ export async function createDynamicNginxConf({ config, outputPath }) {
 
     // Close server and http blocks
     nginxConf += `
+            }
         }
-    }
     `;
 
     return nginxConf;

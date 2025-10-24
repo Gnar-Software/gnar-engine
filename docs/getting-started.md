@@ -14,8 +14,6 @@ curl -fsSL https://gnarengine.com/install.sh | bash
 
 Create a new Gnar Engine project using the CLI. This guided setup will help you configure a new CLI profile, and create a new project.
 
-```bashbash
+```bash
 gnar create project my-project-name
 ```
-
-

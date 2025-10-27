@@ -20,6 +20,13 @@ const docker = new Docker();
  * @param {boolean} [options.coreDev=false] - Whether to run in core development mode (requires access to core source)
  */
 export async function up({ projectDir, build = false, detached = false, coreDev = false }) {
+    
+    // core dev
+    if (coreDev) {
+        const fileDir = path.dirname(new URL(import.meta.url).pathname);
+        projectDir = path.resolve(fileDir, "../../bootstrap/");
+    }
+
     // parse config
     const configPath = path.join(projectDir, "deploy.localdev.yml");
     const secretsPath = path.join(projectDir, "secrets.localdev.yml");

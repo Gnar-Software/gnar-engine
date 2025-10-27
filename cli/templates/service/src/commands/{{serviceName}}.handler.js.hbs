@@ -1,8 +1,7 @@
 import { commands, logger, error } from '@gnar-engine/core';
-import { auth } from '../services/authentication.service.js';
 import { {{serviceName}} } from '../services/{{serviceName}}.service.js';
 import { config } from '../config.js';
-import { validate{{pascalCase serviceName}}, validateServiceAdmin{{pascalCase serviceName}}, validate{{pascalCase serviceName}}Update, validateServiceAdmin{{pascalCase serviceName}}Update } from '../schema/{{serviceName}}.schema.js';
+import { validate{{pascalCase serviceName}} } from '../schema/{{serviceName}}.schema.js';
 
 
 /**

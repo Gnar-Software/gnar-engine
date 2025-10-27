@@ -1,7 +1,7 @@
 import { message, http, logger, db } from '@gnar-engine/core';
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
-import { httpController as {{pascalCase serviceName}}PlatformHttpController } from './controllers/http.controller.js';
+import { httpController as productPlatformHttpController } from './controllers/http.controller.js';
 
 /**
  * Initialise service
@@ -13,7 +13,7 @@ export const initService = async () => {
 	db.seeders.runSeeders({config});
 
 	// Import command handlers after the command bus is initialised
-	await import('./commands/{{lowerCasePlural serviceName}}.handler.js');
+	await import('./commands/product.handler.js');
 	// Add more handlers as needed
 
 	// Initialise and register message handlers
@@ -25,14 +25,14 @@ export const initService = async () => {
 	// Register http routes
 	await http.registerRoutes({
 		controllers: [
-			{{pascalCase serviceName}}PlatformHttpController,
+			productPlatformHttpController,
 		]
 	});
 
 	// Start the HTTP server
 	await http.start();
 
-	logger.info('G n a r  E n g i n e | {{capitaliseFirstLetter serviceName}} Service initialised successfully.');
+	logger.info('G n a r  E n g i n e | Product Service initialised successfully.');
 }
 
 initService();

@@ -1,15 +1,9 @@
-# deploy.localdev.yml
-
-# - This file is used to orchestrate locally running containers for development
-# - environment: localdev is a named convention required for local development 
-
 config:
-  core-version: 1.0
+  core-version: 1
   architecture: microservice
   region: eu-west-2
   environment: localdev
   namespace: my-project
-
   services:
     - name: control
       listener_rules:
@@ -20,10 +14,12 @@ config:
       max_tasks: 1
       depends_on:
         - control-db
-      command: ["npm", "run", "start:dev"]
-      ports: 
-        - "4001:3000"
-
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4001:3000'
     - name: user
       listener_rules:
         paths:
@@ -33,8 +29,79 @@ config:
       max_tasks: 1
       depends_on:
         - user-db
-      command: ["npm", "run", "start:dev"]
-      ports: 
-        - "4002:3000"
-
-
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4002:3000'
+    - name: product
+      listener_rules:
+        paths:
+          - /product
+      min_tasks: 1
+      max_tasks: 1
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4003:3000'
+      depends_on:
+        - product-db
+    - name: product
+      listener_rules:
+        paths:
+          - /product
+      min_tasks: 1
+      max_tasks: 1
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4004:3000'
+      depends_on:
+        - product-db
+    - name: product
+      listener_rules:
+        paths:
+          - /product
+      min_tasks: 1
+      max_tasks: 1
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4005:3000'
+      depends_on:
+        - product-db
+    - name: product
+      listener_rules:
+        paths:
+          - /product
+      min_tasks: 1
+      max_tasks: 1
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4006:3000'
+      depends_on:
+        - product-db
+    - name: product
+      listener_rules:
+        paths:
+          - /product
+      min_tasks: 1
+      max_tasks: 1
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4007:3000'
+      depends_on:
+        - product-db

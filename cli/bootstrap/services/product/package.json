@@ -1,0 +1,16 @@
+{
+    "name": "product-service",
+    "version": "1.0.0",
+    "description": "Product microservice for Gnar Engine",
+    "type": "module",
+    "scripts": {
+        "start": "node ./src/app.js",
+        "start:dev": "nodemon --watch ./src ./src/app.js",
+        "test": "jest --watchAll --verbose"
+    },
+    "author": "Gnar Software Ltd.",
+    "license": "ISC",
+    "dependencies": {
+        "@gnar-engine/core": "^1.0.1"
+    }
+}

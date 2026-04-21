@@ -6,7 +6,7 @@ import { registerDevCommands } from './dev/commands.js';
 import { registerControlCommands } from './control/commands.js';
 import { registerScaffolderCommands } from './scaffolder/commands.js';
 import { registerAgentCommands } from './agent/commands.js';
-import path from 'path';
+import { registerUiCommands } from './ui/commands.js';
 
 // Create a new program
 const program = new Command();
@@ -17,6 +17,7 @@ registerProfileCommand(program);
 registerControlCommands(program);
 registerScaffolderCommands(program);
 registerAgentCommands(program);
+registerUiCommands(program);
 
 // Help
 program
@@ -29,4 +30,3 @@ G n a r  E n g i n e -  A powerful, AI ready microservice framework for modern a
 
 // Parse CLI input
 program.parse(process.argv);
-

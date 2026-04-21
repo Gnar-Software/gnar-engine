@@ -25,26 +25,57 @@ function getActiveProfileInfo() {
 }
 
 const BROWSE_KEY_HINTS = [
-    { key: '↑↓ j/k', desc: 'move' },
+    { key: 'up/down j/k', desc: 'move' },
     { key: 'type', desc: 'filter' },
     { key: 'enter', desc: 'expand' },
-    { key: 'q/esc', desc: 'quit' },
+    { key: 'q/esc', desc: 'quit' }
 ];
 
 const VARIANTS_KEY_HINTS = [
-    { key: '↑↓ j/k', desc: 'move' },
+    { key: 'up/down j/k', desc: 'move' },
     { key: 'enter', desc: 'run' },
-    { key: 'esc', desc: 'back' },
+    { key: 'esc', desc: 'back' }
+];
+
+const FORM_KEY_HINTS = [
+    { key: 'type', desc: 'value' },
+    { key: 'enter', desc: 'next/save' },
+    { key: 'esc', desc: 'cancel' }
 ];
 
 function normalizeQuery(input) {
-    if (!input.startsWith('/')) return '/' + input;
+    if (!input.startsWith('/')) {
+        return '/' + input;
+    }
+
     return input;
 }
 
-function getCommandIssues(commandDef) {
-    const missingArgs = commandDef.args.filter((arg) => arg.required);
-    const missingOptions = commandDef.options.filter((opt) => opt.required);
+function hasValue(value) {
+    return value !== undefined && value !== null && String(value).trim().length > 0;
+}
+
+function createDefaultSelections(commandDef) {
+    const selections = { args: {}, options: {} };
+
+    for (const option of commandDef.options) {
+        if (option.type === 'boolean') {
+            selections.options[option.key] = false;
+            continue;
+        }
+
+        if (option.defaultValue !== undefined) {
+            selections.options[option.key] = option.defaultValue;
+        }
+    }
+
+    return selections;
+}
+
+function getCommandIssues(commandDef, selections = { args: {}, options: {} }) {
+    const missingArgs = commandDef.args.filter((arg) => arg.required && !hasValue(selections.args[arg.key]));
+    const missingOptions = commandDef.options.filter((opt) => opt.required && !hasValue(selections.options[opt.key]));
+
     return {
         runnable: missingArgs.length === 0 && missingOptions.length === 0,
         missingArgs,
@@ -52,14 +83,67 @@ function getCommandIssues(commandDef) {
     };
 }
 
-function getVariants(commandDef) {
-    const base = { args: {}, options: {} };
-    const items = [{ label: buildPreview(commandDef, base), selections: base, hint: 'Run without flags' }];
+function getRequiredFields(commandDef, selections) {
+    const requiredArgs = commandDef.args
+        .filter((arg) => arg.required)
+        .map((arg) => ({
+            id: `arg:${arg.key}`,
+            type: 'arg',
+            key: arg.key,
+            label: `<${arg.key}>`,
+            description: arg.description || arg.key,
+            currentValue: selections.args[arg.key] || ''
+        }));
+
+    const requiredOptions = commandDef.options
+        .filter((opt) => opt.required)
+        .map((opt) => ({
+            id: `opt:${opt.key}`,
+            type: 'option',
+            key: opt.key,
+            label: opt.flag,
+            description: opt.description || opt.flag,
+            currentValue: selections.options[opt.key] || ''
+        }));
+
+    return [...requiredArgs, ...requiredOptions];
+}
+
+function getVariants(commandDef, baseSelections) {
+    const base = {
+        args: { ...baseSelections.args },
+        options: { ...baseSelections.options }
+    };
+
+    const items = [
+        {
+            label: buildPreview(commandDef, base),
+            selections: base,
+            hint: 'Run with current values'
+        }
+    ];
+
     for (const opt of commandDef.options) {
-        if (opt.type !== 'boolean') continue;
-        const sel = { args: {}, options: { [opt.key]: true } };
-        items.push({ label: buildPreview(commandDef, sel), selections: sel, hint: opt.description });
+        if (opt.type !== 'boolean') {
+            continue;
+        }
+
+        if (base.options[opt.key]) {
+            continue;
+        }
+
+        const sel = {
+            args: { ...base.args },
+            options: { ...base.options, [opt.key]: true }
+        };
+
+        items.push({
+            label: buildPreview(commandDef, sel),
+            selections: sel,
+            hint: opt.description
+        });
     }
+
     return items;
 }
 
@@ -75,25 +159,48 @@ function App() {
     const [query, setQuery] = useState('/');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [runState, setRunState] = useState({ status: 'idle', output: '' });
-    const [mode, setMode] = useState('browse'); // 'browse' | 'variants'
+    const [mode, setMode] = useState('browse'); // browse | form | variants
     const [variantIndex, setVariantIndex] = useState(0);
+    const [requiredFieldIndex, setRequiredFieldIndex] = useState(0);
+    const [formInput, setFormInput] = useState('');
+    const [activeSelections, setActiveSelections] = useState({ args: {}, options: {} });
 
     const term = useMemo(() => query.slice(1).trim(), [query]);
     const commands = useMemo(() => searchCommands(term), [term]);
     const selected = commands[selectedIndex] || null;
-    const issues = selected ? getCommandIssues(selected) : null;
+    const issues = selected ? getCommandIssues(selected, activeSelections) : null;
     const groups = useMemo(() => getGroups(), []);
     const profileInfo = useMemo(() => getActiveProfileInfo(), []);
 
-    const variants = useMemo(() => selected ? getVariants(selected) : [], [selected]);
+    const requiredFields = useMemo(() => {
+        if (!selected) {
+            return [];
+        }
 
-    const preview = useMemo(
-        () => selected ? buildPreview(selected, { args: {}, options: {} }) : 'No command selected',
-        [selected]
-    );
+        return getRequiredFields(selected, activeSelections);
+    }, [selected, activeSelections]);
+
+    const variants = useMemo(() => {
+        if (!selected) {
+            return [];
+        }
+
+        return getVariants(selected, activeSelections);
+    }, [selected, activeSelections]);
+
+    const preview = useMemo(() => {
+        if (!selected) {
+            return 'No command selected';
+        }
+
+        return buildPreview(selected, activeSelections);
+    }, [selected, activeSelections]);
 
     const scrollOffset = useMemo(() => {
-        if (commands.length <= VISIBLE_COUNT) return 0;
+        if (commands.length <= VISIBLE_COUNT) {
+            return 0;
+        }
+
         return Math.min(
             Math.max(0, selectedIndex - Math.floor(VISIBLE_COUNT / 2)),
             commands.length - VISIBLE_COUNT
@@ -101,7 +208,7 @@ function App() {
     }, [selectedIndex, commands.length]);
 
     const executeVariant = (commandDef, selections) => {
-        const cmdIssues = getCommandIssues(commandDef);
+        const cmdIssues = getCommandIssues(commandDef, selections);
         if (!cmdIssues.runnable) {
             const missing = [
                 ...cmdIssues.missingArgs.map((arg) => `<${arg.key}>`),
@@ -127,10 +234,60 @@ function App() {
     };
 
     useInput((input, key) => {
-        if (runState.status === 'running') return;
+        if (runState.status === 'running') {
+            return;
+        }
+
+        if (mode === 'form') {
+            if (key.escape) {
+                setMode('browse');
+                setRequiredFieldIndex(0);
+                return;
+            }
+
+            if (key.return) {
+                const field = requiredFields[requiredFieldIndex];
+                if (!field) {
+                    setMode('variants');
+                    setVariantIndex(0);
+                    return;
+                }
+
+                const nextSelections = {
+                    args: { ...activeSelections.args },
+                    options: { ...activeSelections.options }
+                };
+
+                if (field.type === 'arg') {
+                    nextSelections.args[field.key] = formInput;
+                } else {
+                    nextSelections.options[field.key] = formInput;
+                }
+
+                setActiveSelections(nextSelections);
+
+                const atLast = requiredFieldIndex >= requiredFields.length - 1;
+                if (atLast) {
+                    setMode('variants');
+                    setVariantIndex(0);
+                    setRequiredFieldIndex(0);
+                } else {
+                    const nextIndex = requiredFieldIndex + 1;
+                    setRequiredFieldIndex(nextIndex);
+                    const nextField = requiredFields[nextIndex];
+                    setFormInput(nextField?.currentValue || '');
+                }
+            }
+
+            return;
+        }
 
         if (mode === 'variants') {
-            if (key.escape) { setMode('browse'); setVariantIndex(0); return; }
+            if (key.escape) {
+                setMode('browse');
+                setVariantIndex(0);
+                return;
+            }
             if (key.upArrow || input === 'k') {
                 setVariantIndex((prev) => (prev - 1 + variants.length) % variants.length);
                 return;
@@ -145,38 +302,51 @@ function App() {
             return;
         }
 
-        // browse mode
-        if (key.escape || input === 'q') { exit(); return; }
+        if (key.escape || input === 'q') {
+            exit();
+            return;
+        }
         if (key.upArrow || input === 'k') {
-            if (commands.length > 0) setSelectedIndex((prev) => (prev - 1 + commands.length) % commands.length);
+            if (commands.length > 0) {
+                setSelectedIndex((prev) => (prev - 1 + commands.length) % commands.length);
+                setActiveSelections({ args: {}, options: {} });
+            }
             return;
         }
         if (key.downArrow || input === 'j') {
-            if (commands.length > 0) setSelectedIndex((prev) => (prev + 1) % commands.length);
+            if (commands.length > 0) {
+                setSelectedIndex((prev) => (prev + 1) % commands.length);
+                setActiveSelections({ args: {}, options: {} });
+            }
             return;
         }
+
         if (key.return && selected) {
-            if (issues && !issues.runnable) {
-                const missing = [
-                    ...issues.missingArgs.map((arg) => `<${arg.key}>`),
-                    ...issues.missingOptions.map((opt) => opt.flag)
-                ];
-                setRunState({ status: 'error', output: `Required: ${missing.join(', ')}` });
+            const defaults = createDefaultSelections(selected);
+            setActiveSelections(defaults);
+
+            const required = getRequiredFields(selected, defaults);
+            if (required.length > 0) {
+                setMode('form');
+                setRequiredFieldIndex(0);
+                setFormInput(required[0].currentValue || '');
                 return;
             }
+
             setMode('variants');
             setVariantIndex(0);
         }
     });
 
     const visibleCommands = commands.slice(scrollOffset, scrollOffset + VISIBLE_COUNT);
-    const keyHints = mode === 'variants' ? VARIANTS_KEY_HINTS : BROWSE_KEY_HINTS;
+    const keyHints = mode === 'variants' ? VARIANTS_KEY_HINTS : mode === 'form' ? FORM_KEY_HINTS : BROWSE_KEY_HINTS;
     const currentVariant = variants[variantIndex];
+    const currentRequiredField = requiredFields[requiredFieldIndex];
 
     const outputColor = runState.status === 'running' ? 'yellow'
         : runState.status === 'success' ? 'greenBright'
-        : runState.status === 'error' ? 'red'
-        : 'gray';
+            : runState.status === 'error' ? 'red'
+                : 'gray';
 
     return h(
         Box,
@@ -203,7 +373,6 @@ function App() {
         ),
         h(Text, { color: 'gray' }, '--------------------------------------------------------------------------------'),
 
-        // Search bar (browse mode only)
         mode === 'browse'
             ? h(Box, { marginTop: 1 },
                 h(Text, { color: 'yellow' }, 'Palette: '),
@@ -212,43 +381,66 @@ function App() {
                     onChange: (value) => {
                         setQuery(normalizeQuery(value));
                         setSelectedIndex(0);
+                        setActiveSelections({ args: {}, options: {} });
                     },
                     placeholder: '/'
                 })
             )
-            : h(Box, { marginTop: 1 },
-                h(Text, { color: 'yellow' }, 'Options: '),
-                h(Text, { color: 'cyanBright' }, selected ? `${selected.group} ${selected.command}` : '')
-            ),
+            : mode === 'form'
+                ? h(Box, { marginTop: 1 },
+                    h(Text, { color: 'yellow' }, `Required input ${requiredFieldIndex + 1}/${requiredFields.length}: `),
+                    h(Text, { color: 'cyanBright' }, currentRequiredField ? `${currentRequiredField.label} ` : ''),
+                    h(TextInput, {
+                        value: formInput,
+                        onChange: setFormInput,
+                        placeholder: currentRequiredField?.description || ''
+                    })
+                )
+                : h(Box, { marginTop: 1 },
+                    h(Text, { color: 'yellow' }, 'Options: '),
+                    h(Text, { color: 'cyanBright' }, selected ? `${selected.group} ${selected.command}` : '')
+                ),
 
         h(Box, { marginTop: 1, height: 22 },
-
-            // Left panel — command list or variants list
             mode === 'browse'
                 ? h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },
                     h(Text, { color: 'magentaBright' }, `Commands (${commands.length})`),
                     ...visibleCommands.map((cmd, index) => {
                         const isSelected = index + scrollOffset === selectedIndex;
-                        return h(Text, { key: cmd.id, color: isSelected ? 'black' : 'white', backgroundColor: isSelected ? 'cyan' : undefined },
-                            `${isSelected ? '>' : ' '} ${cmd.group}.${cmd.command} - ${cmd.description}`
-                        );
+                        return h(Text, {
+                            key: cmd.id,
+                            color: isSelected ? 'black' : 'white',
+                            backgroundColor: isSelected ? 'cyan' : undefined
+                        }, `${isSelected ? '>' : ' '} ${cmd.group}.${cmd.command} - ${cmd.description}`);
                     }),
                     commands.length === 0 ? h(Text, { color: 'red' }, 'No commands found') : null
                 )
-                : h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
-                    h(Text, { color: 'magentaBright' }, `Variants (${variants.length})`),
-                    ...variants.map((v, index) => {
-                        const isSelected = index === variantIndex;
-                        return h(Text, { key: `v-${index}`, color: isSelected ? 'black' : 'white', backgroundColor: isSelected ? 'cyan' : undefined },
-                            `${isSelected ? '>' : ' '} ${v.label}`
-                        );
-                    })
-                ),
+                : mode === 'form'
+                    ? h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'yellow', paddingX: 1 },
+                        h(Text, { color: 'magentaBright' }, `Required fields (${requiredFields.length})`),
+                        ...requiredFields.map((field, index) => {
+                            const isSelected = index === requiredFieldIndex;
+                            const value = field.type === 'arg' ? activeSelections.args[field.key] : activeSelections.options[field.key];
+                            return h(Text, {
+                                key: field.id,
+                                color: isSelected ? 'black' : 'white',
+                                backgroundColor: isSelected ? 'yellow' : undefined
+                            }, `${isSelected ? '>' : ' '} ${field.label} - ${value || '(empty)'}`);
+                        })
+                    )
+                    : h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
+                        h(Text, { color: 'magentaBright' }, `Variants (${variants.length})`),
+                        ...variants.map((v, index) => {
+                            const isSelected = index === variantIndex;
+                            return h(Text, {
+                                key: `v-${index}`,
+                                color: isSelected ? 'black' : 'white',
+                                backgroundColor: isSelected ? 'cyan' : undefined
+                            }, `${isSelected ? '>' : ' '} ${v.label}`);
+                        })
+                    ),
 
-            // Right panel — info + run output
             h(Box, { width: '58%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },
-
-                // Info section
                 ...(mode === 'browse'
                     ? [
                         h(Text, { key: 'ph', color: 'greenBright' }, 'Preview'),
@@ -265,20 +457,31 @@ function App() {
                                 ...issues.missingArgs.map((a) => `<${a.key}>`),
                                 ...issues.missingOptions.map((o) => o.flag)
                             ].join(', ')}`)
-                            : null,
+                            : null
                     ]
-                    : [
-                        h(Text, { key: 'vh', color: 'greenBright' }, 'Selected variant'),
-                        currentVariant
-                            ? h(Text, { key: 'vl', color: 'white', bold: true }, currentVariant.label)
-                            : null,
-                        currentVariant?.hint
-                            ? h(Text, { key: 'vi', color: 'gray' }, currentVariant.hint)
-                            : null,
-                        selected?.hints?.destructive
-                            ? h(Text, { key: 'vd', color: 'red' }, 'Warning: destructive command')
-                            : null,
-                    ]
+                    : mode === 'form'
+                        ? [
+                            h(Text, { key: 'fh', color: 'greenBright' }, 'Input Details'),
+                            currentRequiredField
+                                ? h(Text, { key: 'f1', color: 'white', bold: true }, `${currentRequiredField.label}`)
+                                : null,
+                            currentRequiredField
+                                ? h(Text, { key: 'f2', color: 'gray' }, currentRequiredField.description)
+                                : null,
+                            h(Text, { key: 'f3', color: 'gray' }, 'Press Enter to save value and continue.')
+                        ]
+                        : [
+                            h(Text, { key: 'vh', color: 'greenBright' }, 'Selected variant'),
+                            currentVariant
+                                ? h(Text, { key: 'vl', color: 'white', bold: true }, currentVariant.label)
+                                : null,
+                            currentVariant?.hint
+                                ? h(Text, { key: 'vi', color: 'gray' }, currentVariant.hint)
+                                : null,
+                            selected?.hints?.destructive
+                                ? h(Text, { key: 'vd', color: 'red' }, 'Warning: destructive command')
+                                : null
+                        ]
                 ),
 
                 h(Text, { key: 'e2' }, ''),

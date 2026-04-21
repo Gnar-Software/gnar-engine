@@ -55,7 +55,7 @@ const commandCatalog = [
         description: 'Select active profile',
         args: [],
         options: [],
-        hints: {}
+        hints: { interactive: true }
     },
     {
         id: 'profile.create',
@@ -64,7 +64,7 @@ const commandCatalog = [
         description: 'Create a new profile',
         args: [],
         options: [],
-        hints: {}
+        hints: { interactive: true }
     },
     {
         id: 'profile.update',
@@ -75,7 +75,7 @@ const commandCatalog = [
             { key: 'profileName', description: 'Profile name', required: true }
         ],
         options: [],
-        hints: {}
+        hints: { interactive: true }
     },
     {
         id: 'profile.delete',
@@ -86,7 +86,7 @@ const commandCatalog = [
             { key: 'profileName', description: 'Profile name', required: true }
         ],
         options: [],
-        hints: { destructive: true, confirmMessage: 'Delete selected profile?' }
+        hints: { destructive: true, confirmMessage: 'Delete selected profile?', interactive: true }
     },
     {
         id: 'control.migrate',
@@ -95,9 +95,7 @@ const commandCatalog = [
         description: 'Run migrations',
         args: [],
         options: [
-            { key: 'all', type: 'boolean', flag: '--all', shortFlag: '-a', description: 'Run all migrations' },
-            { key: 'service', type: 'string', flag: '--service', shortFlag: '-s', description: 'Service name' },
-            { key: 'migration', type: 'string', flag: '--migration', shortFlag: '-m', description: 'Migration name' }
+            { key: 'all', type: 'boolean', flag: '--all', shortFlag: '-a', description: 'Run all migrations' }
         ],
         hints: { requiresProfile: true }
     },
@@ -108,9 +106,7 @@ const commandCatalog = [
         description: 'Run seeders',
         args: [],
         options: [
-            { key: 'all', type: 'boolean', flag: '--all', shortFlag: '-a', description: 'Run all seeders' },
-            { key: 'service', type: 'string', flag: '--service', shortFlag: '-s', description: 'Service name' },
-            { key: 'seed', type: 'string', flag: '--seed', shortFlag: '-S', description: 'Seed name' }
+            { key: 'all', type: 'boolean', flag: '--all', shortFlag: '-a', description: 'Run all seeders' }
         ],
         hints: { requiresProfile: true }
     },
@@ -124,7 +120,7 @@ const commandCatalog = [
             { key: 'all', type: 'boolean', flag: '--all', shortFlag: '-a', description: 'Reset everything' },
             { key: 'service', type: 'string', flag: '--service', shortFlag: '-s', description: 'Service name' }
         ],
-        hints: { requiresProfile: true, destructive: true, confirmMessage: 'Run full reset and potentially delete data?' }
+        hints: { requiresProfile: true, destructive: true, confirmMessage: 'Run full reset and potentially delete data?', interactive: true }
     },
     {
         id: 'control.get-tasks',
@@ -177,7 +173,7 @@ const commandCatalog = [
             { key: 'projectName', description: 'Project name', required: true }
         ],
         options: [],
-        hints: {}
+        hints: { interactive: true }
     },
     {
         id: 'create.service',
@@ -188,7 +184,7 @@ const commandCatalog = [
             { key: 'service', description: 'Service name', required: true }
         ],
         options: [],
-        hints: { requiresProfile: true }
+        hints: { requiresProfile: true, interactive: true }
     },
     {
         id: 'create.entity',
@@ -210,7 +206,7 @@ const commandCatalog = [
         description: 'Prompt the engine agent',
         args: [],
         options: [],
-        hints: {}
+        hints: { interactive: true }
     }
 ];
 
@@ -224,12 +220,13 @@ export function getGroups() {
 
 export function searchCommands(query) {
     const term = query.trim().toLowerCase();
+    const catalog = commandCatalog.filter((entry) => !entry.hints?.interactive);
 
     if (!term) {
-        return commandCatalog;
+        return catalog;
     }
 
-    return commandCatalog.filter((entry) => {
+    return catalog.filter((entry) => {
         const haystack = `${entry.group} ${entry.command} ${entry.description}`.toLowerCase();
         return haystack.includes(term);
     });

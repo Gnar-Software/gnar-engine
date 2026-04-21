@@ -52,6 +52,15 @@ export function buildPreview(commandDef, selections) {
 }
 
 export async function runCommandStreaming(commandDef, selections, onData) {
+    if (commandDef?.hints?.interactive) {
+        return {
+            code: 1,
+            stdout: '',
+            stderr: '',
+            error: new Error(`"${commandDef.group} ${commandDef.command}" is interactive and is not supported in gnar ui yet.`)
+        };
+    }
+
     const argv = buildArgv(commandDef, selections);
 
     return new Promise((resolve) => {

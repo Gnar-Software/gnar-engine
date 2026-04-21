@@ -25,10 +25,10 @@ function getActiveProfileInfo() {
 }
 
 const BROWSE_KEY_HINTS = [
-    { key: 'up/down j/k', desc: 'move' },
+    { key: 'up/down', desc: 'move' },
     { key: 'type', desc: 'filter' },
     { key: 'enter', desc: 'expand' },
-    { key: 'q/esc', desc: 'quit' }
+    { key: 'esc', desc: 'quit' }
 ];
 
 const VARIANTS_KEY_HINTS = [
@@ -302,18 +302,18 @@ function App() {
             return;
         }
 
-        if (key.escape || input === 'q') {
+        if (key.escape) {
             exit();
             return;
         }
-        if (key.upArrow || input === 'k') {
+        if (key.upArrow) {
             if (commands.length > 0) {
                 setSelectedIndex((prev) => (prev - 1 + commands.length) % commands.length);
                 setActiveSelections({ args: {}, options: {} });
             }
             return;
         }
-        if (key.downArrow || input === 'j') {
+        if (key.downArrow) {
             if (commands.length > 0) {
                 setSelectedIndex((prev) => (prev + 1) % commands.length);
                 setActiveSelections({ args: {}, options: {} });
@@ -448,6 +448,7 @@ function App() {
                         h(Text, { key: 'e1' }, ''),
                         h(Text, { key: 'gh', color: 'greenBright' }, 'Groups'),
                         h(Text, { key: 'gv', color: 'gray' }, groups.join(', ')),
+                        h(Text, { key: 'ih', color: 'yellow' }, 'Note: interactive-only commands are hidden in this UI.'),
                         selected
                             ? h(Text, { key: 'safe', color: selected.hints?.destructive ? 'red' : 'gray' },
                                 selected.hints?.destructive ? 'Warning: destructive command' : 'Safe command')

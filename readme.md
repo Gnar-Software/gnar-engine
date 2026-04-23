@@ -1,9 +1,12 @@
-![Gnar Engine Logo](cli/assets/gnar-engine-logo-white.svg)
+<p align="center">
+  <img src="cli/assets/gnar-engine-logo-white.svg" alt="Gnar Engine Logo" width="520">
+</p>
 
-[![NPM Version](https://img.shields.io/npm/v/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![NPM Downloads](https://img.shields.io/npm/dt/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![License](https://img.shields.io/npm/l/@gnar-engine/cli.svg)](https://www.npmjs.com/package/@gnar-engine/cli)
-[![Discord](https://img.shields.io/discord/1423275646804693012?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/VBh8QmU82X)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@gnar-engine/cli"><img src="https://img.shields.io/npm/v/@gnar-engine/cli.svg?style=for-the-badge" alt="NPM Version"></a>
+  <a href="https://www.npmjs.com/package/@gnar-engine/cli"><img src="https://img.shields.io/npm/dt/@gnar-engine/cli.svg?style=for-the-badge" alt="NPM Downloads"></a>
+  <a href="https://www.npmjs.com/package/@gnar-engine/cli"><img src="https://img.shields.io/npm/l/@gnar-engine/cli.svg?style=for-the-badge" alt="License"></a>
+</p>
 
 ### What is Gnar Engine?
 
@@ -40,4 +43,3 @@ Start your Gnar Engine project:
 ``` bash
 gnar dev up --build
 ```
-

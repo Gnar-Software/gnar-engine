@@ -6,6 +6,7 @@
   <a href="https://www.npmjs.com/package/@gnar-engine/cli"><img src="https://img.shields.io/npm/v/@gnar-engine/cli.svg?style=for-the-badge" alt="NPM Version"></a>
   <a href="https://www.npmjs.com/package/@gnar-engine/cli"><img src="https://img.shields.io/npm/dt/@gnar-engine/cli.svg?style=for-the-badge" alt="NPM Downloads"></a>
   <a href="https://www.npmjs.com/package/@gnar-engine/cli"><img src="https://img.shields.io/npm/l/@gnar-engine/cli.svg?style=for-the-badge" alt="License"></a>
+  <a href="https://discord.gg/mAYTc9ehkB"><img src="https://img.shields.io/discord/1423275646804693012?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
 </p>
 
 ### What is Gnar Engine?

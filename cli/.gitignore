@@ -8,7 +8,6 @@
 
 # Lock files
 **/package-lock.json
-!package-lock.json
 
 # Build output
 **/dist/

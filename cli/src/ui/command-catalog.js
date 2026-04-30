@@ -1,3 +1,5 @@
+import { profiles } from '../profiles/profiles.client.js';
+
 const commandCatalog = [
     {
         id: 'dev.up',
@@ -17,7 +19,7 @@ const commandCatalog = [
             { key: 'resetDatabases', type: 'boolean', flag: '--reset-databases', description: 'Drop all service databases' },
             { key: 'resetDatabase', type: 'string', flag: '--reset-database', description: 'Drop one service database (e.g. user)' }
         ],
-        hints: { requiresProfile: true }
+        hints: { requiresProfile: true, persistent: true }
     },
     {
         id: 'dev.down',
@@ -53,9 +55,26 @@ const commandCatalog = [
         group: 'profile',
         command: 'set-active',
         description: 'Select active profile',
-        args: [],
+        args: [{
+            key: 'profileName',
+            description: 'Profile to set as active',
+            required: true,
+            type: 'select',
+            choicesFn: () => {
+                try {
+                    const allProfiles = profiles.getAllProfiles();
+                    const active = allProfiles.activeProfile;
+                    return Object.keys(allProfiles.profiles).map((p) => ({
+                        label: p === active ? `${p} (active)` : p,
+                        value: p
+                    }));
+                } catch {
+                    return [];
+                }
+            }
+        }],
         options: [],
-        hints: { interactive: true }
+        hints: {}
     },
     {
         id: 'profile.create',

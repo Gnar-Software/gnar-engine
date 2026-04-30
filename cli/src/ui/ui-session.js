@@ -1,9 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import { createRequire } from 'module';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Text, useApp, useInput, render } from 'ink';
 import TextInput from 'ink-text-input';
 import { profiles } from '../profiles/profiles.client.js';
 import { getGroups, searchCommands } from './command-catalog.js';
-import { buildPreview, runCommandStreaming } from './runner.js';
+import { buildPreview, dismissProcess, getProcessRegistry, killProcess, runCommandStreaming, spawnPersistent } from './runner.js';
+
+const require = createRequire(import.meta.url);
+const { version: GNAR_VERSION } = require('../../package.json');
 
 const h = React.createElement;
 
@@ -28,6 +32,7 @@ const BROWSE_KEY_HINTS = [
     { key: 'up/down', desc: 'move' },
     { key: 'type', desc: 'filter' },
     { key: 'enter', desc: 'expand' },
+    { key: 'p', desc: 'processes' },
     { key: 'esc', desc: 'quit' }
 ];
 
@@ -37,11 +42,39 @@ const VARIANTS_KEY_HINTS = [
     { key: 'esc', desc: 'back' }
 ];
 
-const FORM_KEY_HINTS = [
+const FORM_TEXT_KEY_HINTS = [
     { key: 'type', desc: 'value' },
     { key: 'enter', desc: 'next/save' },
     { key: 'esc', desc: 'cancel' }
 ];
+
+const FORM_SELECT_KEY_HINTS = [
+    { key: 'up/down', desc: 'move' },
+    { key: 'enter', desc: 'select' },
+    { key: 'esc', desc: 'cancel' }
+];
+
+const OUTPUT_KEY_HINTS = [
+    { key: 'up/down j/k', desc: 'scroll' },
+    { key: 'g/G', desc: 'top/bottom' },
+    { key: 'e', desc: 'errors only' },
+    { key: 'esc', desc: 'back' }
+];
+
+const PROCESSES_KEY_HINTS = [
+    { key: 'up/down j/k', desc: 'move' },
+    { key: 'enter', desc: 'view output' },
+    { key: 'x', desc: 'kill' },
+    { key: 'd', desc: 'dismiss' },
+    { key: 'esc', desc: 'back' }
+];
+
+function formatElapsed(startedAt) {
+    const s = Math.floor((Date.now() - startedAt) / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    return `${m}m ${s % 60}s`;
+}
 
 function normalizeQuery(input) {
     if (!input.startsWith('/')) {
@@ -89,6 +122,8 @@ function getRequiredFields(commandDef, selections) {
         .map((arg) => ({
             id: `arg:${arg.key}`,
             type: 'arg',
+            fieldType: arg.type === 'select' ? 'select' : 'text',
+            choicesFn: arg.choicesFn || null,
             key: arg.key,
             label: `<${arg.key}>`,
             description: arg.description || arg.key,
@@ -100,6 +135,8 @@ function getRequiredFields(commandDef, selections) {
         .map((opt) => ({
             id: `opt:${opt.key}`,
             type: 'option',
+            fieldType: 'text',
+            choicesFn: null,
             key: opt.key,
             label: opt.flag,
             description: opt.description || opt.flag,
@@ -147,23 +184,62 @@ function getVariants(commandDef, baseSelections) {
     return items;
 }
 
-function trimOutput(text, maxLines = 10) {
+function trimOutput(text, maxLines = 7) {
     const lines = text.split('\n');
     return lines.slice(-maxLines).join('\n');
 }
 
-const VISIBLE_COUNT = 18;
+const VISIBLE_COUNT = 13;
+const OUTPUT_VISIBLE_LINES = 19;
+const PROCESS_TAIL_LINES = 7;
+const ERROR_PATTERN = /error|err\b|failed|failure|warn|warning|exception|fatal/i;
 
 function App() {
     const { exit } = useApp();
     const [query, setQuery] = useState('/');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [runState, setRunState] = useState({ status: 'idle', output: '' });
-    const [mode, setMode] = useState('browse'); // browse | form | variants
+    const [fullOutput, setFullOutput] = useState('');
+    const [outputScrollOffset, setOutputScrollOffset] = useState(0);
+    const [lastRunPreview, setLastRunPreview] = useState('');
+    const [errorsOnly, setErrorsOnly] = useState(false);
+    const runId = useRef(0);
+    const [mode, setMode] = useState('browse'); // browse | form | variants | output | processes
     const [variantIndex, setVariantIndex] = useState(0);
     const [requiredFieldIndex, setRequiredFieldIndex] = useState(0);
     const [formInput, setFormInput] = useState('');
+    const [selectChoices, setSelectChoices] = useState([]);
+    const [selectIndex, setSelectIndex] = useState(0);
     const [activeSelections, setActiveSelections] = useState({ args: {}, options: {} });
+
+    // persistent processes
+    const [processesVersion, setProcessesVersion] = useState(0);
+    const [selectedProcessIndex, setSelectedProcessIndex] = useState(0);
+    const [viewingProcessId, setViewingProcessId] = useState(null);
+    const watchingProcessIdRef = useRef(null);
+    const pendingOpenProcessIdRef = useRef(null);
+    const autoScrollRef = useRef(true);
+
+    const handleProcessUpdate = useCallback((processId, entry) => {
+        setProcessesVersion((v) => v + 1);
+        if (watchingProcessIdRef.current === processId) {
+            setFullOutput(entry.output);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!autoScrollRef.current) return;
+        const lines = fullOutput ? fullOutput.split('\n') : [];
+        setOutputScrollOffset(Math.max(0, lines.length - OUTPUT_VISIBLE_LINES));
+    }, [fullOutput]);
+
+    useEffect(() => {
+        const id = pendingOpenProcessIdRef.current;
+        if (id !== null) {
+            pendingOpenProcessIdRef.current = null;
+            openProcessOutput(id);
+        }
+    });
 
     const term = useMemo(() => query.slice(1).trim(), [query]);
     const commands = useMemo(() => searchCommands(term), [term]);
@@ -171,6 +247,16 @@ function App() {
     const issues = selected ? getCommandIssues(selected, activeSelections) : null;
     const groups = useMemo(() => getGroups(), []);
     const profileInfo = useMemo(() => getActiveProfileInfo(), []);
+
+    const processes = useMemo(() => {
+        return [...getProcessRegistry().values()].reverse();
+    }, [processesVersion]);
+
+    const runningCount = useMemo(() => {
+        return processes.filter((e) => e.status === 'running').length;
+    }, [processes]);
+
+    const selectedProcess = processes[selectedProcessIndex] || null;
 
     const requiredFields = useMemo(() => {
         if (!selected) {
@@ -207,6 +293,19 @@ function App() {
         );
     }, [selectedIndex, commands.length]);
 
+    const openProcessOutput = (processId) => {
+        const entry = getProcessRegistry().get(processId);
+        if (!entry) return;
+        autoScrollRef.current = true;
+        watchingProcessIdRef.current = processId;
+        setViewingProcessId(processId);
+        setFullOutput(entry.output);
+        const lines = entry.output.split('\n');
+        setOutputScrollOffset(Math.max(0, lines.length - OUTPUT_VISIBLE_LINES));
+        setErrorsOnly(false);
+        setMode('output');
+    };
+
     const executeVariant = (commandDef, selections) => {
         const cmdIssues = getCommandIssues(commandDef, selections);
         if (!cmdIssues.runnable) {
@@ -218,23 +317,131 @@ function App() {
             return;
         }
 
+        if (commandDef.hints?.persistent) {
+            const processId = spawnPersistent(commandDef, selections, handleProcessUpdate);
+            setProcessesVersion((v) => v + 1);
+            setSelectedProcessIndex(0);
+            setMode('processes');
+            pendingOpenProcessIdRef.current = processId;
+            return;
+        }
+
+        const id = ++runId.current;
+        autoScrollRef.current = true;
+        setLastRunPreview(buildPreview(commandDef, selections));
+        setFullOutput('');
+        setOutputScrollOffset(0);
+        setErrorsOnly(false);
         setRunState({ status: 'running', output: '' });
         runCommandStreaming(commandDef, selections, (output) => {
+            if (runId.current !== id) return;
+            setFullOutput(output);
             setRunState((prev) => ({ ...prev, output: trimOutput(output) }));
         }).then((result) => {
+            if (runId.current !== id) return;
             const outputParts = [result.stdout?.trim(), result.stderr?.trim()].filter(Boolean);
-            const output = trimOutput(outputParts.join('\n'));
+            const raw = outputParts.join('\n');
+            const fallback = result.code === 0 ? 'Done.' : `Exit ${result.code}.`;
+            setFullOutput(raw || fallback);
             setRunState({
                 status: result.code === 0 ? 'success' : 'error',
-                output: output || (result.code === 0 ? 'Done.' : `Exit ${result.code}.`)
+                output: trimOutput(raw) || fallback
             });
         }).catch((err) => {
+            if (runId.current !== id) return;
+            setFullOutput(err.message);
             setRunState({ status: 'error', output: err.message });
         });
     };
 
     useInput((input, key) => {
-        if (runState.status === 'running') {
+        if (mode === 'output') {
+            if (key.escape) {
+                if (viewingProcessId !== null) {
+                    watchingProcessIdRef.current = null;
+                    setViewingProcessId(null);
+                    setMode('processes');
+                } else {
+                    setMode('browse');
+                }
+                return;
+            }
+            const maxOffset = Math.max(0, outputLines.length - OUTPUT_VISIBLE_LINES);
+            const step = key.shift ? 1 : 5;
+            if (key.upArrow || input === 'k') {
+                autoScrollRef.current = false;
+                setOutputScrollOffset((prev) => Math.max(0, prev - step));
+                return;
+            }
+            if (key.downArrow || input === 'j') {
+                setOutputScrollOffset((prev) => {
+                    const next = Math.min(maxOffset, prev + step);
+                    if (next >= maxOffset) autoScrollRef.current = true;
+                    return next;
+                });
+                return;
+            }
+            if (input === 'g') {
+                autoScrollRef.current = false;
+                setOutputScrollOffset(0);
+                return;
+            }
+            if (input === 'G') {
+                autoScrollRef.current = true;
+                setOutputScrollOffset(maxOffset);
+                return;
+            }
+            if (input === 'e') {
+                setErrorsOnly((prev) => !prev);
+                setOutputScrollOffset(0);
+                return;
+            }
+            return;
+        }
+
+        if (mode === 'processes') {
+            if (key.escape) {
+                setMode('browse');
+                return;
+            }
+            if (key.upArrow || input === 'k') {
+                setSelectedProcessIndex((prev) => Math.max(0, prev - 1));
+                return;
+            }
+            if (key.downArrow || input === 'j') {
+                setSelectedProcessIndex((prev) => Math.min(processes.length - 1, prev + 1));
+                return;
+            }
+            if (key.return && selectedProcess) {
+                openProcessOutput(selectedProcess.processId);
+                return;
+            }
+            if (input === 'x' && selectedProcess) {
+                killProcess(selectedProcess.processId);
+                setProcessesVersion((v) => v + 1);
+                return;
+            }
+            if (input === 'd' && selectedProcess) {
+                const dismissed = dismissProcess(selectedProcess.processId);
+                if (dismissed) {
+                    setProcessesVersion((v) => v + 1);
+                    setSelectedProcessIndex((prev) => Math.max(0, prev - 1));
+                }
+                return;
+            }
+            return;
+        }
+
+        if (input === 'o' && fullOutput && mode !== 'form') {
+            const lines = fullOutput.split('\n');
+            setOutputScrollOffset(Math.max(0, lines.length - OUTPUT_VISIBLE_LINES));
+            setMode('output');
+            return;
+        }
+
+        if (input === 'p' && mode === 'browse') {
+            setSelectedProcessIndex(0);
+            setMode('processes');
             return;
         }
 
@@ -242,11 +449,62 @@ function App() {
             if (key.escape) {
                 setMode('browse');
                 setRequiredFieldIndex(0);
+                setSelectChoices([]);
+                setSelectIndex(0);
+                return;
+            }
+
+            const field = requiredFields[requiredFieldIndex];
+
+            if (field?.fieldType === 'select') {
+                if (key.upArrow || input === 'k') {
+                    setSelectIndex((prev) => Math.max(0, prev - 1));
+                    return;
+                }
+                if (key.downArrow || input === 'j') {
+                    setSelectIndex((prev) => Math.min(selectChoices.length - 1, prev + 1));
+                    return;
+                }
+                if (key.return) {
+                    const chosen = selectChoices[selectIndex];
+                    if (!chosen) return;
+
+                    const nextSelections = {
+                        args: { ...activeSelections.args },
+                        options: { ...activeSelections.options }
+                    };
+
+                    if (field.type === 'arg') {
+                        nextSelections.args[field.key] = chosen.value;
+                    } else {
+                        nextSelections.options[field.key] = chosen.value;
+                    }
+
+                    setActiveSelections(nextSelections);
+
+                    const atLast = requiredFieldIndex >= requiredFields.length - 1;
+                    if (atLast) {
+                        setMode('variants');
+                        setVariantIndex(0);
+                        setRequiredFieldIndex(0);
+                    } else {
+                        const nextIndex = requiredFieldIndex + 1;
+                        setRequiredFieldIndex(nextIndex);
+                        const nextField = requiredFields[nextIndex];
+                        if (nextField?.fieldType === 'select') {
+                            const choices = nextField.choicesFn ? nextField.choicesFn() : [];
+                            setSelectChoices(choices);
+                            setSelectIndex(0);
+                        } else {
+                            setFormInput(nextField?.currentValue || '');
+                        }
+                    }
+                    return;
+                }
                 return;
             }
 
             if (key.return) {
-                const field = requiredFields[requiredFieldIndex];
                 if (!field) {
                     setMode('variants');
                     setVariantIndex(0);
@@ -275,7 +533,13 @@ function App() {
                     const nextIndex = requiredFieldIndex + 1;
                     setRequiredFieldIndex(nextIndex);
                     const nextField = requiredFields[nextIndex];
-                    setFormInput(nextField?.currentValue || '');
+                    if (nextField?.fieldType === 'select') {
+                        const choices = nextField.choicesFn ? nextField.choicesFn() : [];
+                        setSelectChoices(choices);
+                        setSelectIndex(0);
+                    } else {
+                        setFormInput(nextField?.currentValue || '');
+                    }
                 }
             }
 
@@ -329,7 +593,14 @@ function App() {
             if (required.length > 0) {
                 setMode('form');
                 setRequiredFieldIndex(0);
-                setFormInput(required[0].currentValue || '');
+                const first = required[0];
+                if (first.fieldType === 'select') {
+                    const choices = first.choicesFn ? first.choicesFn() : [];
+                    setSelectChoices(choices);
+                    setSelectIndex(0);
+                } else {
+                    setFormInput(first.currentValue || '');
+                }
                 return;
             }
 
@@ -339,21 +610,42 @@ function App() {
     });
 
     const visibleCommands = commands.slice(scrollOffset, scrollOffset + VISIBLE_COUNT);
-    const keyHints = mode === 'variants' ? VARIANTS_KEY_HINTS : mode === 'form' ? FORM_KEY_HINTS : BROWSE_KEY_HINTS;
+    const outputLines = useMemo(() => {
+        const lines = fullOutput ? fullOutput.split('\n') : [];
+        return errorsOnly ? lines.filter((l) => ERROR_PATTERN.test(l)) : lines;
+    }, [fullOutput, errorsOnly]);
+    const hasOutput = outputLines.length > 0 || (viewingProcessId === null && runState.output);
     const currentVariant = variants[variantIndex];
     const currentRequiredField = requiredFields[requiredFieldIndex];
+    const keyHints = mode === 'output' ? OUTPUT_KEY_HINTS
+        : mode === 'processes' ? PROCESSES_KEY_HINTS
+        : mode === 'variants' ? (hasOutput ? [...VARIANTS_KEY_HINTS, { key: 'o', desc: 'logs' }] : VARIANTS_KEY_HINTS)
+        : mode === 'form' ? (currentRequiredField?.fieldType === 'select' ? FORM_SELECT_KEY_HINTS : FORM_TEXT_KEY_HINTS)
+        : (hasOutput ? [...BROWSE_KEY_HINTS, { key: 'o', desc: 'logs' }] : BROWSE_KEY_HINTS);
 
     const outputColor = runState.status === 'running' ? 'yellow'
         : runState.status === 'success' ? 'greenBright'
             : runState.status === 'error' ? 'red'
                 : 'gray';
 
+    const viewingProcess = viewingProcessId !== null ? getProcessRegistry().get(viewingProcessId) : null;
+    const viewingOutputColor = !viewingProcess ? 'gray'
+        : viewingProcess.status === 'running' ? 'yellow'
+        : viewingProcess.status === 'done' ? 'greenBright'
+        : 'red';
+
     return h(
         Box,
         { flexDirection: 'column' },
         h(Box, { flexDirection: 'column' }, ...BANNER.map((line, i) => h(Text, { key: `b-${i}`, color: 'cyanBright' }, line))),
         h(Text, { color: 'gray' }, '--------------------------------------------------------------------------------'),
-        h(Text, { color: 'white', bold: true }, 'Gnar UI - Full Screen Command Palette'),
+        h(Box, {},
+            h(Text, { color: 'white', bold: true }, 'Gnar UI'),
+            h(Text, { color: 'gray' }, `  v${GNAR_VERSION}`),
+            runningCount > 0
+                ? h(Text, { color: 'yellow' }, `  ● ${runningCount} running`)
+                : null
+        ),
         h(Box, {},
             h(Text, { color: 'gray' }, 'Active profile: '),
             profileInfo
@@ -373,7 +665,21 @@ function App() {
         ),
         h(Text, { color: 'gray' }, '--------------------------------------------------------------------------------'),
 
-        mode === 'browse'
+        mode === 'output'
+            ? h(Box, { marginTop: 1 },
+                h(Text, { color: 'yellow' }, 'Output: '),
+                h(Text, { color: viewingProcessId !== null ? viewingOutputColor : outputColor },
+                    viewingProcessId !== null
+                        ? (viewingProcess?.preview || `process ${viewingProcessId}`)
+                        : lastRunPreview
+                )
+            )
+            : mode === 'processes'
+            ? h(Box, { marginTop: 1 },
+                h(Text, { color: 'yellow' }, 'Processes: '),
+                h(Text, { color: 'gray' }, `${processes.length} total  ${runningCount} running`)
+            )
+            : mode === 'browse'
             ? h(Box, { marginTop: 1 },
                 h(Text, { color: 'yellow' }, 'Palette: '),
                 h(TextInput, {
@@ -390,11 +696,13 @@ function App() {
                 ? h(Box, { marginTop: 1 },
                     h(Text, { color: 'yellow' }, `Required input ${requiredFieldIndex + 1}/${requiredFields.length}: `),
                     h(Text, { color: 'cyanBright' }, currentRequiredField ? `${currentRequiredField.label} ` : ''),
-                    h(TextInput, {
-                        value: formInput,
-                        onChange: setFormInput,
-                        placeholder: currentRequiredField?.description || ''
-                    })
+                    currentRequiredField?.fieldType === 'select'
+                        ? h(Text, { color: 'gray' }, selectChoices[selectIndex]?.label || '')
+                        : h(TextInput, {
+                            value: formInput,
+                            onChange: setFormInput,
+                            placeholder: currentRequiredField?.description || ''
+                        })
                 )
                 : h(Box, { marginTop: 1 },
                     h(Text, { color: 'yellow' }, 'Options: '),
@@ -402,31 +710,106 @@ function App() {
                 ),
 
         h(Box, { marginTop: 1, height: 22 },
-            mode === 'browse'
+            mode === 'output'
+                ? h(Box, { width: '100%', flexDirection: 'column', borderStyle: 'round', borderColor: viewingProcessId !== null ? viewingOutputColor : outputColor, paddingX: 1 },
+                    ...outputLines.slice(outputScrollOffset, outputScrollOffset + OUTPUT_VISIBLE_LINES).map((line, i) =>
+                        h(Text, { key: `ol-${i}`, color: 'white' }, line || ' ')
+                    ),
+                    h(Box, { key: 'osi' },
+                        h(Text, { color: 'gray' },
+                            outputLines.length > OUTPUT_VISIBLE_LINES
+                                ? `lines ${outputScrollOffset + 1}-${Math.min(outputScrollOffset + OUTPUT_VISIBLE_LINES, outputLines.length)}/${outputLines.length}`
+                                : `${outputLines.length} line${outputLines.length !== 1 ? 's' : ''}`
+                        ),
+                        errorsOnly ? h(Text, { color: 'red' }, '  errors only') : null,
+                        errorsOnly && outputLines.length === 0 ? h(Text, { color: 'gray' }, ' (none found)') : null,
+                        viewingProcess?.status === 'running' && autoScrollRef.current ? h(Text, { color: 'yellow' }, '  tailing') : null,
+                        viewingProcess?.status === 'running' && !autoScrollRef.current ? h(Text, { color: 'gray' }, '  paused  ↓j/G to resume') : null
+                    )
+                )
+            : mode === 'processes'
+                ? h(Box, { width: '100%', flexDirection: 'row' },
+                    h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },
+                        h(Text, { color: 'magentaBright' }, `Processes (${processes.length})`),
+                        processes.length === 0
+                            ? h(Text, { color: 'gray' }, 'No processes yet.')
+                            : processes.map((entry, index) => {
+                                const isSelected = index === selectedProcessIndex;
+                                const statusColor = entry.status === 'running' ? 'yellow'
+                                    : entry.status === 'done' ? 'greenBright'
+                                    : 'red';
+                                const elapsed = formatElapsed(entry.startedAt);
+                                return h(Box, { key: `p-${entry.processId}`, flexDirection: 'column' },
+                                    h(Text, {
+                                        color: isSelected ? 'black' : 'white',
+                                        backgroundColor: isSelected ? 'cyan' : undefined,
+                                        wrap: 'truncate'
+                                    }, `${isSelected ? '>' : ' '} ${entry.preview}`),
+                                    h(Text, {
+                                        color: isSelected ? 'black' : statusColor,
+                                        backgroundColor: isSelected ? 'cyan' : undefined
+                                    }, `    ${entry.status}  ${elapsed}`)
+                                );
+                            })
+                    ),
+                    h(Box, { width: '58%', flexDirection: 'column', borderStyle: 'round', borderColor: selectedProcess ? (selectedProcess.status === 'running' ? 'yellow' : selectedProcess.status === 'done' ? 'greenBright' : 'red') : 'gray', paddingX: 1 },
+                        h(Text, { color: 'greenBright' }, selectedProcess ? 'Output tail' : 'No process selected'),
+                        ...(selectedProcess
+                            ? selectedProcess.output.split('\n').slice(-PROCESS_TAIL_LINES).map((line, i) =>
+                                h(Text, { key: `pt-${i}`, color: 'white', wrap: 'truncate' }, line || ' ')
+                            )
+                            : [h(Text, { key: 'np', color: 'gray' }, 'Select a process and press enter to view output.')]
+                        ),
+                        selectedProcess
+                            ? h(Text, { color: 'gray' }, `press enter to view full output`)
+                            : null
+                    )
+                )
+            : mode === 'browse'
                 ? h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },
                     h(Text, { color: 'magentaBright' }, `Commands (${commands.length})`),
-                    ...visibleCommands.map((cmd, index) => {
-                        const isSelected = index + scrollOffset === selectedIndex;
-                        return h(Text, {
-                            key: cmd.id,
-                            color: isSelected ? 'black' : 'white',
-                            backgroundColor: isSelected ? 'cyan' : undefined
-                        }, `${isSelected ? '>' : ' '} ${cmd.group}.${cmd.command} - ${cmd.description}`);
-                    }),
+                    ...(() => {
+                        const items = [];
+                        let lastGroup = null;
+                        visibleCommands.forEach((cmd, index) => {
+                            if (cmd.group !== lastGroup) {
+                                items.push(h(Text, { key: `grp-${cmd.group}`, color: 'cyanBright', bold: true }, cmd.group));
+                                lastGroup = cmd.group;
+                            }
+                            const isSelected = index + scrollOffset === selectedIndex;
+                            items.push(h(Text, {
+                                key: cmd.id,
+                                color: isSelected ? 'black' : 'white',
+                                backgroundColor: isSelected ? 'cyan' : undefined
+                            }, `  ${isSelected ? '>' : ' '} ${cmd.command}${cmd.description ? '  ' + cmd.description : ''}`));
+                        });
+                        return items;
+                    })(),
                     commands.length === 0 ? h(Text, { color: 'red' }, 'No commands found') : null
                 )
                 : mode === 'form'
                     ? h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'yellow', paddingX: 1 },
-                        h(Text, { color: 'magentaBright' }, `Required fields (${requiredFields.length})`),
-                        ...requiredFields.map((field, index) => {
-                            const isSelected = index === requiredFieldIndex;
-                            const value = field.type === 'arg' ? activeSelections.args[field.key] : activeSelections.options[field.key];
-                            return h(Text, {
-                                key: field.id,
-                                color: isSelected ? 'black' : 'white',
-                                backgroundColor: isSelected ? 'yellow' : undefined
-                            }, `${isSelected ? '>' : ' '} ${field.label} - ${value || '(empty)'}`);
-                        })
+                        currentRequiredField?.fieldType === 'select'
+                            ? h(Text, { color: 'magentaBright' }, `Select ${currentRequiredField.label} (${selectChoices.length})`)
+                            : h(Text, { color: 'magentaBright' }, `Required fields (${requiredFields.length})`),
+                        currentRequiredField?.fieldType === 'select'
+                            ? selectChoices.map((choice, index) => {
+                                const isSelected = index === selectIndex;
+                                return h(Text, {
+                                    key: `sc-${index}`,
+                                    color: isSelected ? 'black' : 'white',
+                                    backgroundColor: isSelected ? 'yellow' : undefined
+                                }, `${isSelected ? '>' : ' '} ${choice.label}`);
+                            })
+                            : requiredFields.map((field, index) => {
+                                const isSelected = index === requiredFieldIndex;
+                                const value = field.type === 'arg' ? activeSelections.args[field.key] : activeSelections.options[field.key];
+                                return h(Text, {
+                                    key: field.id,
+                                    color: isSelected ? 'black' : 'white',
+                                    backgroundColor: isSelected ? 'yellow' : undefined
+                                }, `${isSelected ? '>' : ' '} ${field.label} - ${value || '(empty)'}`);
+                            })
                     )
                     : h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
                         h(Text, { color: 'magentaBright' }, `Variants (${variants.length})`),
@@ -440,7 +823,7 @@ function App() {
                         })
                     ),
 
-            h(Box, { width: '58%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },
+            mode !== 'output' && mode !== 'processes' && h(Box, { width: '58%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },
                 ...(mode === 'browse'
                     ? [
                         h(Text, { key: 'ph', color: 'greenBright' }, 'Preview'),
@@ -448,7 +831,7 @@ function App() {
                         h(Text, { key: 'e1' }, ''),
                         h(Text, { key: 'gh', color: 'greenBright' }, 'Groups'),
                         h(Text, { key: 'gv', color: 'gray' }, groups.join(', ')),
-                        h(Text, { key: 'ih', color: 'yellow' }, 'Note: interactive-only commands are hidden in this UI.'),
+                        h(Text, { key: 'ih', color: 'yellow' }, 'Interactive-only commands are hidden.'),
                         selected
                             ? h(Text, { key: 'safe', color: selected.hints?.destructive ? 'red' : 'gray' },
                                 selected.hints?.destructive ? 'Warning: destructive command' : 'Safe command')
@@ -486,8 +869,9 @@ function App() {
                 ),
 
                 h(Text, { key: 'e2' }, ''),
-                h(Text, { key: 'roh', color: 'greenBright' },
-                    runState.status === 'running' ? 'Run Output  (running...)' : 'Run Output'
+                h(Box, { key: 'roh' },
+                    h(Text, { color: 'greenBright' }, runState.status === 'running' ? 'Run Output  (running...)' : 'Run Output'),
+                    hasOutput ? h(Text, { color: 'gray' }, '  press o to open logs') : null
                 ),
                 h(Text, { key: 'rov', color: outputColor },
                     runState.output || 'No output yet.'

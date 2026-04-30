@@ -6,6 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const cliEntrypoint = path.resolve(__dirname, '..', 'cli.js');
 
+const processRegistry = new Map();
+let nextProcessId = 1;
+
 function quoteArg(value) {
     if (value === '') {
         return "''";
@@ -49,6 +52,83 @@ export function buildArgv(commandDef, selections) {
 export function buildPreview(commandDef, selections) {
     const argv = buildArgv(commandDef, selections);
     return ['gnar', ...argv.map(quoteArg)].join(' ');
+}
+
+export function getProcessRegistry() {
+    return processRegistry;
+}
+
+export function killProcess(processId) {
+    const entry = processRegistry.get(processId);
+    if (!entry || entry.status !== 'running') return false;
+    entry.child.kill('SIGTERM');
+    return true;
+}
+
+export function dismissProcess(processId) {
+    const entry = processRegistry.get(processId);
+    if (entry?.status === 'running') return false;
+    processRegistry.delete(processId);
+    return true;
+}
+
+export function spawnPersistent(commandDef, selections, onUpdate) {
+    const processId = nextProcessId++;
+    const argv = buildArgv(commandDef, selections);
+    const preview = buildPreview(commandDef, selections);
+
+    const child = spawn(process.execPath, [cliEntrypoint, ...argv], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: process.env
+    });
+
+    const entry = {
+        processId,
+        preview,
+        child,
+        output: '',
+        status: 'running',
+        code: null,
+        startedAt: Date.now()
+    };
+
+    processRegistry.set(processId, entry);
+
+    let lastNotify = 0;
+    const notify = () => {
+        const now = Date.now();
+        if (now - lastNotify > 80) {
+            lastNotify = now;
+            onUpdate?.(processId, entry);
+        }
+    };
+
+    child.stdout.on('data', (chunk) => {
+        entry.output += chunk.toString();
+        notify();
+    });
+
+    child.stderr.on('data', (chunk) => {
+        entry.output += chunk.toString();
+        notify();
+    });
+
+    child.on('close', (code) => {
+        entry.status = code === 0 ? 'done' : 'error';
+        entry.code = code ?? 1;
+        entry.child = null;
+        onUpdate?.(processId, entry);
+    });
+
+    child.on('error', (error) => {
+        entry.output += `\nProcess error: ${error.message}`;
+        entry.status = 'error';
+        entry.code = 1;
+        entry.child = null;
+        onUpdate?.(processId, entry);
+    });
+
+    return processId;
 }
 
 export async function runCommandStreaming(commandDef, selections, onData) {

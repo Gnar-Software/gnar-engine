@@ -46,11 +46,22 @@ export function registerProfileCommand(program) {
 
     // profile set active <profileName>
     profile
-        .command('set-active')
+        .command('set-active [profileName]')
         .description('Select active profile')
-        .action(() => {
+        .action(async (profileName) => {
             try {
                 const allProfiles = profiles.getAllProfiles();
+
+                if (profileName) {
+                    if (!allProfiles.profiles[profileName]) {
+                        console.error(`❌ Profile "${profileName}" not found.`);
+                        return;
+                    }
+                    profiles.setActiveProfile({ profileName });
+                    console.log(`✅ Profile "${profileName}" set as active.`);
+                    return;
+                }
+
                 const choices = Object.keys(allProfiles.profiles).map((p) => {
                     if (allProfiles.activeProfile == p) {
                         return { name: p + ' (active)', value: p };
@@ -59,22 +70,16 @@ export function registerProfileCommand(program) {
                     }
                 });
 
-                inquirer.prompt([
+                const answers = await inquirer.prompt([
                     {
                         type: 'list',
                         name: 'profileName',
                         message: 'Select a profile to set as active:',
                         choices: choices
                     }
-                ]).then((answers) => {
-                    const profileName = answers.profileName;
-                    profiles.setActiveProfile({
-                        profileName: profileName
-                    });
-                    console.log(`✅ Profile "${profileName}" set as active.`);
-                });
-
-                return;
+                ]);
+                profiles.setActiveProfile({ profileName: answers.profileName });
+                console.log(`✅ Profile "${answers.profileName}" set as active.`);
             } catch (error) {
                 console.error(`❌ Error setting active profile: ${error.message}`);
             }

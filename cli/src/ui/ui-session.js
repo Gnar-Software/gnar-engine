@@ -230,6 +230,7 @@ function App() {
     const [selectChoices, setSelectChoices] = useState([]);
     const [selectIndex, setSelectIndex] = useState(0);
     const [activeSelections, setActiveSelections] = useState({ args: {}, options: {} });
+    const [profileInfo, setProfileInfo] = useState(() => getActiveProfileInfo());
 
     // persistent processes
     const [processesVersion, setProcessesVersion] = useState(0);
@@ -265,7 +266,9 @@ function App() {
     const selected = commands[selectedIndex] || null;
     const issues = selected ? getCommandIssues(selected, activeSelections) : null;
     const groups = useMemo(() => getGroups(), []);
-    const profileInfo = useMemo(() => getActiveProfileInfo(), []);
+    const refreshProfileInfo = useCallback(() => {
+        setProfileInfo(getActiveProfileInfo());
+    }, []);
 
     const processes = useMemo(() => {
         return [...getProcessRegistry().values()].reverse();
@@ -358,6 +361,7 @@ function App() {
             setRunState((prev) => ({ ...prev, output: trimOutput(output) }));
         }).then((result) => {
             if (runId.current !== id) return;
+            refreshProfileInfo();
             const outputParts = [result.stdout?.trim(), result.stderr?.trim()].filter(Boolean);
             const raw = outputParts.join('\n');
             const fallback = result.code === 0 ? 'Done.' : `Exit ${result.code}.`;

@@ -1,4 +1,36 @@
 import { profiles } from '../profiles/profiles.client.js';
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+
+function getActiveProfileServices() {
+    try {
+        const activeProfile = profiles.getActiveProfile();
+        const projectDir = activeProfile?.profile?.PROJECT_DIR;
+
+        if (!projectDir) {
+            return [];
+        }
+
+        const deployPath = path.join(projectDir, 'deploy.localdev.yml');
+
+        if (!fs.existsSync(deployPath)) {
+            return [];
+        }
+
+        const parsedConfig = yaml.load(fs.readFileSync(deployPath, 'utf8'));
+        const services = parsedConfig?.config?.services || [];
+
+        return services
+            .filter((service) => service?.name)
+            .map((service) => ({
+                label: service.name,
+                value: service.name
+            }));
+    } catch {
+        return [];
+    }
+}
 
 const commandCatalog = [
     {
@@ -14,10 +46,10 @@ const commandCatalog = [
             { key: 'coreDev', type: 'boolean', flag: '--core-dev', description: 'Use local core/dist/core.js instead of npm package' },
             { key: 'bootstrapDev', type: 'boolean', flag: '--bootstrap-dev', description: 'Use local bootstrap services instead of npm package' },
             { key: 'test', type: 'boolean', flag: '--test', shortFlag: '-t', description: 'Run all tests with ephemeral databases' },
-            { key: 'testService', type: 'string', flag: '--test-service', description: 'Run tests for a specific service (e.g. user)' },
+            { key: 'testService', type: 'select', flag: '--test-service', description: 'Run tests for a specific service', choicesFn: getActiveProfileServices },
             { key: 'testMode', type: 'string', flag: '--test-mode', description: 'Test mode — ephemeral (default), localdev' },
             { key: 'resetDatabases', type: 'boolean', flag: '--reset-databases', description: 'Drop all service databases' },
-            { key: 'resetDatabase', type: 'string', flag: '--reset-database', description: 'Drop one service database (e.g. user)' }
+            { key: 'resetDatabase', type: 'select', flag: '--reset-database', description: 'Drop one service database', choicesFn: getActiveProfileServices }
         ],
         hints: { requiresProfile: true, persistent: true }
     },

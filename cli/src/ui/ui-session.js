@@ -135,8 +135,8 @@ function getRequiredFields(commandDef, selections) {
         .map((opt) => ({
             id: `opt:${opt.key}`,
             type: 'option',
-            fieldType: 'text',
-            choicesFn: null,
+            fieldType: opt.type === 'select' ? 'select' : 'text',
+            choicesFn: opt.choicesFn || null,
             key: opt.key,
             label: opt.flag,
             description: opt.description || opt.flag,
@@ -161,24 +161,43 @@ function getVariants(commandDef, baseSelections) {
     ];
 
     for (const opt of commandDef.options) {
-        if (opt.type !== 'boolean') {
+        if (opt.type === 'boolean') {
+            if (base.options[opt.key]) {
+                continue;
+            }
+
+            const sel = {
+                args: { ...base.args },
+                options: { ...base.options, [opt.key]: true }
+            };
+
+            items.push({
+                label: buildPreview(commandDef, sel),
+                selections: sel,
+                hint: opt.description
+            });
+
             continue;
         }
 
-        if (base.options[opt.key]) {
+        if (!opt.choicesFn || hasValue(base.options[opt.key])) {
             continue;
         }
 
-        const sel = {
-            args: { ...base.args },
-            options: { ...base.options, [opt.key]: true }
-        };
+        const choices = opt.choicesFn();
 
-        items.push({
-            label: buildPreview(commandDef, sel),
-            selections: sel,
-            hint: opt.description
-        });
+        for (const choice of choices) {
+            const sel = {
+                args: { ...base.args },
+                options: { ...base.options, [opt.key]: choice.value }
+            };
+
+            items.push({
+                label: buildPreview(commandDef, sel),
+                selections: sel,
+                hint: `${opt.description}: ${choice.label}`
+            });
+        }
     }
 
     return items;

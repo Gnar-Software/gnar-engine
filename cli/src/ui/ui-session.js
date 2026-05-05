@@ -213,6 +213,17 @@ const OUTPUT_VISIBLE_LINES = 19;
 const PROCESS_TAIL_LINES = 7;
 const ERROR_PATTERN = /error|err\b|failed|failure|warn|warning|exception|fatal/i;
 
+function getWindowOffset(selectedIndex, total, visibleCount = VISIBLE_COUNT) {
+    if (total <= visibleCount) {
+        return 0;
+    }
+
+    return Math.min(
+        Math.max(0, selectedIndex - Math.floor(visibleCount / 2)),
+        total - visibleCount
+    );
+}
+
 function App() {
     const { exit } = useApp();
     const [query, setQuery] = useState('/');
@@ -305,15 +316,16 @@ function App() {
     }, [selected, activeSelections]);
 
     const scrollOffset = useMemo(() => {
-        if (commands.length <= VISIBLE_COUNT) {
-            return 0;
-        }
-
-        return Math.min(
-            Math.max(0, selectedIndex - Math.floor(VISIBLE_COUNT / 2)),
-            commands.length - VISIBLE_COUNT
-        );
+        return getWindowOffset(selectedIndex, commands.length);
     }, [selectedIndex, commands.length]);
+
+    const selectScrollOffset = useMemo(() => {
+        return getWindowOffset(selectIndex, selectChoices.length);
+    }, [selectIndex, selectChoices.length]);
+
+    const variantScrollOffset = useMemo(() => {
+        return getWindowOffset(variantIndex, variants.length);
+    }, [variantIndex, variants.length]);
 
     const openProcessOutput = (processId) => {
         const entry = getProcessRegistry().get(processId);
@@ -633,6 +645,8 @@ function App() {
     });
 
     const visibleCommands = commands.slice(scrollOffset, scrollOffset + VISIBLE_COUNT);
+    const visibleSelectChoices = selectChoices.slice(selectScrollOffset, selectScrollOffset + VISIBLE_COUNT);
+    const visibleVariants = variants.slice(variantScrollOffset, variantScrollOffset + VISIBLE_COUNT);
     const outputLines = useMemo(() => {
         const lines = fullOutput ? fullOutput.split('\n') : [];
         return errorsOnly ? lines.filter((l) => ERROR_PATTERN.test(l)) : lines;
@@ -816,34 +830,44 @@ function App() {
                             ? h(Text, { color: 'magentaBright' }, `Select ${currentRequiredField.label} (${selectChoices.length})`)
                             : h(Text, { color: 'magentaBright' }, `Required fields (${requiredFields.length})`),
                         currentRequiredField?.fieldType === 'select'
-                            ? selectChoices.map((choice, index) => {
-                                const isSelected = index === selectIndex;
+                            ? visibleSelectChoices.map((choice, index) => {
+                                const choiceIndex = index + selectScrollOffset;
+                                const isSelected = choiceIndex === selectIndex;
                                 return h(Text, {
-                                    key: `sc-${index}`,
+                                    key: `sc-${choiceIndex}`,
                                     color: isSelected ? 'black' : 'white',
-                                    backgroundColor: isSelected ? 'yellow' : undefined
+                                    backgroundColor: isSelected ? 'yellow' : undefined,
+                                    wrap: 'truncate'
                                 }, `${isSelected ? '>' : ' '} ${choice.label}`);
-                            })
+                            }).concat(selectChoices.length > VISIBLE_COUNT
+                                ? [h(Text, { key: 'sc-window', color: 'gray' }, `showing ${selectScrollOffset + 1}-${Math.min(selectScrollOffset + VISIBLE_COUNT, selectChoices.length)}/${selectChoices.length}`)]
+                                : [])
                             : requiredFields.map((field, index) => {
                                 const isSelected = index === requiredFieldIndex;
                                 const value = field.type === 'arg' ? activeSelections.args[field.key] : activeSelections.options[field.key];
                                 return h(Text, {
                                     key: field.id,
                                     color: isSelected ? 'black' : 'white',
-                                    backgroundColor: isSelected ? 'yellow' : undefined
+                                    backgroundColor: isSelected ? 'yellow' : undefined,
+                                    wrap: 'truncate'
                                 }, `${isSelected ? '>' : ' '} ${field.label} - ${value || '(empty)'}`);
                             })
                     )
                     : h(Box, { width: '42%', flexDirection: 'column', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
                         h(Text, { color: 'magentaBright' }, `Variants (${variants.length})`),
-                        ...variants.map((v, index) => {
-                            const isSelected = index === variantIndex;
+                        ...visibleVariants.map((v, index) => {
+                            const variantItemIndex = index + variantScrollOffset;
+                            const isSelected = variantItemIndex === variantIndex;
                             return h(Text, {
-                                key: `v-${index}`,
+                                key: `v-${variantItemIndex}`,
                                 color: isSelected ? 'black' : 'white',
-                                backgroundColor: isSelected ? 'cyan' : undefined
+                                backgroundColor: isSelected ? 'cyan' : undefined,
+                                wrap: 'truncate'
                             }, `${isSelected ? '>' : ' '} ${v.label}`);
-                        })
+                        }),
+                        variants.length > VISIBLE_COUNT
+                            ? h(Text, { color: 'gray' }, `showing ${variantScrollOffset + 1}-${Math.min(variantScrollOffset + VISIBLE_COUNT, variants.length)}/${variants.length}`)
+                            : null
                     ),
 
             mode !== 'output' && mode !== 'processes' && h(Box, { width: '58%', flexDirection: 'column', borderStyle: 'round', borderColor: 'gray', paddingX: 1 },

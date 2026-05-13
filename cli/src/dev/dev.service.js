@@ -277,6 +277,7 @@ async function buildAndUpContainers({
     let mysqlHostsRequired = [];
     let mongoHostsRequired = [];
     const services = {};
+    const databaseServices = {};
 
     console.log('========   g n a r   e n g i n e   ========');
     console.log('⛏️  Starting development environment...');
@@ -326,9 +327,9 @@ async function buildAndUpContainers({
 
     // create bridge network
     const networkName = `ge-${config.environment}-${config.namespace}`;
-    createBridgeNetwork({
+    await createBridgeNetwork({
         name: networkName
-    })
+    });
 
     // provision the provisioner service
     const provisionerTag = `ge-${config.environment}-${config.namespace}-provisioner`;
@@ -362,10 +363,9 @@ async function buildAndUpContainers({
         ports: {},
         binds: provisionerBinds,
         restart: 'no',
-        attach: attachAll,
+        attach: true,
         network: networkName
     });
-    services[provisionerTag] = provisioner;
 
     // Nginx
     const nginxName = `ge-${config.environment}-${config.namespace}-nginx`;
@@ -497,7 +497,7 @@ async function buildAndUpContainers({
             binds.push(`${gnarHiddenDir}/data/${host}-data:/var/lib/mysql`)
 
             const mysqlContainerName = `ge-${config.environment}-${config.namespace}-${host}`;
-            services[mysqlContainerName] = await createContainer({
+            databaseServices[mysqlContainerName] = await createContainer({
                 name: `ge-${config.environment}-${config.namespace}-${host}`,
                 image: 'mysql',
                 env: {
@@ -529,7 +529,7 @@ async function buildAndUpContainers({
             binds.push(`${gnarHiddenDir}/data/${host}-data:/data/db`);
 
             const mongoContainerName = `ge-${config.environment}-${config.namespace}-${host}`;
-            services[mongoContainerName] = await createContainer({
+            databaseServices[mongoContainerName] = await createContainer({
                 name: `ge-${config.environment}-${config.namespace}-${host}`,
                 image: 'mongo:latest',
                 env: {
@@ -551,11 +551,28 @@ async function buildAndUpContainers({
         }
     }
 
+    // start RabbitMQ alongside the database containers, but only wait on databases
+    services[rabbitMqName].start();
+
+    // start the database containers
+    await Promise.all(
+        Object.values(databaseServices).map(container => container.start())
+    );
+
+    // start the provisioner container and wait for it to finish before starting the rest of the services
+    await provisioner.start();
+    const provisionerResult = await provisioner.wait();
+
+    if (provisionerResult.StatusCode !== 0) {
+        throw new Error(`Provisioner exited with status code ${provisionerResult.StatusCode}. Services were not started.`);
+    }
+
     // start the containers
-    Object.keys(services).forEach(async (key) => {
-        const container = services[key];
-        container.start();
-    });
+    await Promise.all(
+        Object.entries(services)
+            .filter(([name]) => name !== rabbitMqName)
+            .map(([, container]) => container.start())
+    );
 }
 
 /**
@@ -564,4 +581,3 @@ async function buildAndUpContainers({
 async function assertGnarEngineHiddenDir(gnarHiddenDir) {
     await fs.mkdir(gnarHiddenDir, { recursive: true });
 }
-

@@ -750,7 +750,7 @@ function App() {
             mode === 'output'
                 ? h(Box, { width: '100%', flexDirection: 'column', borderStyle: 'round', borderColor: viewingProcessId !== null ? viewingOutputColor : outputColor, paddingX: 1 },
                     ...outputLines.slice(outputScrollOffset, outputScrollOffset + OUTPUT_VISIBLE_LINES).map((line, i) =>
-                        h(Text, { key: `ol-${i}`, color: 'white' }, line || ' ')
+                        h(Text, { key: `ol-${i}`, color: 'white', wrap: 'wrap' }, line || ' ')
                     ),
                     h(Box, { key: 'osi' },
                         h(Text, { color: 'gray' },

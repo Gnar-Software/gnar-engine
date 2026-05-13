@@ -80,5 +80,17 @@ export const secrets = {
         }
 
         return mongoDatabases;
+    },
+
+    /**
+     * Collate message queue credentials
+    */
+    collateMessageQueueCredentials: (provisionerSecrets) => {
+        
+        const messageQueueCredentials = {
+            rabbitUrl: provisionerSecrets.global.RABBITMQ_URL || null,
+        };
+
+        return messageQueueCredentials;
     }
 }

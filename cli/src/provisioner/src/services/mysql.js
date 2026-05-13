@@ -31,17 +31,16 @@ export const mysqlService = {
                 await conn.query(`GRANT ALL PRIVILEGES ON ${mysql.escapeId(database)}.* TO ${mysql.escape(user)}@'%';`);
                 await conn.query(`FLUSH PRIVILEGES;`);
 
-                console.log(`Successfully provisioned MySQL database: ${database} and user: ${user}`);
+                console.log(`Successfully asserted MySQL database: ${database} and user: ${user}`);
                 await conn.end();
                 return;
 
             } catch (error) {
-                console.error(`Failed provisioning MySQL database "${database}" for user "${user}" ": ${error.message}`);
+                console.log('Waiting for MySQL to be ready...');
                 retries++;
 
                 if (retries >= maxRetries) {
-                    console.error(`Max retries reached. Could not provision database "${database}".`);
-                    return;
+                    throw new Error(`Max retries reached. Could not provision MySQL database "${database}".`);
                 }
 
                 await new Promise(resolve => setTimeout(resolve, retryInterval));

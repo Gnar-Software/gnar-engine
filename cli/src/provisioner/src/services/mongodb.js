@@ -47,8 +47,7 @@ export const mongoService = {
                 retries++;
 
                 if (retries >= maxRetries) {
-                    console.error(`Max retries reached. Could not provision database "${database}".`);
-                    return;
+                    throw new Error(`Max retries reached. Could not provision MongoDB database "${database}".`);
                 }
 
                 await new Promise(resolve => setTimeout(resolve, retryInterval));

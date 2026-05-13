@@ -17,11 +17,8 @@ COPY ./package*.json ./
 # Copy source
 COPY ./src ./src
 
-# Install nodemon
-RUN npm install -g nodemon
-
 # Install app dependencies
 RUN npm install
 
 # Start the application
-CMD ["nodemon", "--watch", "./gnar_engine", "./gnar_engine/app.js"]
+CMD ["node", "./src/app.js"]

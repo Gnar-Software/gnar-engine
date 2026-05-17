@@ -132,6 +132,10 @@ export const wsManager = {
                                 serviceName: serviceName
                             });
 
+                            if (!newPeer) {
+                                continue;
+                            }
+
                             peerAddresses[serviceName] = newPeer;
 
                             await this.connect({ peer: newPeer, config });

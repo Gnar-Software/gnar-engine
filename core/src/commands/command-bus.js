@@ -13,9 +13,9 @@ export const commandBus = {
         this.config = config;
     },
   
-    register(commandName, handlerFunction) {
+    register(commandName, handlerFunction, metadata = {}) {
         this.handlers.set(commandName, handlerFunction);
-        manifest.addCommand({ commandName, handlerFunction });
+        manifest.addCommand({ commandName, handlerFunction, metadata });
     },
   
     /**

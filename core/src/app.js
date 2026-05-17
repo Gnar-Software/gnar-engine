@@ -1,7 +1,7 @@
 import { httpController } from './controllers/http.controller.js';
 import { messageController } from './controllers/message.controller.js';
 import { commandBus } from './commands/command-bus.js';
-import { manifest } from './commands/command-manifest.js';
+import { manifest as manifestObj } from './commands/command-manifest.js';
 import { runSeeders, internalHealthCheck } from './commands/handlers/control.handler.js';
 import { BadRequestError, initErrorResponses, NotFoundError, UnauthorisedError, FailedHealthCheckError } from './errors/errors.js';
 import { initDbConnection, checkConnection, dropDatabaseData } from './db/db.js';
@@ -16,7 +16,6 @@ import { wsManager } from './services/websocket.service.js';
 import schemaService from './services/schema.service.js';
 import { testService } from './services/test.service.js';
 import { storageService } from './services/storage.service.js';
-import { manifest } from './commands/command-manifest.js';
 import { rabbit as rabbitService } from './services/rabbit.js';
 import { v4 as uuidv4 } from 'uuid';
 import { v5 as uuidv5 } from 'uuid';
@@ -55,7 +54,7 @@ const GnarEngine = {
 		// Initialise command bus
 		GnarEngine.commands = commandBus;
         GnarEngine.commands.init(config);
-        GnarEngine.manifest = manifest;
+        GnarEngine.manifest = manifestObj;
 
 		// Connect to database
         if (config.db && config.db.type) {

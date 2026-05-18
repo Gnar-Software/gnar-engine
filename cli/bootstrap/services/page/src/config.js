@@ -15,13 +15,13 @@ export const config = {
 
     // web server
     http: {
-        allowedOrigins: [],
         allowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         rateLimiting: {
-			max: 5,
+			max: 999,
 			timeWindow: '1 minute',
-		}
+		},
+        bodyLimit: 5 * 1024 * 1024, // 5mb
     },
 
     // database
@@ -64,4 +64,13 @@ export const config = {
     },
 
     hashNameSpace: '',
+
+    rebuilds: {
+        pathBased: {
+            enabled: process.env.PAGE_BUILD_REVALIDATE_ENABLED === 'true',
+            endpointBase: process.env.PAGE_BUILD_ENDPOINT_BASE,
+            endpointPath: '/api/revalidate',
+            revalidateSecret: process.env.PAGE_BUILD_REVALIDATE_SECRET
+        }
+    }
 }

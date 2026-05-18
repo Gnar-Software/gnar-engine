@@ -1,4 +1,4 @@
-import { commands } from '@gnar-engine/core';
+import { commands, logger } from '@gnar-engine/core';
 import { authorise } from '../policies/page.policy.js';
 
 /**
@@ -30,7 +30,10 @@ export const httpController = {
 		url: '/pages/',
 		preHandler: async (request, reply) => authorise.getMany(request, reply),
 		handler: async (request, reply) => {
-			const params = {};
+			const params = {
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum
+			};
 			const results = await commands.execute('getManyPages', params);
 			reply.code(200).send({ pages: results });
 		}
@@ -86,4 +89,55 @@ export const httpController = {
 			reply.code(200).send({ message: 'Page deleted' });
 		},
 	},
-}
+
+    exportPages: {
+        method: 'GET',
+        url: '/pages/export/pages.json',
+        preHandler: async (request, reply) => authorise.getMany(request, reply),
+        handler: async (request, reply) => {
+            const { fileName, jsonString } = await commands.execute('exportPages', {});
+            reply
+                .header('Content-Type', 'application/json; charset=utf-8')
+                .header('Content-Disposition', `attachment; filename="${fileName}"`)
+                .code(200)
+                .send(jsonString);
+        },
+    },
+
+    exportBlocks: {
+        method: 'GET',
+        url: '/pages/export/blocks.json',
+        preHandler: async (request, reply) => authorise.getMany(request, reply),
+        handler: async (request, reply) => {
+            const { fileName, jsonString } = await commands.execute('exportBlocks', {});
+            reply
+                .header('Content-Type', 'application/json; charset=utf-8')
+                .header('Content-Disposition', `attachment; filename="${fileName}"`)
+                .code(200)
+                .send(jsonString);
+        },
+    },
+
+    importPages: {
+        method: 'POST',
+        url: '/pages/import/pages',
+        handler: async (request, reply) => {
+            try {
+                const jsonString = request.body?.jsonString;
+                if (!jsonString) {
+                    return reply.code(400).send({ message: 'Missing jsonString in request body' });
+                }
+
+                const result = await commands.execute('pageService.importPagesFromJsonString', {
+                    jsonString,
+                    requestUser: request.user,
+                });
+
+                return reply.code(200).send(result);
+            } catch (err) {
+                logger.error({ message: err?.message, stack: err?.stack }, 'import failed');
+                return reply.code(500).send({ message: err?.message || 'Import failed' });
+            }
+        },
+    },
+};

@@ -6,8 +6,19 @@ export const user = {
         return data;
     },
 
-    getMany: async () => {
-        const { data } = await client.get('/users/');
+    getMany: async ({ page, pageSize } = {}) => {
+        const queryParams = new URLSearchParams();
+
+        if (page) {
+            queryParams.append('pageNum', page);
+        }
+
+        if (pageSize) {
+            queryParams.append('pageSize', pageSize);
+        }
+
+        const url = `/users/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const { data } = await client.get(url);
         return data;
     },
 
@@ -22,20 +33,24 @@ export const user = {
     },
 
     update: async ({ id, user }) => {
-        const { data } = await client.post(`/users/${id}`, { user });
+        const { data } = await client.post(`/users/${id}`, user);
         return data;
+    },
+
+    updateMyProfile: async ({ id, data }) => {
+        const { data: responseData } = await client.post(`/users/${id}/profile`, data);
+        return responseData;
     },
 
     delete: async ({ userId }) => {
         await client.delete(`/users/${userId}`);
     },
 
-    sendPasswordReset: async ({ email }) => {
-        await client.post('/users/request-password-reset', { email });
+    sendPasswordReset: async ({ email, createComplexPassword = false }) => {
+        await client.post('/users/request-password-reset', { email, createComplexPassword });
     },
 
     changePassword: async ({ email, token, password }) => {
         await client.post('/users/change-password', { email, token, password });
     },
 };
-

@@ -1,204 +1,140 @@
-import { commands, logger, message, db } from '@gnar-engine/core';
+import { commands, logger, db, error } from '@gnar-engine/core';
+import { config } from "../config.js";
 import { registry } from "../services/registry.service.js";
 import { task } from "../services/task.service.js";
 import { reset } from "../services/reset.service.js";
+import { seeders } from "../services/seeders.service.js";
 
 
 /**
  * Run migrations
- * 
+ *
  * @param {Object} params
- * @param {string} params.service The service name
+ * @param {string|Object} params.service The service name or service object
  * @param {string} params.migration The migration name
  * @returns {Promise<void>}
  */
-commands.register('controlService.runMigrations', async ({service, migration}) => {
-    let response;
+commands.register('controlService.runMigrations', async ({ service, migration } = {}) => {
+    if (service) {
+        const serviceName = typeof service === 'string' ? service : service.name;
 
-    // run single migration
-    if (service && migration) {
-        logger.info(`Running migration: ${migration} for service: ${service}`);
+        logger.info(`Running migrations for service: ${serviceName}`);
 
-        const payload = {
-            method: 'runMigrations',
-            data: {
-                migration: migration
-            }
-        };
-
-        // send message to service queue
-        try {
-            response = await message.sendAndForget(service.name, payload);
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    // run all migrations for service
-    else if (service) {
-        logger.info(`Running migrations for service: ${service}`);
-
-        if (service == 'controlService') {
-            try {
-                await migrations.runMigrations();
-                return;
-            } catch (error) {
-                throw error;
-            }
+        if (serviceName === config.serviceName) {
+            return await db.migrations.runMigrations({ config });
         }
 
-        const payload = {
-            method: 'runMigrations',
-        };
-
-        // send message to service queue
-        try {
-            response = await message.sendAndForget(service.name, payload);
-        } catch (error) {
-            throw error;
-        }
+        return await commands.execute(`${serviceName}.runMigrations`, { migration });
     }
 
-    // run all migrations
-    else {
-        // get registered services
-        const services = await registry.getServices();
+    const services = await registry.getServices();
 
-        logger.info(`Running migrations for services: ${JSON.stringify(services)}`);
+    logger.info(`Running migrations for services: ${JSON.stringify(services)}`);
 
-        // run migrations for each service
-        const migrationPromises = services.map(async (service) => {
-            const payload = { 
-                method: 'runMigrations'
-            };
-
-            try {
-                return await message.sendAndForget(service.name, payload);
-            } catch (error) {
-                throw error;
+    await Promise.all(
+        services.map(async (registeredService) => {
+            if (registeredService.name === config.serviceName) {
+                return await db.migrations.runMigrations({ config });
             }
-        });
 
-        const responses = await Promise.all(migrationPromises);
-    }
+            return await commands.execute(`${registeredService.name}.runMigrations`, { migration });
+        })
+    );
+})
 
-    return response;
+/**
+ * Run seeders for all registered services.
+ *
+ * @param {Object} params
+ * @param {string} params.seeder The seeder type (e.g. 'test', 'development')
+ */
+commands.register('controlService.runAllSeeders', async ({ seeder }) => {
+    const services = await registry.getServices();
+
+    await seeders.runAll({
+        services: services,
+        seeder: seeder
+    });
 })
 
 /**
  * Run seeders
- * 
+ *
  * @param {Object} params
- * @param {string} params.service The service name
+ * @param {string|Object} params.service The service name or service object
+ * @param {string} params.seeder The seeder type (e.g. 'test', 'development')
  * @returns {Promise<void>}
  */
-commands.register('controlService.runSeeders', async ({service}) => {
-    let response;
-
-    // run seeders for service
+commands.register('controlService.runSeeders', async ({ service, seeder } = {}) => {
     if (service) {
-        logger.info(`Running seeders for service: ${service}`);
+        const serviceName = typeof service === 'string' ? service : service.name;
 
-        const payload = {
-            method: 'runSeeders',
-        };
+        logger.info(`Running seeders for service: ${serviceName}`);
 
-        // send message to service queue
-        try {
-            response = await message.sendAndForget(service.name, payload);
-        } catch (error) {
-            throw error
+        if (serviceName === config.serviceName) {
+            return await db.seeders.runSeeders({ config, seeder });
         }
+
+        return await commands.execute(`${serviceName}.runSeeders`, { seeder });
     }
 
-    // run seeders for all services
-    else {
-        // get registered services
-        const services = await registry.getServices();
+    if (seeder) {
+        return await commands.execute('controlService.runAllSeeders', { seeder });
+    }
 
-        logger.info(`Running seeders for services: ${JSON.stringify(services)}`);
+    const services = await registry.getServices();
 
-        // run seeders for each service
-        for (const service of services) {
-            const payload = {
-                method: 'runSeeders',
-            };
+    logger.info(`Running seeders for services: ${JSON.stringify(services)}`);
 
-            // send message to service queue
-            try {
-                response = await message.sendAndForget(service.name, payload);
-            } catch (error) {
-                throw error
+    await Promise.all(
+        services.map(async (registeredService) => {
+            if (registeredService.name === config.serviceName) {
+                return await db.seeders.runSeeders({ config, seeder });
             }
-        }
-    }
 
-    return response;
+            return await commands.execute(`${registeredService.name}.runSeeders`, { seeder });
+        })
+    );
 })
 
 /**
  * Run full database reset (centrally)
  */
 commands.register('controlService.runReset', async () => {
+    const services = await registry.getServices();
 
-    if (process.env.NODE_ENV !== 'development') {
-        throw new Error("Reset is only allowed in development environment");
-    }
-
-    // delete all mongodb collections
-    try {
-        await reset.dropMongoCollections();
-    } catch (error) {
-        logger.error("Error resetting MongoDB: " + error);
-    }
-
-    // delete all mysql databases
-    try {
-        await reset.dropMysqlDatabases();
-    } catch (error) {
-        logger.error("Error resetting MYSQL: " + error);
-    }
+    await reset.allServiceDatabases({
+        services: services
+    });
 })
 
 /**
  * Run health check
  * ----------------
- * 
- * Checks services are available and subscribed to RabbitMQ
+ *
+ * Checks registered services are available and have no failed tasks.
  */
 commands.register('controlService.runHealthcheck', async () => {
-
-    const services = [
-        'userService',
-        'contactService',
-        'productService',
-        'cartService',
-        'orderService',
-        'subscriptionService',
-        'checkoutService'
-    ]
+    const services = await registry.getServices();
 
     const results = await Promise.all(
         services.map(async (service) => {
             try {
-                const result = await message.sendAwaitResponse(service, {
-                    method: 'healthCheck'
-                });
-                return { service, result };
-            } catch (error) {
+                const result = await commands.execute(`${service.name}.internalHealthCheck`);
+                return { service: service.name, result };
+            } catch (healthCheckError) {
                 return {
-                    service,
-                    error: `Error checking health of ${service}: ${error}`
+                    service: service.name,
+                    error: `Error checking health of ${service.name}: ${healthCheckError}`
                 };
             }
         })
     );
 
     const errors = results
-        .filter(r => r.error)
-        .map(r => r.error);
+        .filter(result => result.error)
+        .map(result => result.error);
 
-    // Check for failed tasks
     const failedTasks = await task.getTasksByStatus({
         status: 'failed'
     });
@@ -207,21 +143,17 @@ commands.register('controlService.runHealthcheck', async () => {
         errors.push(`${failedTasks.length} failed tasks`);
     }
 
-    // Aggregate errors
     if (errors.length > 0) {
         throw new error.failedHealthCheck(JSON.stringify(errors));
     }
 
     logger.info('Health check passed');
-    return;
 })
 
 /**
  * Internal health check (kills process if it fails)
  */
 commands.register('controlService.internalHealthCheck', async () => {
-
-    // ensure db connection
     try {
         await db.checkConnection();
     } catch (err) {

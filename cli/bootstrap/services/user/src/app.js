@@ -1,4 +1,4 @@
-import { message, http, logger, db, registerService, webSockets, test } from '@gnar-engine/core';
+import { message, http, logger, db, webSockets, test } from '@gnar-engine/core';
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
 import { httpController as userPlatformHttpController } from './controllers/http.controller.js';
@@ -11,7 +11,7 @@ export const initService = async () => {
 
 	// Run migrations
 	await db.migrations.runMigrations({config});
-	db.seeders.runSeeders({config});
+	await db.seeders.runSeeders({config});
 
 	// Import command handlers after the command bus is initialised
 	await import('./commands/user.handler.js');
@@ -35,9 +35,6 @@ export const initService = async () => {
 
 	// Start the HTTP server
 	await http.start();
-
-	// Register service with control service
-    await registerService();
 
 	logger.info('G n a r  E n g i n e | User Service initialised successfully.');
 

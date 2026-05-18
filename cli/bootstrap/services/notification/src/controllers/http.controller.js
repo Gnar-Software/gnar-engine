@@ -30,7 +30,12 @@ export const httpController = {
 		url: '/notifications/',
 		preHandler: async (request, reply) => authorise.getMany(request, reply),
 		handler: async (request, reply) => {
-			const params = {};
+			const params = {
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum,
+				filters: request.query.filters ? JSON.parse(request.query.filters) : {},
+				ids: request.query.ids ? request.query.ids.split(',') : []
+			};
 			const results = await commands.execute('getManyNotifications', params);
 			reply.code(200).send({ notifications: results });
 		}
@@ -62,11 +67,27 @@ export const httpController = {
 		handler: async (request, reply) => {
 			const params = {
 				id: request.params.id,
-				newNotificationData: request.body
+				data: request.body
 			};
 			const result = await commands.execute('updateNotification', params);
 			reply.code(200).send({ notification: result });
 		},
+	},
+
+	/**
+	 * Archive all passed notifications by IDs
+	 */
+	archiveAll: {
+		method: 'POST',
+		url: '/notifications/archive/',
+		preHandler: async (request, reply) => authorise.update(request, reply),
+		handler: async (request, reply) => {
+			const params = {
+				ids: request.body.ids || [],
+			};
+			const result = await commands.execute('archiveNotifications', params);
+			reply.code(200).send({ notifications: result });
+		}
 	},
 
 	/**

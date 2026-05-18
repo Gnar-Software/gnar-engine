@@ -1,7 +1,7 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { {{serviceName}} } from '../services/{{serviceName}}.service.js';
 import { config } from '../config.js';
-import { validate{{pascalCase serviceName}} } from '../schema/{{serviceName}}.schema.js';
+import { validate{{pascalCase serviceName}}, validate{{pascalCase serviceName}}Update } from '../schema/{{serviceName}}.schema.js';
 
 
 /**
@@ -18,8 +18,8 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase serviceName}}', 
 /**
  * Get many {{lowerCasePlural serviceName}}
  */
-commands.register('{{serviceName}}Service.getMany{{pascalCasePlural serviceName}}', async ({}) => {
-    return await {{serviceName}}.getAll();
+commands.register('{{serviceName}}Service.getMany{{pascalCasePlural serviceName}}', async ({ pageSize, pageNum, filters = {}, ids = [] } = {}) => {
+    return await {{serviceName}}.getAll({ pageSize, pageNum, filters, ids });
 });
 
 /**

@@ -6,14 +6,6 @@ import { commands } from '@gnar-engine/core';
  */
 export const messageHandlers = {
 
-    registerService: async (payload) => {
-        const service = await commands.execute('registerService', {
-            service: payload.data.service,
-        });
-
-        return { service };
-    },
-
     getServices: async (payload) => {
         const services = await commands.execute('getServices', payload.data);
         

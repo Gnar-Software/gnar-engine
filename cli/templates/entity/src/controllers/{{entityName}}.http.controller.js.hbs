@@ -30,7 +30,11 @@ export const httpController = {
 		url: '/{{lowerCasePlural entityName}}/',
 		preHandler: async (request, reply) => authorise.getMany(request, reply),
 		handler: async (request, reply) => {
-			const params = {};
+			const params = {
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum,
+				filters: request.query.filters ? JSON.parse(request.query.filters) : {}
+			};
 			const results = await commands.execute('getMany{{pascalCasePlural entityName}}', params);
 			reply.code(200).send({ {{lowerCasePlural entityName}}: results });
 		}

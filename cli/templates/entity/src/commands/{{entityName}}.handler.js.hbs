@@ -1,7 +1,7 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { {{entityName}} } from '../services/{{entityName}}.service.js';
 import { config } from '../config.js';
-import { validate{{pascalCase entityName}} } from '../schema/{{entityName}}.schema.js';
+import { validate{{pascalCase entityName}}, validate{{pascalCase entityName}}Update } from '../schema/{{entityName}}.schema.js';
 
 
 /**
@@ -18,8 +18,8 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase entityName}}', a
 /**
  * Get many {{lowerCasePlural entityName}}
  */
-commands.register('{{serviceName}}Service.getMany{{pascalCasePlural entityName}}', async ({}) => {
-    return await {{entityName}}.getAll();
+commands.register('{{serviceName}}Service.getMany{{pascalCasePlural entityName}}', async ({ pageSize, pageNum, filters = {}, ids = [] } = {}) => {
+    return await {{entityName}}.getAll({ pageSize, pageNum, filters, ids });
 });
 
 /**

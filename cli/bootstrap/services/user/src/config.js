@@ -7,7 +7,7 @@ export const config = {
     serviceName: 'userService',
 
     // environment
-    environment: process.env.USER_NODE_ENV || 'dev',
+    environment: process.env.USER_NODE_ENV || 'development',
     runTests: process.env.USER_RUN_TESTS || false,
     resetDatabase: process.env.USER_RESET_DATABASE || false,
 
@@ -16,7 +16,6 @@ export const config = {
 
     // web server
     http: {
-        allowedOrigins: ['localhost', 'localhost:4003'],
         allowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         rateLimiting: {
@@ -39,8 +38,8 @@ export const config = {
         user: process.env.USER_MYSQL_USER,
         password: process.env.USER_MYSQL_PASSWORD,
         database: process.env.USER_MYSQL_DATABASE,
-        connectionLimit: 10,
-        queueLimit: 20,
+        connectionLimit: 3,
+        queueLimit: 30,
         maxRetries: 5
     },
 
@@ -60,18 +59,22 @@ export const config = {
     userRoles: [
         'service_admin',
         'admin',
-        'customer'
+        'leaseholder'
     ],
 
     publicCanCreateRoles: [
-        'customer'
+
     ],
 
-    defaultUserRole: 'customer',
+    defaultUserRole: 'leaseholder',
 
     authenticationOptions: {
         password_auth_enabled: true,
         api_key_auth_enabled: true
+    },
+
+    notifications: {
+        passwordResetFromEmail: process.env.USER_PASSWORD_RESET_EMAIL_FROM || 'noreply@example.com'
     },
 
     hashNameSpace: '8a07b16c-327f-45c5-9484-8d843f57bb4b',

@@ -4,25 +4,40 @@ export const {{entityName}} = {
     async getById({ id }) {
         const [result] = await db.query('SELECT * FROM {{lowerCasePlural entityName}} WHERE id = ?', [id]);
 
-        if (!result) {
+        if (!result || result.length === 0) {
             return null;
         }
 
-        return db.sql.helpers.objectToCamelCase(result);
+        return db.sql.helpers.objectToCamelCase(result[0]);
     },
 
-    async getAll({ pageSize = 100, pageNum = 1 }) {
+    async getAll({ pageSize = 100, pageNum = 1, filters = {}, ids = [] } = {}) {
         pageSize = Number(pageSize);
         pageNum  = Number(pageNum);
         const offset = (pageNum - 1) * pageSize;
 
+        const filterKeys = Object.keys(filters);
+        const whereClauses = filterKeys.map(key => `${db.sql.helpers.toSnake(key)} = ?`);
+
+        if (ids.length) {
+            whereClauses.push(`id IN (${ids.map(() => '?').join(',')})`);
+        }
+
+        const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+        const params = filterKeys.map(key => filters[key]);
+
+        if (ids.length) {
+            params.push(...ids);
+        }
+
         const [rows] = await db.query(
-            'SELECT * FROM {{lowerCasePlural entityName}} LIMIT ? OFFSET ?',
-            [pageSize, offset]
+            `SELECT * FROM {{lowerCasePlural entityName}} ${whereSql} LIMIT ? OFFSET ?`,
+            [...params, pageSize, offset]
         );
 
         const [[{ total }]] = await db.query(
-            'SELECT COUNT(*) AS total FROM {{lowerCasePlural entityName}}'
+            `SELECT COUNT(*) AS total FROM {{lowerCasePlural entityName}} ${whereSql}`,
+            params
         );
 
         return {

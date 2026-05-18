@@ -22,7 +22,7 @@ export const initDatabaseTables = async () => {
     // Migrations table
     logger.info("Creating migrations table");
     const createMigrationsTableQuery = `
-        CREATE TABLE migrations (
+        CREATE TABLE IF NOT EXISTS migrations (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -32,7 +32,7 @@ export const initDatabaseTables = async () => {
     // Seeders table
     logger.info("Creating seeders table");
     const createSeedersTableQuery = `
-        CREATE TABLE seeders (
+        CREATE TABLE IF NOT EXISTS seeders (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

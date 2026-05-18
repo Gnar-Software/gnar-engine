@@ -1,4 +1,5 @@
 import { logger, utils, db } from '@gnar-engine/core';
+import { config } from '../config.js';
 
 
 /**
@@ -6,15 +7,46 @@ import { logger, utils, db } from '@gnar-engine/core';
  */
 export const task = {
 
-    // schedule a task
-    scheduleTask: async ({name, payload, scheduled, recurringInterval, recurringIntervalCount, rescheduleCentrallyOnSuccess = false, rescheduleCentrallyOnFailure = false, handlerServiceName, handlerName, idempotencyKey = ''}) => {
+    // get task by id
+    getById: async ({id}) => {
+        const [result] = await db.query('SELECT * FROM tasks WHERE id = ?', [id]);
+
+        if (!result) {
+            return null;
+        }
+
+        const normalisedResult = db.sql.helpers.objectToCamelCase(result[0]);
+
         try {
+            normalisedResult.payload = JSON.parse(normalisedResult.payload)
+        } catch (error) {
+
+        }
+
+        return normalisedResult;
+    },
+
+    // schedule a task
+    scheduleTask: async ({
+        name,
+        payload,
+        scheduled,
+        recurringTaskId,
+        rescheduleCentrallyOnFailure = true,
+        handler,
+        idempotencyKey = ''
+    }) => {
+        try {
+            const id = utils.uuid();
+
             const [result] = await db.execute(
-                'INSERT INTO `tasks` (`id`, `name`, `payload`, `status`, `scheduled`, `recurring_interval`, `recurring_interval_count`, `reschedule_centrally_on_success`, `reschedule_centrally_on_failure`, `handler_service_name`, `handler_name`, `idempotency_key`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [utils.uuid(), name, JSON.stringify(payload), 'scheduled', scheduled, recurringInterval, recurringIntervalCount, rescheduleCentrallyOnSuccess, rescheduleCentrallyOnFailure, handlerServiceName, handlerName, idempotencyKey]
+                'INSERT INTO `tasks` (`id`, `name`, `payload`, `status`, `scheduled`, `recurring_task_id`, `reschedule_centrally_on_failure`, `handler`, `idempotency_key`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [id, name, JSON.stringify(payload), 'scheduled', scheduled, recurringTaskId, rescheduleCentrallyOnFailure, handler, idempotencyKey]
             );
 
-            return result.insertId;
+            return await task.getById({
+                id: id
+            });
         } catch (error) {
             logger.error("Error scheduling task:" + error);
             throw error;
@@ -54,27 +86,23 @@ export const task = {
     // get task batch
     getTaskBatch: async ({status}) => {
         try {
-            const [result] = await db.execute(
-                'SELECT * FROM `tasks` WHERE `status` = ? AND `scheduled` <= NOW()',
-                [status]
+            const claimedStatus = 'processing-' + config.hostName;
+
+            // claim
+            await db.execute(
+                'UPDATE `tasks` SET `status` = ? WHERE `status` = ? AND `scheduled` <= NOW()',
+                [claimedStatus, status]
             );
 
-            // map from snake case to camel case
-            const tasks = result.map(task => {
-                return {
-                    id: task.id,
-                    name: task.name,
-                    payload: JSON.parse(task.payload),
-                    status: task.status,
-                    scheduled: task.scheduled,
-                    recurringInterval: task.recurring_interval,
-                    recurringIntervalCount: task.recurring_interval_count,
-                    rescheduleCentrallyOnSuccess: task.reschedule_centrally_on_success,
-                    rescheduleCentrallyOnFailure: task.reschedule_centrally_on_failure,
-                    handlerServiceName: task.handler_service_name,
-                    handlerName: task.handler_name,
-                    idempotencyKey: task.idempotency_key
-                };
+            // fetch
+            const [result] = await db.execute(
+                'SELECT * FROM `tasks` WHERE `status` = ? AND `scheduled` <= NOW()',
+                [claimedStatus]
+            );
+
+            // normalise
+            let tasks = result.map(taskObj => {
+                return task.normaliseTaskForResponse(taskObj);
             });
 
             return tasks;
@@ -92,27 +120,34 @@ export const task = {
                 [status]
             );
 
-            // map from snake case to camel case
-            const tasks = result.map(task => {
-                return {
-                    id: task.id,
-                    name: task.name,
-                    payload: JSON.parse(task.payload),
-                    status: task.status,
-                    scheduled: task.scheduled,
-                    recurringInterval: task.recurring_interval,
-                    recurringIntervalCount: task.recurring_interval_count,
-                    rescheduleCentrallyOnSuccess: task.reschedule_centrally_on_success,
-                    rescheduleCentrallyOnFailure: task.reschedule_centrally_on_failure,
-                    handlerServiceName: task.handler_service_name,
-                    handlerName: task.handler_name,
-                    idempotencyKey: task.idempotency_key
-                };
+            // normalise
+            let tasks = result.map(taskObj => {
+                return task.normaliseTaskForResponse(taskObj);
             });
 
             return tasks;
         } catch (error) {
             logger.error("Error getting tasks by status in service:" + error);
+            throw error;
+        }
+    },
+
+    // get scheduled tasks by recurring task if task is active
+    getScheduledForRecurringTask: async ({ recurringTaskId }) => {
+        try {
+            const [result] = await db.execute(
+                'SELECT * FROM `tasks` WHERE `recurring_task_id` = ? AND `status` = ? AND `scheduled` >= NOW() ORDER BY `scheduled` ASC',
+                [recurringTaskId, 'scheduled']
+            );
+
+            // normalise
+            let tasks = result.map(taskObj => {
+                return task.normaliseTaskForResponse(taskObj);
+            });
+
+            return tasks;
+        } catch (error) {
+            logger.error("Error getting scheduled tasks for recurring task in service:" + error);
             throw error;
         }
     },
@@ -149,5 +184,19 @@ export const task = {
             logger.error("Error deleting failed tasks:" + error);
             throw error;
         }
+    },
+
+    normaliseTaskForResponse: (task) => {
+        const normalisedTask = db.sql.helpers.objectToCamelCase(task);
+
+        try {
+            if (typeof task.payload === 'string') {
+                normalisedTask.payload = JSON.parse(task.payload);
+            }
+        } catch (error) {
+
+        }
+
+        return normalisedTask;
     }
 };

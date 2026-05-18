@@ -16,7 +16,6 @@ export const config = {
 
     // web server
     http: {
-        allowedOrigins: [],
         allowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         rateLimiting: {
@@ -41,7 +40,7 @@ export const config = {
         database: process.env.CONTROL_MYSQL_DATABASE,
         // port: process.env.CONTROL_MYSQL_PORT,
         connectionLimit: 10,
-        queueLimit: 20,
+        queueLimit: 200,
         maxRetries: 5
     },
 
@@ -50,6 +49,11 @@ export const config = {
         url: process.env.RABBITMQ_URL,
         queueName: 'controlServiceQueue',
         prefetch: 20,
+    },
+
+    // central task scheduler
+    tasks: {
+        forwardScheduleNum: 1
     },
 
     // web socket client & server

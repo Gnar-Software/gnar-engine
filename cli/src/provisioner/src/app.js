@@ -68,8 +68,8 @@ export const initService = async () => {
 
     try {
         await controlService.init(mysqlDatabases.control);
-        await controlService.flushOldConnections();
         await controlService.flushOldReplicas();
+        await controlService.flushOldConnections();
     } finally {
         await controlService.close();
     }

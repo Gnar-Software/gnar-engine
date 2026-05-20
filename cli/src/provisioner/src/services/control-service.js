@@ -3,8 +3,49 @@ import mysql from 'mysql2/promise';
 
 const retryInterval = 5000;
 const maxRetries = 5;
+const runtimeTables = {
+    service_replicas: 'service replicas',
+    peer_connections: 'service connections'
+};
 
 let db;
+
+const assertInitialised = () => {
+    if (!db) {
+        throw new Error('Control service database connection not initialized. Cannot flush old replicas and connections.');
+    }
+}
+
+const tableExists = async (tableName) => {
+    const [rows] = await db.query(
+        `
+            SELECT TABLE_NAME
+            FROM information_schema.TABLES
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+            LIMIT 1
+        `,
+        [tableName]
+    );
+
+    return rows.length > 0;
+}
+
+const flushRuntimeTable = async (tableName) => {
+    assertInitialised();
+
+    if (!Object.hasOwn(runtimeTables, tableName)) {
+        throw new Error(`Unsupported runtime table cleanup requested: ${tableName}`);
+    }
+
+    if (!await tableExists(tableName)) {
+        console.log(`Skipping old ${runtimeTables[tableName]} cleanup; ${tableName} table does not exist yet.`);
+        return;
+    }
+
+    await db.query(`DELETE FROM \`${tableName}\`;`);
+    console.log(`Flushed old ${runtimeTables[tableName]} from control service database.`);
+}
 
 export const controlService = {
 
@@ -38,26 +79,16 @@ export const controlService = {
     },
 
     flushOldReplicas: async () => {
-        if (!db) {
-            throw new Error('Control service database connection not initialized. Cannot flush old replicas and connections.');
-        }
-
         try {
-            await db.query(`DELETE FROM service_replicas;`)
-            console.log('Flushed old service replicas from control service database.');
+            await flushRuntimeTable('service_replicas');
         } catch (error) {
             throw new Error(`Error flushing old service replicas: ${error.message}`);
         }
     },
 
     flushOldConnections: async () => {
-        if (!db) {
-            throw new Error('Control service database connection not initialized. Cannot flush old replicas and connections.');
-        }
-
         try {
-            await db.query(`DELETE FROM peer_connections;`)
-            console.log('Flushed old service connections from control service database.');
+            await flushRuntimeTable('peer_connections');
         } catch (error) {
             throw new Error(`Error flushing old service connections: ${error.message}`);
         }

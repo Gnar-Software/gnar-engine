@@ -13,8 +13,10 @@ export const manifest = {
     /**
      * Generates a manifest of all registered commands
      */
-    addCommand({ commandName, handlerFunction }) {
+    addCommand({ commandName, handlerFunction, metadata = {} }) {
         manifest.manifest.commandImplementations[commandName] = {
+            ...metadata,
+            commandName,
             function: handlerFunction.toString()
         };
         manifest.manifest.commandList.push(commandName);

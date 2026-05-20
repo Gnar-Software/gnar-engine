@@ -22,7 +22,7 @@ export const rabbitService = {
                     throw new Error('Max retries reached. Could not connect to RabbitMQ message queue.');
                 }
 
-                await new Promise(resolve => setTimeout(resolve, retryInterval));
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
         }
     }

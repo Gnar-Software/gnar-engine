@@ -43,10 +43,14 @@ export const controlService = {
         }
 
         try {
+            // if (!await db.query(`SHOW TABLES LIKE 'service_replicas';`)) {
+            //     return;
+            // }
+
             await db.query(`DELETE FROM service_replicas;`)
             console.log('Flushed old service replicas from control service database.');
         } catch (error) {
-            throw new Error(`Error flushing old service replicas: ${error.message}`);
+            //throw new Error(`Error flushing old service replicas: ${error.message}`);
         }
     },
 
@@ -56,10 +60,14 @@ export const controlService = {
         }
 
         try {
+            // if (!await db.query(`SHOW TABLES LIKE 'peer_connections';`)) {
+            //     return;
+            // }
+
             await db.query(`DELETE FROM peer_connections;`)
             console.log('Flushed old service connections from control service database.');
         } catch (error) {
-            throw new Error(`Error flushing old service connections: ${error.message}`);
+            //throw new Error(`Error flushing old service connections: ${error.message}`);
         }
     },
 

@@ -1,64 +1,41 @@
-import { config } from '../config.js';
-import { sesService } from '../services/ses.service.js';
 import { commands, logger, error } from '@gnar-engine/core';
 import { emailNotification } from '../services/emailNotification.service.js';
+import { config } from '../config.js';
 import { validateEmailNotification, validateEmailNotificationUpdate } from '../schema/emailNotification.schema.js';
+import { sesService } from '../services/ses.service.js';
+import { compileNotificationTemplate } from '../services/template.service.js';
 
-
-/**
- * Get single emailNotification
- */
-commands.register('notificationService.getSingleEmailNotification', async ({ id }) => {
-    if (id) {
-        return await emailNotification.getById({ id: id });
-    } else {
-        throw new error.badRequest('EmailNotification id required');
-    }
+commands.register('notificationService.compileTemplate', async ({ templateSlug, data = {} }) => {
+    return await compileNotificationTemplate({ templateSlug, data });
 });
 
+commands.register('notificationService.getSingleEmailNotification', async ({ id }) => {
+    if (!id) {
+        throw new error.badRequest('EmailNotification id required');
+    }
 
-/**
- * Get emailNotifications by user ID
- */
-commands.register('notificationService.getEmailNotificationsByUserId', async ({ userId }) => {
+    return await emailNotification.getById({ id });
+});
+
+commands.register('notificationService.getEmailNotificationsByUserId', async ({ userId, pageSize, pageNum }) => {
     if (!userId) {
         throw new error.badRequest('User ID required');
     }
 
-    return await emailNotification.getByUserId({ userId: userId });
+    return await emailNotification.getByUserId({ userId, pageSize, pageNum });
 });
 
-
-/**
- * Get email template associated with email notification
- */
-commands.register('notificationService.getEmailNotificationTemplate', async ({ emailId }) => {
-    if (!emailId) {
-        throw new error.badRequest('EmailNotification ID required');
-    }
-
-    return await emailNotification.getEmailTemplate({ emailId: emailId });
+commands.register('notificationService.getManyEmailNotifications', async ({ pageSize, pageNum } = {}) => {
+    return await emailNotification.getAll({ pageSize, pageNum });
 });
 
-
-/**
- * Get many emailNotifications
- */
-commands.register('notificationService.getManyEmailNotifications', async ({ }) => {
-    return await emailNotification.getAll();
-});
-
-
-/**
- * Create emailNotifications
- */
 commands.register('notificationService.createEmailNotifications', async ({ emailNotifications }) => {
     const validationErrors = [];
     const createdNewEmailNotifications = [];
 
     for (const emailNotificationObj of emailNotifications) {
+        emailNotificationObj.fromEmail = emailNotificationObj.fromEmail || config.email?.from;
 
-        // validate
         const { errors } = validateEmailNotification(emailNotificationObj);
         if (errors?.length) {
             validationErrors.push(errors);
@@ -69,7 +46,6 @@ commands.register('notificationService.createEmailNotifications', async ({ email
             throw new error.badRequest('EmailNotification templateSlug missing and no content provided');
         }
 
-        // compile email from template if templateSlug provided
         if (emailNotificationObj.templateSlug) {
             emailNotificationObj.content = await commands.execute('notificationService.compileTemplate', {
                 templateSlug: emailNotificationObj.templateSlug,
@@ -77,7 +53,17 @@ commands.register('notificationService.createEmailNotifications', async ({ email
             });
         }
 
-        // schedule for immediate sending
+        let createdEmailNotificationObj;
+
+        try {
+            createdEmailNotificationObj = await emailNotification.create({
+                data: emailNotificationObj
+            });
+        } catch (err) {
+            logger.error('Failed to create email notification', err);
+            continue;
+        }
+
         try {
             const scheduledTask = await commands.execute('controlService.scheduleTask', {
                 task: {
@@ -88,31 +74,21 @@ commands.register('notificationService.createEmailNotifications', async ({ email
                     },
                     scheduled: new Date(),
                     idempotencyKey: emailNotificationObj.idempotencyKey || null,
-                    rescheduleCentrallyOnFailure: true,
+                    rescheduleCentrallyOnFailure: true
                 }
-            })
+            });
 
             logger.info('scheduled email sending task', scheduledTask);
 
-            // bail if it's already scheduled
-            if (scheduledTask.status == 'already_scheduled') {
-                logger.info(`Email notification ${emailNotificationObj.notificationId} already scheduled for sending`);
-                return;
+            if (scheduledTask.status === 'already_scheduled') {
+                createdNewEmailNotifications.push(createdEmailNotificationObj);
+                continue;
             }
-
-        } catch (error) {
-            logger.error(`Failed to schedule email notification ${emailNotificationObj.notificationId} for sending `, error);
+        } catch (err) {
+            logger.error(`Failed to schedule email notification ${emailNotificationObj.notificationId} for sending`, err);
         }
 
-        // store
-        const created = await emailNotification.create({
-            data: emailNotificationObj
-        });
-
-        // Default status is 'pending' on email creation - on scheduled task execution will need to change it to success
-
-        // collect and return created emailNotifications
-        createdNewEmailNotifications.push(created);
+        createdNewEmailNotifications.push(createdEmailNotificationObj);
     }
 
     if (validationErrors.length) {
@@ -122,23 +98,14 @@ commands.register('notificationService.createEmailNotifications', async ({ email
     return createdNewEmailNotifications;
 });
 
-
-/**
- * Update emailNotification
- * @param {Object} params
- * @param {string|number} params.id - EmailNotification ID
- * @param {Object} params.data - New emailNotification data
- * @returns {Promise<Object>} The updated emailNotification data
- */
 commands.register('notificationService.updateEmailNotification', async ({ id, data }) => {
-
     const validationErrors = [];
 
     if (!id) {
-        throw new error.badRequest('Emailnotification ID required');
+        throw new error.badRequest('EmailNotification ID required');
     }
 
-    const obj = await emailNotification.getById({ id: id });
+    const obj = await emailNotification.getById({ id });
 
     if (!obj) {
         throw new error.notFound('EmailNotification not found');
@@ -156,44 +123,27 @@ commands.register('notificationService.updateEmailNotification', async ({ id, da
         throw new error.badRequest(`Invalid emailNotification data: ${validationErrors}`);
     }
 
-    return await emailNotification.update({
-        id: id,
-        data
-    });
+    return await emailNotification.update({ id, data });
 });
 
-
-/**
- * Delete emailnotification
- */
 commands.register('notificationService.deleteEmailNotification', async ({ id }) => {
-    const obj = await emailNotification.getById({ id: id });
+    const obj = await emailNotification.getById({ id });
+
     if (!obj) {
         throw new error.notFound('EmailNotification not found');
     }
-    return await emailNotification.delete({ id: id });
+
+    return await emailNotification.delete({ id });
 });
 
-
-/** TODO: Not implemented yet - just copy paste from McD
- * Send emailNotification (SES)
- * - Loads notification
- * - Renders template if templateSlug exists
- * - Sends email via SES
- * - Updates status + sentAt
- */
-commands.register('notificationService.sendEmailNotification', async ({ id, notificationId, templateData } = {}) => {
+commands.register('notificationService.sendEmailNotification', async ({ id, notificationId } = {}) => {
     if (!id && !notificationId) {
         throw new error.badRequest('EmailNotification id or notificationId required');
     }
 
-    let notificationObj = null;
-
-    if (id) {
-        notificationObj = await emailNotification.getById({ id });
-    } else {
-        notificationObj = await emailNotification.getLatestByNotificationId({ notificationId });
-    }
+    const notificationObj = id
+        ? await emailNotification.getById({ id })
+        : await emailNotification.getLatestByNotificationId({ notificationId });
 
     if (!notificationObj) {
         throw new error.notFound('EmailNotification not found');
@@ -204,17 +154,15 @@ commands.register('notificationService.sendEmailNotification', async ({ id, noti
     }
 
     try {
-
-        // validate
-        if (!notificationObj.fromEmail) {
+        if (!notificationObj.from_email) {
             throw new Error('fromEmail missing');
         }
 
-        if (!notificationObj.emailAddress) {
+        if (!notificationObj.email_address) {
             throw new Error('emailAddress missing');
         }
 
-        if (!notificationObj.subjectLine) {
+        if (!notificationObj.subject_line) {
             throw new Error('subjectLine missing');
         }
 
@@ -222,37 +170,40 @@ commands.register('notificationService.sendEmailNotification', async ({ id, noti
             throw new Error('content missing');
         }
 
-        // send email via SES
+        const parseAddresses = value => {
+            if (!value) {
+                return [];
+            }
+
+            return typeof value === 'string' ? JSON.parse(value) : value;
+        };
+
         const sendRes = await sesService.sendEmail({
-            from: notificationObj.fromEmail ?? config?.email?.from,
-            to: notificationObj.emailAddress,
-            subject: notificationObj.subjectLine,
+            from: notificationObj.from_email,
+            to: notificationObj.email_address,
+            cc: parseAddresses(notificationObj.cc_email_addresses),
+            bcc: parseAddresses(notificationObj.bcc_email_addresses),
+            subject: notificationObj.subject_line,
             html: notificationObj.content,
-            text: null,
-            cc: Array.isArray(notificationObj.ccEmailAddresses) ? notificationObj.ccEmailAddresses : [],
-            bcc: Array.isArray(notificationObj.bccEmailAddresses) ? notificationObj.bccEmailAddresses : [],
+            text: null
         });
 
-        const updated = await emailNotification.markSent({
-            id: notificationObj.id,
-        });
+        const updated = await emailNotification.markSent({ id: notificationObj.id });
 
         return {
             ok: true,
             messageId: sendRes?.messageId,
             emailNotification: updated
         };
-
     } catch (err) {
         logger.error(err.message, 'Failed to send email notification');
 
-        // mark as failed
         try {
-            await emailNotification.markFailed({
-                id: notificationObj.id,
-            });
+            await emailNotification.markFailed({ id: notificationObj.id });
         } catch {
             logger.error(`Failed to mark email notification ${notificationObj.id} as failed`);
         }
+
+        throw err;
     }
 });

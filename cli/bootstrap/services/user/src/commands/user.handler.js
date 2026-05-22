@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { user } from '../services/user.service.js';
-import { commands, logger, error } from '@gnar-engine/core';
+import { commands, logger, error, utils } from '@gnar-engine/core';
 import { auth } from '../services/authentication.service.js';
 import { passwordReset } from '../services/passwordReset.service.js';
 import { validateUser, validateServiceAdminUser, validateUserUpdate, validateServiceAdminUserUpdate } from '../schema/user.schema.js';
@@ -352,39 +352,36 @@ commands.register('userService.deleteUser', async ({ id }) => {
     return await user.delete({ id: id });
 });
 
-
 /**
- * Request password reset
+ * Request password reset.
  *
  * @param {Object} params
  * @param {string} params.email
+ * @param {boolean} params.createComplexPassword
  * @returns {Promise<{success: boolean}>}
  */
-commands.register('userService.requestPasswordReset', async ({ email }) => {
+commands.register('userService.requestPasswordReset', async ({ email, createComplexPassword = false }) => {
     if (!email) {
-        return {
-            success: false,
-        };
+        return { success: false };
     }
 
     try {
         const userObj = await user.getByEmail({ email });
+
         if (!userObj) {
             return { success: false };
         }
 
         const token = await passwordReset.createResetToken({ email: userObj.email });
-
         const frontEndUrl = process.env.FRONTEND_URL || '';
         const resetUrl = frontEndUrl
             ? `${frontEndUrl}/password-reset?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}&create_complex_password=${createComplexPassword ? 'true' : 'false'}`
             : null;
 
-        if (process.env.USER_NODE_ENV !== 'production') {
+        if (config.environment !== 'production') {
             logger.info(`Password reset requested for ${email}${resetUrl ? ` | resetUrl: ${resetUrl}` : ''}`);
         }
 
-        // trigger notification
         const notifications = await commands.execute('notificationService.createNotifications', {
             notifications: [
                 {
@@ -392,22 +389,17 @@ commands.register('userService.requestPasswordReset', async ({ email }) => {
                     userId: userObj.id,
                     emailAddress: userObj.email,
                     fromEmail: config.notifications.passwordResetFromEmail,
-                    subjectLine: 'Reset your password',
-                    templateSlug: 'account-password-reset',
-                    content: '',
+                    subjectLine: createComplexPassword ? 'Set up your account' : 'Reset your password',
+                    templateSlug: createComplexPassword ? 'account-setup-complete' : 'account-password-reset',
                     templateData: {
-                        userName: userObj.username,
-                        resetUrl: resetUrl,
-                        logoUrl: '#'
+                        name: userObj.username,
+                        resetUrl
                     }
                 }
             ]
         });
 
-        logger.info(notifications);
-
-        const notificationId = notifications?.[0]?.id;
-        if (!notificationId) {
+        if (!notifications?.[0]?.id) {
             throw new Error('Failed to create notification');
         }
 
@@ -418,9 +410,8 @@ commands.register('userService.requestPasswordReset', async ({ email }) => {
     }
 });
 
-
 /**
- * Change password
+ * Change password using a password-reset token.
  *
  * @param {Object} params
  * @param {string} params.email
@@ -437,29 +428,29 @@ commands.register('userService.changePassword', async ({ email, token, password 
         throw new error.badRequest('Password must be at least 8 characters');
     }
 
-    // verify token
-    const isValidToken = await passwordReset.verifyPasswordResetToken({
+    const tokenStatus = await passwordReset.verifyPasswordResetToken({
         token,
-        email,
+        email
     });
 
-    if (!isValidToken) {
-        throw new error.badRequest('Invalid or expired password reset token');
+    if (tokenStatus === 'expired') {
+        throw new error.badRequest('Password reset link has expired');
     }
 
-    // check user exists
+    if (tokenStatus !== 'valid') {
+        throw new error.badRequest('Password reset link is invalid or has already been used');
+    }
+
     const userObj = await user.getByEmail({ email });
 
     if (!userObj) {
         throw new error.notFound('User not found');
     }
 
-    // hash + update password
-    const hashedPassword = await auth.hashPassword({ password });
-
+    const hashedPassword = await utils.hash(password, config.hashNameSpace);
     const updateResult = await user.changePassword({
         id: userObj.id,
-        newPassword: hashedPassword,
+        newPassword: hashedPassword
     });
 
     if (!updateResult) {

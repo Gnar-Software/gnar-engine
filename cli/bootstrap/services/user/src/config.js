@@ -74,7 +74,7 @@ export const config = {
     },
 
     notifications: {
-        passwordResetFromEmail: process.env.USER_PASSWORD_RESET_EMAIL_FROM || 'noreply@example.com'
+        passwordResetFromEmail: process.env.USER_PASSWORD_RESET_FROM_EMAIL || 'no-reply@example.com'
     },
 
     hashNameSpace: '8a07b16c-327f-45c5-9484-8d843f57bb4b',

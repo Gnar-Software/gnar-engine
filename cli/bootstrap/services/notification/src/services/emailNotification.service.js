@@ -1,9 +1,15 @@
-import { db, utils, commands } from '@gnar-engine/core';
+import { db, utils } from '@gnar-engine/core';
+
+const serializeValue = value => (
+    Array.isArray(value) || (value && typeof value === 'object')
+        ? JSON.stringify(value)
+        : value
+);
 
 export const emailNotification = {
     async getById({ id }) {
-        const [result] = await db.execute('SELECT * FROM email_notifications WHERE id = ?', [id]);
-        return result[0] || null;
+        const [rows] = await db.execute('SELECT * FROM email_notifications WHERE id = ?', [id]);
+        return rows[0] || null;
     },
 
     async getAll({ pageSize = 100, pageNum = 1 } = {}) {
@@ -12,8 +18,7 @@ export const emailNotification = {
         const offset = (pageNum - 1) * pageSize;
 
         const [rows] = await db.execute(
-            `SELECT * FROM email_notifications LIMIT ${pageSize} OFFSET ${offset}`,
-            []
+            `SELECT * FROM email_notifications LIMIT ${pageSize} OFFSET ${offset}`
         );
 
         const [[{ total }]] = await db.execute(
@@ -21,14 +26,9 @@ export const emailNotification = {
         );
 
         return {
-            // data: rows.map(row => db.sql.helpers.objectToCamelCase(row)),
             data: rows,
-            pagination: {
-                pageSize,
-                pageNum,
-                total
-            }
-        }
+            pagination: { pageSize, pageNum, total }
+        };
     },
 
     async getByUserId({ userId, pageSize = 100, pageNum = 1 } = {}) {
@@ -40,115 +40,93 @@ export const emailNotification = {
             SELECT
                 email_notifications.*,
                 p.user_id AS user_id
-            FROM 
-                email_notifications 
-            LEFT JOIN 
+            FROM
+                email_notifications
+            LEFT JOIN
                 notifications AS p ON p.id = email_notifications.notification_id
-            WHERE 
+            WHERE
                 p.user_id = ?
-            LIMIT 
+            LIMIT
                 ${pageSize} OFFSET ${offset}
-            `, [userId]
+            `,
+            [userId]
         );
 
         const [[{ total }]] = await db.execute(`
-            SELECT 
-                COUNT(*) AS total FROM email_notifications 
-            LEFT JOIN 
+            SELECT
+                COUNT(*) AS total
+            FROM
+                email_notifications
+            LEFT JOIN
                 notifications AS p ON p.id = email_notifications.notification_id
-            WHERE 
+            WHERE
                 p.user_id = ?
-            `, [userId]
+            `,
+            [userId]
         );
 
         return {
             data: rows,
-            pagination: {
-                pageSize,
-                pageNum,
-                total
-            }
+            pagination: { pageSize, pageNum, total }
         };
     },
 
-    async getEmailTemplate({ emailId }) {
-        const emailNotification = await this.getById({ id: emailId });
-        if (!emailNotification || !emailNotification.template_id) {
-            return null;
-        }
-
-        const templateId = emailNotification.template_id;
-        if (!templateId) {
-            return null;
-        }
-
-        return await commands.execute('notificationService.getSingleTemplate', { id: emailNotification.template_id });
-    },
-
     async create({ data }) {
-        // Generate a unique ID for the notification
         const id = utils.uuid();
-
         const columns = ['id', ...Object.keys(data).map(db.sql.helpers.toSnake)];
         const placeholders = columns.map(() => '?');
-        const values = [
-            id,
-            ...Object
-                .values(data)
-                .map(data => Array.isArray(data) || typeof data === 'object' ? JSON.stringify(data) : data)
-        ];
+        const values = [id, ...Object.values(data).map(serializeValue)];
 
-        const sql = `INSERT INTO email_notifications (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`;
-        await db.execute(sql, values);
+        await db.execute(
+            `INSERT INTO email_notifications (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`,
+            values
+        );
 
         return await this.getById({ id });
     },
 
     async update({ id, data }) {
-        // If data is empty, return the existing notification
         if (Object.keys(data).length === 0) {
             return await this.getById({ id });
         }
-        const columns = Object.keys(data).map((key) => db.sql.helpers.toSnake(key));
+
+        const columns = Object.keys(data).map(db.sql.helpers.toSnake);
         const assignments = columns.map(col => `${col} = ?`);
-        const values = Object.values(data).map(data => Array.isArray(data) || typeof data === 'object' ? JSON.stringify(data) : data);
+        const values = Object.values(data).map(serializeValue);
 
-        const sql = `UPDATE email_notifications SET ${assignments.join(', ')} WHERE id = ?`;
+        await db.execute(
+            `UPDATE email_notifications SET ${assignments.join(', ')} WHERE id = ?`,
+            [...values, id]
+        );
 
-        await db.execute(sql, [...values, id]);
         return this.getById({ id });
     },
 
     async delete({ id }) {
-        await db.query('DELETE FROM email_notifications WHERE id = ?', [id]);
+        await db.execute('DELETE FROM email_notifications WHERE id = ?', [id]);
         return true;
     },
 
     async getLatestByNotificationId({ notificationId }) {
-        const [rows] = await db.query(
+        const [rows] = await db.execute(
             `
-            SELECT 
-                * 
-            FROM 
-                email_notifications
-            WHERE 
-                notification_id = ?
-            ORDER BY 
-                created_at DESC
+            SELECT *
+            FROM email_notifications
+            WHERE notification_id = ?
+            ORDER BY created_at DESC
             LIMIT 1
             `,
             [notificationId]
         );
-        return rows?.[0] ? db.sql.helpers.objectToCamelCase(rows[0]) : null;
+
+        return rows[0] || null;
     },
 
     async markSent({ id }) {
         await db.execute(
             `
-            UPDATE 
-                email_notifications
-            SET 
-                status = 'sent',
+            UPDATE email_notifications
+            SET status = 'sent',
                 sent_at = CURRENT_TIMESTAMP,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
@@ -162,10 +140,8 @@ export const emailNotification = {
     async markFailed({ id }) {
         await db.execute(
             `
-            UPDATE 
-                email_notifications
-            SET 
-                status = 'failed',
+            UPDATE email_notifications
+            SET status = 'failed',
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             `,
@@ -173,5 +149,5 @@ export const emailNotification = {
         );
 
         return this.getById({ id });
-    },
+    }
 };

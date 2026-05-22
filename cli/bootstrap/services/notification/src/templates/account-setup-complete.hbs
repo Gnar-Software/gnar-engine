@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Account setup complete</title>
+</head>
+<body>
+    <p>Hello{{#if name}} {{name}}{{else}} there{{/if}},</p>
+    <p>Your account setup is complete.</p>
+    {{#if signInUrl}}
+        <p><a href="{{signInUrl}}">Sign in to your account</a></p>
+    {{/if}}
+</body>
+</html>

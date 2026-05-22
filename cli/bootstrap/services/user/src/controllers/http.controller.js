@@ -221,44 +221,40 @@ export const httpController = {
 		},
 	},
 
-	/**
-	 * Request password reset
-	 */
-	requestPasswordReset: {
-		method: 'POST',
-		url: '/users/request-password-reset',
-		handler: async (request, reply) => {
-			const params = {
-				email: request.body.email || null,
-				createComplexPassword: !!request.body.createComplexPassword,
-			};
+    /**
+     * Request password reset
+     */
+    requestPasswordReset: {
+        method: 'POST',
+        url: '/users/request-password-reset',
+        handler: async (request, reply) => {
+            const params = {
+                email: request.body.email || null,
+                createComplexPassword: !!request.body.createComplexPassword
+            };
 
-			// execute
-			await commands.execute('userService.requestPasswordReset', params);
+            await commands.execute('userService.requestPasswordReset', params);
 
-			// Always return success (avoid leaking whether email exists)
-			reply.code(200).send({ message: 'If that email exists, a reset link has been sent.' });
-		}
-	},
+            reply.code(200).send({ message: 'If that email exists, a reset link has been sent.' });
+        }
+    },
 
-	/**
-	 * Change password
-	 */
-	changePassword: {
-		method: 'POST',
-		url: '/users/change-password',
-		handler: async (request, reply) => {
-			const params = {
-				email: request.body.email || null,
-				token: request.body.token || null,
-				password: request.body.password || null,
-			};
+    /**
+     * Change password
+     */
+    changePassword: {
+        method: 'POST',
+        url: '/users/change-password',
+        handler: async (request, reply) => {
+            const params = {
+                email: request.body.email || null,
+                token: request.body.token || null,
+                password: request.body.password || null
+            };
 
-			// execute
-			await commands.execute('userService.changePassword', params);
+            await commands.execute('userService.changePassword', params);
 
-			// if the command throws, it will be handled by your global error handler
-			reply.code(200).send({ message: 'Password changed successfully' });
-		}
-	},
+            reply.code(200).send({ message: 'Password changed successfully' });
+        }
+    },
 }

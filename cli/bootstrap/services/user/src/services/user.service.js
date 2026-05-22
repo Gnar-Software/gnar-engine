@@ -209,6 +209,21 @@ export const user = {
             logger.error("Error deleting user: " + error);
             throw error;
         }
+    },
+
+    // Change password
+    changePassword: async ({ id, newPassword }) => {
+        try {
+            const [result] = await db.execute(
+                'UPDATE `users` SET `password` = ? WHERE `id` = ?',
+                [newPassword, id]
+            );
+
+            return result.affectedRows;
+        } catch (error) {
+            logger.error("Error changing password: " + error);
+            throw error;
+        }
     }
 
 };

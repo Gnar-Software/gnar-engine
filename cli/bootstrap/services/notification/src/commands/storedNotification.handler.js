@@ -1,49 +1,34 @@
-import { commands, logger, error } from '@gnar-engine/core';
+import { commands, error } from '@gnar-engine/core';
 import { storedNotification } from '../services/storedNotification.service.js';
-import { config } from '../config.js';
 import { validateStoredNotification, validateStoredNotificationUpdate } from '../schema/storedNotification.schema.js';
 
-
-/**
- * Get single stored-notification
- */
 commands.register('notificationService.getSingleStoredNotification', async ({ id }) => {
-    if (id) {
-        return await storedNotification.getById({ id: id });
-    } else {
+    if (!id) {
         throw new error.badRequest('StoredNotification id required');
     }
+
+    return await storedNotification.getById({ id });
 });
 
-
-/**
- * Get many stored-notifications
- */
-commands.register('notificationService.getManyStoredNotifications', async ({ }) => {
-    return await storedNotification.getAll();
+commands.register('notificationService.getManyStoredNotifications', async ({ pageSize, pageNum } = {}) => {
+    return await storedNotification.getAll({ pageSize, pageNum });
 });
 
-
-/**
- * Get users stored-notifications
- */
-commands.register('notificationService.getStoredNotificationsByUserId', async ({ userId }) => {
+commands.register('notificationService.getStoredNotificationsByUserId', async ({ userId, pageSize, pageNum }) => {
     if (!userId) {
         throw new error.badRequest('User ID required');
     }
-    return await storedNotification.getByUserId({ userId });
+
+    return await storedNotification.getByUserId({ userId, pageSize, pageNum });
 });
 
-
-/**
- * Create stored-notifications
- */
 commands.register('notificationService.createStoredNotifications', async ({ storedNotifications }) => {
     const validationErrors = [];
-    let createdNewStoredNotifications = [];
+    const createdNewStoredNotifications = [];
 
     for (const data of storedNotifications) {
         const { errors } = validateStoredNotification(data);
+
         if (errors?.length) {
             validationErrors.push(errors);
             continue;
@@ -54,25 +39,20 @@ commands.register('notificationService.createStoredNotifications', async ({ stor
     }
 
     if (validationErrors.length) {
-        throw new error.badRequest(`Invalid stored-notification data: ${validationErrors}`);
+        throw new error.badRequest(`Invalid storedNotification data: ${validationErrors}`);
     }
 
     return createdNewStoredNotifications;
 });
 
-
-/**
- * Update stored-notification
- */
 commands.register('notificationService.updateStoredNotification', async ({ id, data }) => {
-
     const validationErrors = [];
 
     if (!id) {
         throw new error.badRequest('StoredNotification ID required');
     }
 
-    const obj = await storedNotification.getById({ id: id });
+    const obj = await storedNotification.getById({ id });
 
     if (!obj) {
         throw new error.notFound('StoredNotification not found');
@@ -87,23 +67,18 @@ commands.register('notificationService.updateStoredNotification', async ({ id, d
     }
 
     if (validationErrors.length) {
-        throw new error.badRequest(`Invalid stored-notification data: ${validationErrors}`);
+        throw new error.badRequest(`Invalid storedNotification data: ${validationErrors}`);
     }
 
-    return await storedNotification.update({
-        id: id,
-        data
-    });
+    return await storedNotification.update({ id, data });
 });
 
-
-/**
- * Delete stored-notification
- */
 commands.register('notificationService.deleteStoredNotification', async ({ id }) => {
-    const obj = await storedNotification.getById({ id: id });
+    const obj = await storedNotification.getById({ id });
+
     if (!obj) {
         throw new error.notFound('StoredNotification not found');
     }
-    return await storedNotification.delete({ id: id });
+
+    return await storedNotification.delete({ id });
 });

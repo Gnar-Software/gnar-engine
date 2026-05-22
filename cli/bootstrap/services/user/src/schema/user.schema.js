@@ -3,7 +3,7 @@ import { config } from '../config.js';
 
 
 // User create schema
-const userSchema = {
+export const userSchema = {
     schemaName: 'userService.userSchema',
     schema: {
         type: 'object',
@@ -40,7 +40,7 @@ const userUpdateSchema = {
     schema: {
         type: 'object',
         properties: {
-            email: { type: 'string', format: 'email' },
+            username: { type: 'string' },
             role: { type: 'string', enum: config.allowedUserRoles, default: config.defaultUserRole },
             contactId: { type: 'string' }
         },

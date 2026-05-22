@@ -41,7 +41,7 @@ export const config = {
         database: process.env.CONTROL_MYSQL_DATABASE,
         // port: process.env.CONTROL_MYSQL_PORT,
         connectionLimit: 10,
-        queueLimit: 20,
+        queueLimit: 200,
         maxRetries: 5
     },
 

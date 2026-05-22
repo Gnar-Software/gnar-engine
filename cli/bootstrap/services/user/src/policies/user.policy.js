@@ -24,7 +24,24 @@ export const authorise = {
      * Authorise get many users
      */
     getMany: async (request, reply) => {
-        logger.info('user -' + JSON.stringify(request.user)); 
+        if (!request.user || request.user.role !== 'service_admin') {
+            reply.code(403).send({error: 'not authorised'});
+        }
+    },
+
+    /**
+     * Authorise search users
+     */
+    search: async (request, reply) => {
+        if (!request.user || request.user.role !== 'service_admin') {
+            reply.code(403).send({error: 'not authorised'});
+        }
+    },
+
+    /**
+     * Authorisse get user enums
+     */
+    getUserEnums: async (request, reply) => {
         if (!request.user || request.user.role !== 'service_admin') {
             reply.code(403).send({error: 'not authorised'});
         }

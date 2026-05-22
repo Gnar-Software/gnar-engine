@@ -1,37 +1,23 @@
-# Stage 1: Builder
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy app source
-COPY ./services/control/src ./src
-COPY ./Lib ./Lib
-
-# Copy environment variables (do this later in build only if needed)
-COPY ./.env.production .env
-
-# Copy package files and install deps
-COPY ./services/control/package*.json ./
-RUN npm install --omit=dev
-
-# Stage 2: Runtime
+# Dockerfile for Control Service
 FROM node:20-alpine
 
-WORKDIR /app
+# Set the working directory
+WORKDIR /usr/gnar_engine/app
 
-# Copy built app from builder stage
-COPY --from=builder /app /app
+# Define a global env var
+ENV GLOBAL_SERVICE_BASE_DIR=/usr/gnar_engine/app/src/
 
-# Install system deps
-RUN apk add --no-cache ca-certificates wget
+# Copy package.json and package-lock.json
+COPY ./package*.json ./
 
-# Install AWS DocumentDB CA certificates
-RUN mkdir -p /usr/local/share/ca-certificates && \
-    wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /usr/local/share/ca-certificates/aws-docdb.pem && \
-    update-ca-certificates
+# Install nodemon
+RUN npm install -g nodemon
 
-# Expose port
-EXPOSE 4000
+# Install app dependencies
+RUN npm install
 
-# Start app
-CMD ["npm", "run", "start"]
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port the service will run on
+EXPOSE 3000

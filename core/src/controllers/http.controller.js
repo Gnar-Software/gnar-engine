@@ -45,6 +45,10 @@ export const httpController = {
         http.addHook(hookName, hookFunction);
     },
 
+    getServer: () => {
+        return http.server;
+    },
+
     start: async () => {
         try {
             await http.listen({ port: port, host: '0.0.0.0' });

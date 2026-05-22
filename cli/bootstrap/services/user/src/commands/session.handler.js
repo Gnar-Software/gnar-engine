@@ -9,6 +9,9 @@ import { unauthenticatedSession } from '../services/session.service.js';
  */
 commands.register('userService.createUnauthenticatedSessionToken', async () => {
     return unauthenticatedSession.createSessionToken();
+}, {
+    description: 'Create an unauthenticated session token.',
+    parameters: {}
 });
 
 /**
@@ -20,4 +23,9 @@ commands.register('userService.createUnauthenticatedSessionToken', async () => {
  */
 commands.register('userService.verifyUnauthenticatedSessionToken', async ({sessionToken}) => {
     return unauthenticatedSession.verifySessionToken({sessionToken});
+}, {
+    description: 'Verify an unauthenticated session token.',
+    parameters: {
+        sessionToken: { type: 'string', description: 'Unauthenticated session token' }
+    }
 });

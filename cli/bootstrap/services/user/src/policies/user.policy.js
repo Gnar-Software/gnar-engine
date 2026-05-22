@@ -24,7 +24,6 @@ export const authorise = {
      * Authorise get many users
      */
     getMany: async (request, reply) => {
-        logger.info('user -' + JSON.stringify(request.user));
         if (!request.user || request.user.role !== 'service_admin') {
             reply.code(403).send({error: 'not authorised'});
         }
@@ -34,7 +33,6 @@ export const authorise = {
      * Authorise search users
      */
     search: async (request, reply) => {
-        logger.info('user -' + JSON.stringify(request.user));
         if (!request.user || request.user.role !== 'service_admin') {
             reply.code(403).send({error: 'not authorised'});
         }

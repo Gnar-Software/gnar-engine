@@ -44,9 +44,6 @@ export const initService = async () => {
 	// Start the HTTP server
 	await http.start();
 
-    // Register service with control service
-    await registerService();
-
 	logger.info('G n a r  E n g i n e | Notification Service initialised successfully.');
 
     // Tests

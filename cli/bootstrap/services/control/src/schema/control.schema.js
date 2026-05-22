@@ -7,9 +7,21 @@ const serviceSchema = {
         type: 'object',
         properties: {
             name: { type: 'string' },
-            manifest: { type: 'object' }
+            manifest: {
+                type: 'object',
+                properties: {
+                    commandList: {
+                        type: 'array',
+                        items: { type: 'string' }
+                    },
+                    commandImplementations: { type: 'object' },
+                    schemas: { type: 'object' }
+                },
+                required: ['commandList', 'commandImplementations', 'schemas'],
+                additionalProperties: false
+            }
         },
-        required: ['name'],
+        required: ['name', 'manifest'],
         additionalProperties: false
     }
 };

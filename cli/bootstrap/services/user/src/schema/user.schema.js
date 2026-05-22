@@ -3,7 +3,7 @@ import { config } from '../config.js';
 
 
 // User create schema
-const userSchema = {
+export const userSchema = {
     schemaName: 'userService.userSchema',
     schema: {
         type: 'object',

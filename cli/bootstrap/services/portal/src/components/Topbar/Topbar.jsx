@@ -1,16 +1,39 @@
-import { useState} from "react";
+import React, { useState } from 'react';
+import AgentInterface from "../AgentInterface/AgentInterface";
+
 
 function Topbar() {
 
-    const [agentQuest, setAgentQuestion] = useState('');
+    const [dropDownOpen, setDropdownOpen] = useState(false);
 
     return (
-        <div className="portal-topbar">
+        <div className={`portal-topbar ${dropDownOpen ? 'dropdown-open' : ''}`}>
             <div className="content flex-row">
-                <label className="input icon icon-agent agent-question">
-                    Engine Agent
-                    <input type="text" id="agent-question" placeholder="I'll be able to help you with tasks soon!" />
-                </label>
+                {!dropDownOpen ? (
+                <button
+                    className="agents-button"
+                    type="button"
+                    aria-expanded={dropDownOpen}
+                    onClick={() => setDropdownOpen(!dropDownOpen)}
+                >
+                    Agent
+                </button>
+                ) : (
+                    <button
+                        className="agents-button active"
+                        type="button"
+                        aria-expanded={dropDownOpen}
+                        onClick={() => setDropdownOpen(!dropDownOpen)}
+                    >
+                        Close
+                    </button>
+                )}
+            </div>
+
+            <div className="agent-dropdown">
+                <div className="agent-dropdown-inner">
+                    <AgentInterface />
+                </div>
             </div>
         </div>
     )

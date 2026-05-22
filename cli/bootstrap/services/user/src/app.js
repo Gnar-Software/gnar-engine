@@ -1,7 +1,8 @@
-import { message, http, logger, db, webSockets, test } from '@gnar-engine/core';
+import { message, http, logger, db, webSockets, test, manifest as commandManifest, commands } from '@gnar-engine/core';
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
 import { httpController as userPlatformHttpController } from './controllers/http.controller.js';
+import { userSchema } from './schema/user.schema.js';
 
 
 /**
@@ -32,6 +33,18 @@ export const initService = async () => {
 			userPlatformHttpController,
 		]
 	});
+
+    // Register the command manifest after all commands are registered
+    await commands.execute('controlService.registerManifest', {
+        serviceName: config.serviceName,
+        manifest: {
+            ...commandManifest.manifest,
+            schemas: {
+                ...commandManifest.manifest.schemas,
+                [userSchema.schemaName]: userSchema.schema
+            }
+        }
+    });
 
 	// Start the HTTP server
 	await http.start();

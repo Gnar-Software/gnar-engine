@@ -4,6 +4,45 @@ import { peerConnection } from '../services/peerConnection.service.js';
 import { validateService } from '../schema/control.schema.js';
 
 /**
+ * Register & get peers
+ *
+ * @param {Object} params
+ * @param {Object} params.config The connecting service config
+ * @returns {Promise<Object>} List of peers
+ */
+commands.register('controlService.registerAndGetPeers', async ({ config }) => {
+    let peers = {};
+
+    // register the service & replica
+    try {
+        await commands.execute('controlService.registerServiceAndReplica', {
+            serviceName: config.serviceName,
+            replicaSlot: config.replicaSlot,
+            replicaHostname: config.replicaHostname,
+            replicaIp: config.replicaIp
+        });
+    } catch (error) {
+        logger.error(`Error registering service: ${error.message}`);
+        throw error;
+    }
+
+    // Get peer addresses
+    try {
+        peers = await commands.execute('controlService.newPeerSet', {
+            requestingHostname: config.replicaHostname
+        });
+
+        // remove the requesting service from the the peers object
+        delete peers[config.serviceName];
+    } catch (error) {
+        logger.error(`Error getting peer set: ${error.message}`);
+        throw error;
+    }
+
+    return peers;
+});
+
+/**
  * Register a service in the registry
  *
  * @param {Object} params
@@ -284,6 +323,37 @@ commands.register('controlService.removeServiceReplica', async({ serviceName, re
         logger.info(`Removed dead service replica and connections: ${serviceName} ${replicaHostname}`);
     } catch (error) {
         logger.error(`Error removing dead service replica: ${error.message}`);
+        throw error;
+    }
+});
+
+/**
+ * Register manifests
+ */
+commands.register('controlService.registerManifest', async ({ serviceName, manifest }) => {
+    const service = {
+        name: serviceName,
+        manifest
+    };
+
+    try {
+        const errors = validateService(service);
+
+        if (errors) {
+            throw new Error(JSON.stringify(errors));
+        }
+
+        const existingService = await registry.getServiceByName({ name: serviceName });
+
+        if (!existingService) {
+            await registry.registerService(service);
+        } else {
+            await registry.updateService(service);
+        }
+
+        logger.info(`Registered manifest for service: ${serviceName}`);
+    } catch (error) {
+        logger.error(`Error registering manifest for service ${serviceName}: ${error.message}`);
         throw error;
     }
 });

@@ -4,7 +4,7 @@ import { commands, logger, error, utils } from '@gnar-engine/core';
 import { auth } from '../services/authentication.service.js';
 import { passwordReset } from '../services/passwordReset.service.js';
 import { validateUser, validateServiceAdminUser, validateUserUpdate, validateServiceAdminUserUpdate } from '../schema/user.schema.js';
-
+import { userSchema } from '../schema/user.schema.js';
 
 /**
  * Authentication
@@ -63,6 +63,13 @@ commands.register('userService.authenticate', async ({ username, password, apiKe
     logger.info('invalid credentials');
 
     throw new error.unauthorised('Invalid credentials');
+}, {
+    description: 'Authenticate a user with username and password or username and API key.',
+    parameters: {
+        username: { type: 'string', description: 'Username or email address' },
+        password: { type: 'string', description: 'Password for password authentication' },
+        apiKey: { type: 'string', description: 'API key for API key authentication' }
+    }
 });
 
 
@@ -92,6 +99,11 @@ commands.register('userService.getAuthenticatedUser', async ({ token }) => {
             return userObj;
         }
     }
+}, {
+    description: 'Get the authenticated user for a session token.',
+    parameters: {
+        token: { type: 'string', description: 'Session token' }
+    }
 });
 
 
@@ -111,6 +123,12 @@ commands.register('userService.getSingleUser', async ({ id, email }) => {
     } else {
         throw new error.badRequest('User email or id required');
     }
+}, {
+    description: 'Get one user by id or email.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'User ID' },
+        email: { type: 'string', format: 'email', description: 'User email address' }
+    }
 });
 
 
@@ -126,12 +144,24 @@ commands.register('userService.getSingleUser', async ({ id, email }) => {
 commands.register('userService.getManyUsers', async ({ pageSize, pageNum, filters, ids }) => {
 
     return await user.getAll({ pageNum, pageSize, filters, ids });
+}, {
+    description: 'Get a paginated list of users.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of users per page' },
+        pageNum: { type: 'number', description: 'Page number' },
+        filters: { type: 'object', description: 'Optional user filters' },
+        ids: {
+            type: 'array',
+            description: 'Optional user IDs to include',
+            items: { type: ['string', 'number'] }
+        }
+    }
 });
 
 
 /**
  * Search users
- *
+ * 
  * @param {Object} params
  * @param {string} params.term - Search term
  * @param {number} params.pageSize - Number of users per page
@@ -154,6 +184,13 @@ commands.register('userService.searchUsers', async ({ term, pageSize, pageNum })
     });
 
     return result;
+}, {
+    description: 'Search users by email or username.',
+    parameters: {
+        term: { type: 'string', description: 'Search term' },
+        pageSize: { type: 'number', description: 'Number of users per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 
@@ -174,6 +211,7 @@ commands.register('userService.createUserWithRandomPassword', async ({ users }) 
         // create random password
         const password = Math.random().toString(36);
         newUserData.password = password;
+        newUserData.role = newUserData.role || config.defaultUserRole;
 
         const { errors } = validateUser(newUserData);
 
@@ -203,6 +241,15 @@ commands.register('userService.createUserWithRandomPassword', async ({ users }) 
     }
 
     return createdNewUsers;
+}, {
+    description: 'Create users and generate random passwords for them.',
+    parameters: {
+        users: {
+            type: 'array',
+            description: 'Users to create',
+            items: userSchema
+        }
+    }
 });
 
 
@@ -213,6 +260,9 @@ commands.register('userService.getUserEnums', async () => {
     return {
         roles: config.userRoles
     }
+}, {
+    description: 'Get user enum values such as roles.',
+    parameters: {}
 })
 
 
@@ -265,6 +315,15 @@ commands.register('userService.createUsers', async ({ users }) => {
     }
 
     return createdNewUsers;
+}, {
+    description: 'Create one or more users.',
+    parameters: {
+        users: {
+            type: 'array',
+            description: 'Users to create. User object details are available in userService.userSchema.',
+            items: userSchema
+        }
+    }
 });
 
 
@@ -331,6 +390,12 @@ commands.register('userService.updateUser', async ({ id, newUserData }) => {
         email: newUserData.email ?? userObj.email ?? '',
         role: newUserData.role ?? userObj.role ?? config.defaultUserRole
     });
+}, {
+    description: 'Update a user by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'User ID' },
+        newUserData: userSchema
+    }
 });
 
 
@@ -350,56 +415,69 @@ commands.register('userService.deleteUser', async ({ id }) => {
     }
 
     return await user.delete({ id: id });
+}, {
+    description: 'Delete a user by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'User ID' }
+    }
 });
 
+
 /**
- * Request password reset.
+ * Request password reset
  *
  * @param {Object} params
  * @param {string} params.email
- * @param {boolean} params.createComplexPassword
  * @returns {Promise<{success: boolean}>}
  */
-commands.register('userService.requestPasswordReset', async ({ email, createComplexPassword = false }) => {
+commands.register('userService.requestPasswordReset', async ({ email }) => {
     if (!email) {
-        return { success: false };
+        return {
+            success: false,
+        };
     }
 
     try {
         const userObj = await user.getByEmail({ email });
-
         if (!userObj) {
             return { success: false };
         }
 
         const token = await passwordReset.createResetToken({ email: userObj.email });
+
         const frontEndUrl = process.env.FRONTEND_URL || '';
         const resetUrl = frontEndUrl
             ? `${frontEndUrl}/password-reset?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}&create_complex_password=${createComplexPassword ? 'true' : 'false'}`
             : null;
 
-        if (config.environment !== 'production') {
+        if (process.env.USER_NODE_ENV !== 'production') {
             logger.info(`Password reset requested for ${email}${resetUrl ? ` | resetUrl: ${resetUrl}` : ''}`);
         }
 
+        // trigger notification
         const notifications = await commands.execute('notificationService.createNotifications', {
             notifications: [
                 {
                     type: 'email',
                     userId: userObj.id,
                     emailAddress: userObj.email,
-                    fromEmail: config.notifications.passwordResetFromEmail,
-                    subjectLine: createComplexPassword ? 'Set up your account' : 'Reset your password',
-                    templateSlug: createComplexPassword ? 'account-setup-complete' : 'account-password-reset',
+                    fromEmail: 'butlin@gnar.co.uk',
+                    subjectLine: 'Reset your password',
+                    templateSlug: 'account-password-reset',
+                    content: '',
                     templateData: {
-                        name: userObj.username,
-                        resetUrl
+                        userName: userObj.username,
+                        resetUrl: resetUrl,
+                        logoUrl: '#'
                     }
                 }
             ]
         });
 
-        if (!notifications?.[0]?.id) {
+        logger.info(notifications);
+
+        const notificationId = notifications?.[0]?.id;
+        if (!notificationId) {
             throw new Error('Failed to create notification');
         }
 
@@ -408,10 +486,16 @@ commands.register('userService.requestPasswordReset', async ({ email, createComp
         logger.error(err.message, 'Password reset request failed');
         return { success: false };
     }
+}, {
+    description: 'Request a password reset for a user email.',
+    parameters: {
+        email: { type: 'string', format: 'email', description: 'User email address' }
+    }
 });
 
+
 /**
- * Change password using a password-reset token.
+ * Change password
  *
  * @param {Object} params
  * @param {string} params.email
@@ -428,29 +512,29 @@ commands.register('userService.changePassword', async ({ email, token, password 
         throw new error.badRequest('Password must be at least 8 characters');
     }
 
-    const tokenStatus = await passwordReset.verifyPasswordResetToken({
+    // verify token
+    const isValidToken = await passwordReset.verifyPasswordResetToken({
         token,
-        email
+        email,
     });
 
-    if (tokenStatus === 'expired') {
-        throw new error.badRequest('Password reset link has expired');
+    if (!isValidToken) {
+        throw new error.badRequest('Invalid or expired password reset token');
     }
 
-    if (tokenStatus !== 'valid') {
-        throw new error.badRequest('Password reset link is invalid or has already been used');
-    }
-
+    // check user exists
     const userObj = await user.getByEmail({ email });
 
     if (!userObj) {
         throw new error.notFound('User not found');
     }
 
-    const hashedPassword = await utils.hash(password, config.hashNameSpace);
+    // hash + update password
+    const hashedPassword = await auth.hashPassword({ password });
+
     const updateResult = await user.changePassword({
         id: userObj.id,
-        newPassword: hashedPassword
+        newPassword: hashedPassword,
     });
 
     if (!updateResult) {
@@ -460,4 +544,11 @@ commands.register('userService.changePassword', async ({ email, token, password 
     await passwordReset.consumeToken({ token, email });
 
     return { success: true };
+}, {
+    description: 'Change a user password using a password reset token.',
+    parameters: {
+        email: { type: 'string', format: 'email', description: 'User email address' },
+        token: { type: 'string', description: 'Password reset token' },
+        password: { type: 'string', description: 'New password' }
+    }
 });

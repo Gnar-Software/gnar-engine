@@ -18,3 +18,4 @@ RUN npm install
 
 # Expose the port the service will run on
 EXPOSE 3000
+

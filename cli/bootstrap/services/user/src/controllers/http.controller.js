@@ -72,7 +72,15 @@ export const httpController = {
 		preHandler: async (request, reply) => authorise.getMany(request, reply),
 		handler: async (request, reply) => {
 			// params from request
-			const params = {};
+			const params = {
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum,
+				filters: request.query.filters ? JSON.parse(request.query.filters) : {},
+				// filters can be passed as a JSON string in the query, e.g. ?filters={"role":"admin"}
+				// this allows for flexible filtering based on any user fields
+				// if no filters are provided, it will return all users with pagination
+				// example filter: ?filters={"role":"admin","username":"john"}
+			};
 
 			// execute
 			const users = await commands.execute('getManyUsers', params);
@@ -83,6 +91,42 @@ export const httpController = {
 			);
 		}
 	},
+
+	/**
+	 * Search users
+	 */
+	search: {
+		method: 'GET',
+		url: '/users/search',
+		preaHandler: async (request, reply) => authorise.search(request, reply),
+		handler: async (request, reply) => {
+			// params from request
+			const params = {
+				term: request.query.term,
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum,
+			};
+			// execute
+			const users = await commands.execute('searchUsers', params);
+
+			// handle response
+			reply.code(200).send({ users });
+		}
+	},
+
+	/**
+	 * Get user enums
+	 */
+	getUserEnums: {
+		method: 'GET',
+		url: '/users/enums',
+		// preHandler: async (request, reply) => authorise.getUserEnums(request, reply),
+		handler: async (request, reply) => {
+			const enums = await commands.execute('getUserEnums');
+			reply.code(200).send({ enums });
+		}
+	},
+
 
 	/**
 	 * Create new user
@@ -105,6 +149,29 @@ export const httpController = {
 				{ users: users }
 			);
 		},
+	},
+
+	/**
+	 * Create new user with random password
+	 */
+	createWithRandomPassword: {
+		method: 'POST',
+		url: '/users/create-with-random-password/',
+		preHandler: async (request, reply) => authorise.create(request, reply),
+		handler: async (request, reply) => {
+			// params from the request
+			const params = {
+				users: [request.body.user],
+			};
+
+			// execute
+			const users = await commands.execute('createUserWithRandomPassword', params);
+
+			// handle response
+			reply.code(200).send(
+				{ users: users }
+			);
+		}
 	},
 
 	/**
@@ -152,5 +219,46 @@ export const httpController = {
 				{ 'message': 'User deleted' }
 			);
 		},
+	},
+
+	/**
+	 * Request password reset
+	 */
+	requestPasswordReset: {
+		method: 'POST',
+		url: '/users/request-password-reset',
+		handler: async (request, reply) => {
+			const params = {
+				email: request.body.email || null,
+				createComplexPassword: !!request.body.createComplexPassword,
+			};
+
+			// execute
+			await commands.execute('userService.requestPasswordReset', params);
+
+			// Always return success (avoid leaking whether email exists)
+			reply.code(200).send({ message: 'If that email exists, a reset link has been sent.' });
+		}
+	},
+
+	/**
+	 * Change password
+	 */
+	changePassword: {
+		method: 'POST',
+		url: '/users/change-password',
+		handler: async (request, reply) => {
+			const params = {
+				email: request.body.email || null,
+				token: request.body.token || null,
+				password: request.body.password || null,
+			};
+
+			// execute
+			await commands.execute('userService.changePassword', params);
+
+			// if the command throws, it will be handled by your global error handler
+			reply.code(200).send({ message: 'Password changed successfully' });
+		}
 	},
 }

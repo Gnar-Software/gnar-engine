@@ -7,7 +7,7 @@ export const config = {
     serviceName: 'userService',
 
     // environment
-    environment: process.env.USER_NODE_ENV || 'dev',
+    environment: process.env.USER_NODE_ENV || 'development',
     runTests: process.env.USER_RUN_TESTS || false,
     resetDatabase: process.env.USER_RESET_DATABASE || false,
 
@@ -39,8 +39,8 @@ export const config = {
         user: process.env.USER_MYSQL_USER,
         password: process.env.USER_MYSQL_PASSWORD,
         database: process.env.USER_MYSQL_DATABASE,
-        connectionLimit: 10,
-        queueLimit: 20,
+        connectionLimit: 3,
+        queueLimit: 30,
         maxRetries: 5
     },
 
@@ -64,7 +64,7 @@ export const config = {
     ],
 
     publicCanCreateRoles: [
-        'customer'
+
     ],
 
     defaultUserRole: 'customer',

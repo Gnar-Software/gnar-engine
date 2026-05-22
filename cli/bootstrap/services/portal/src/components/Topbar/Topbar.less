@@ -1,7 +1,10 @@
 .portal-topbar {
     background: @green-main;
-    min-height: 100vh;
+    min-height: 71px;
+    max-height: 71px;
     width: 100%;
+    position: relative;
+    z-index: 20;
 
     .content {
         padding-left: 45px;
@@ -9,14 +12,52 @@
         box-sizing: border-box;
     }
 
-    >.flex-row {
+    > .flex-row {
         height: 71px;
         align-items: center;
         justify-content: flex-end;
     }
 
-    .agent-question {
-        width: 50%;
-        box-sizing: border-box;
+    .agents-button {
+        min-width: 112px;
+        margin: 0px;
+        background: @dark-1;
+        color: @white;
+
+        &[aria-expanded="true"] {
+            background: @white;
+            color: @dark-1;
+        }
+    }
+
+    .agent-dropdown {
+        transition: 0s;
+        top: 71px;
+        left: 0px;
+        width: 100vw;
+        height: 0vh;
+
+        .agent-dropdown-inner {
+            height: 0vh;
+            transition: 0.3s;
+            overflow: hidden;
+        }
+    }
+
+    &.dropdown-open {
+        .agent-dropdown {
+            min-height: calc(100vh - 71px);
+            background: rgba(0,0,0,0.2) !important;
+
+            .agent-dropdown-inner {
+                height: 83vh;
+
+                .agent-interface {
+                    border-bottom-left-radius: 20px;
+                    border-bottom-right-radius: 20px;
+                    box-shadow: 10px 10px 20px rgba(0,0,0,0.2);
+                }
+            }
+        }
     }
 }

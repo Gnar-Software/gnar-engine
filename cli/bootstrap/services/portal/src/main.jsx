@@ -12,6 +12,7 @@ import PagesPage from './pages/PagesPage/PagesPage.jsx'
 import PageSinglePage from './pages/PageSinglePage/PageSinglePage.jsx'
 import BlocksPage from './pages/BlocksPage/BlocksPage.jsx'
 import BlockSinglePage from './pages/BlockSinglePage/BlockSinglePage.jsx'
+import AgentPage from './pages/AgentPage/AgentPage.jsx'
 
 const router = createBrowserRouter([
     {
@@ -37,7 +38,10 @@ const router = createBrowserRouter([
                     { path: "pages", element: <PagesPage /> },
                     { path: "pages/:id", element: <PageSinglePage /> },
                     { path: "blocks", element: <BlocksPage /> },
-                    { path: "blocks/:id", element: <BlockSinglePage /> }
+                    { path: "blocks/:id", element: <BlockSinglePage /> },
+
+                    // Agent
+                    { path: "agent", element: <AgentPage /> }
                 ],
             }
         ]

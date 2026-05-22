@@ -290,11 +290,13 @@ async function buildAndUpContainers({
                 secrets.services[svc.name].MYSQL_HOST = 'db-mysql-test';
             }
 
-            if (secrets.services?.[svc.name]) {
-                secrets.services[svc.name].NODE_ENV = 'test';
+            if (secrets.services?.[svc.name]?.MONGO_HOST) {
+                secrets.services[svc.name].MONGO_HOST = 'db-mongo-test';
             }
 
             if (secrets.services?.[svc.name]) {
+                secrets.services[svc.name].NODE_ENV = 'test';
+
                 if (testService && svc.name === testService) {
                     secrets.services[svc.name].RUN_TESTS = testMode;
                 }
@@ -353,6 +355,8 @@ async function buildAndUpContainers({
     if (coreDev) {
         provisionerBinds.push(`${gnarEngineCliConfig.coreDevPath}:${gnarEngineCliConfig.corePath}`);
     }
+
+    console.log('Secrets', secrets);
 
     const provisioner = await createContainer({
         name: provisionerTag,
@@ -430,6 +434,11 @@ async function buildAndUpContainers({
             if (svc.depends_on && svc.depends_on.includes('db-mysql')) {
                 svc.depends_on = svc.depends_on.filter(d => d !== 'db-mysql');
                 svc.depends_on.push('db-mysql-test');
+            }
+
+            if (svc.depends_on && svc.depends_on.includes('db-mongo')) {
+                svc.depends_on = svc.depends_on.filter(d => d !== 'db-mongo');
+                svc.depends_on.push('db-mongo-test');
             }
         }
 

@@ -42,7 +42,7 @@ const router = createBrowserRouter([
                             { path: "pages", element: <PagesPage /> },
                             { path: "pages/:id", element: <PageSinglePage /> },
                             { path: "blocks", element: <BlocksPage /> },
-                            { path: "blocks/:id", element: <BlockSinglePage /> }
+                            { path: "blocks/:id", element: <BlockSinglePage /> },
                              
                             // Agent
                             { path: "agent", element: <AgentPage /> }

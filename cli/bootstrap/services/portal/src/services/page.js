@@ -1,8 +1,19 @@
 import client from './client.js';
 
 export const pages = {
-    getMany: async () => {
-        const { data } = await client.get('/pages/');
+    getMany: async ({ page, pageSize } = {}) => {
+        const queryParams = new URLSearchParams();
+
+        if (page) {
+            queryParams.append('pageNum', page);
+        }
+
+        if (pageSize) {
+            queryParams.append('pageSize', pageSize);
+        }
+
+        const url = `/pages/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const { data } = await client.get(url);
         return data;
     },
 
@@ -25,4 +36,3 @@ export const pages = {
         await client.delete(`/pages/${id}`);
     }
 };
-

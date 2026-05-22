@@ -1,17 +1,17 @@
 import { createSlice, createAsyncThunk, createAction } from '@reduxjs/toolkit';
-import { getAuthToken, getAuthUser, setAuthToken, setAuthUser, removeAuthToken, removeAuthUser } from '../services/storage.js';
+import {
+    getAuthToken,
+    getAuthUser,
+    setAuthToken,
+    setAuthUser,
+    removeAuthToken,
+    removeAuthUser,
+} from '../services/storage.js';
 import { user } from '../services/user.js';
 
-
 export const login = createAsyncThunk('auth/login', async ({ username, password }) => {
-    let response;
-    try {
-        response = await user.authenticate({ username, password });
-    } catch (error) {
-        response = error.response;
-    }
-    return response;
-})
+    return await user.authenticate({ username, password });
+});
 
 export const register = createAsyncThunk('auth/register', async (user) => {
     let response;
@@ -21,9 +21,17 @@ export const register = createAsyncThunk('auth/register', async (user) => {
         response = error.response;
     }
     return response;
-})
+});
 
 export const logout = createAction('auth/logout');
+
+export const updateProfile = createAsyncThunk('auth/updateProfile', async ({ id, data }, { rejectWithValue }) => {
+    try {
+        return await user.updateMyProfile({ id, data });
+    } catch (err) {
+        return rejectWithValue('Something went wrong. Please try again.');
+    }
+});
 
 export const authSlice = createSlice({
     name: 'auth',
@@ -31,32 +39,37 @@ export const authSlice = createSlice({
         authUser: getAuthUser() ? JSON.parse(getAuthUser()) : null,
         accessToken: getAuthToken() ? getAuthToken() : '',
         authLoading: false,
-        authError: ''
+        authError: '',
     },
     reducers: {
+        clearAuthError: (state) => {
+            state.authError = '';
+        },
     },
-    extraReducers: builder => {
+    extraReducers: (builder) => {
         builder
             .addCase(login.pending, (state, action) => {
                 state.authLoading = true;
                 state.authError = '';
             })
             .addCase(login.fulfilled, (state, action) => {
-                console.log('login.fulfilled', action.payload);
                 state.authLoading = false;
-                state.authError = action.payload.message ? action.payload.message : '';
 
-                if (action.payload.token) {
-                    state.accessToken = action.payload.token;
-                    state.authUser = action.payload.user;
+                state.authUser = action.payload.user;
+                state.accessToken = action.payload.token;
 
-                    // store in local storage
-                    setAuthToken(action.payload.token);
-                    setAuthUser(JSON.stringify(action.payload.user));
+                const tokenExpiresAt = action.payload?.user?.tokenExpiresAt;
 
-                    // redirect to portal
-                    window.location.href= '/portal/dashboard';
-                }
+                // store auth details
+                setAuthToken({ authToken: action.payload.token, expiresAt: tokenExpiresAt });
+                setAuthUser(JSON.stringify(action.payload.user));
+
+                // redirect to portal
+                window.location.href = '/portal/dashboard';
+            })
+            .addCase(login.rejected, (state) => {
+                state.authLoading = false;
+                state.authError = 'Invalid credentials';
             })
             .addCase(logout, (state, action) => {
                 // Clear auth state
@@ -71,22 +84,30 @@ export const authSlice = createSlice({
                 window.location.href = '/portal/login';
             })
 
+            // Update profile
+            .addCase(updateProfile.fulfilled, (state, action) => {
+                if (action.payload?.user) {
+                    state.authUser = action.payload.user;
+                    setAuthUser(JSON.stringify(action.payload.user));
+                }
+            })
+
             // Register
             .addCase(register.pending, (state, action) => {
                 state.status = 'loading';
             })
             .addCase(register.fulfilled, (state, action) => {
-                state.status    = 'idle';
+                state.status = 'idle';
 
                 if (action.payload.users && action.payload.users.length > 0) {
                     const user = action.payload.users[0];
-            
+
                     state.logged_in = true;
                     state.user = user;
-            
+
                     // Save user auth details (if needed)
                     setAuthUser(JSON.stringify(user));
-            
+
                     // Redirect to dashboard page
                     window.location.href = '/portal/dashboard';
                 } else {
@@ -95,7 +116,8 @@ export const authSlice = createSlice({
                     state.error = 'Registration failed: Invalid response';
                 }
             });
-    }
-})
+    },
+});
 
+export const { clearAuthError } = authSlice.actions;
 export default authSlice;

@@ -1,33 +1,16 @@
-import { logger, db, error } from '@gnar-engine/core';
-import { v4 as uuidv4 } from 'uuid';
+import { logger, db, error, utils } from '@gnar-engine/core';
 
-/**
- * Password Reset Service
- */
 export const passwordReset = {
-
-    /**
-     * Create a password reset token
-     */
     createResetToken: async ({ email }) => {
         if (!email) {
             throw new error.badRequest('Email is required');
         }
 
-        const token = uuidv4();
+        const token = utils.uuid();
 
         try {
-            // Optional: allow only one active token per email
-            await db.query(
-                'DELETE FROM password_resets WHERE email = ?',
-                [email]
-            );
-
-            // IMPORTANT: expires_at is GENERATED in DB — do NOT insert it
-            await db.query(
-                'INSERT INTO password_resets (token, email) VALUES (?, ?)',
-                [token, email]
-            );
+            await db.query('DELETE FROM password_resets WHERE email = ?', [email]);
+            await db.query('INSERT INTO password_resets (token, email) VALUES (?, ?)', [token, email]);
 
             return token;
         } catch (err) {
@@ -71,20 +54,16 @@ export const passwordReset = {
         }
     },
 
-    /**
-     * Consume token after successful password change
-     */
     consumeToken: async ({ token, email }) => {
-        if (!token || !email) return;
+        if (!token || !email) {
+            return;
+        }
 
         try {
-            await db.query(
-                'DELETE FROM password_resets WHERE token = ? AND email = ?',
-                [token, email]
-            );
+            await db.query('DELETE FROM password_resets WHERE token = ? AND email = ?', [token, email]);
         } catch (err) {
             logger.error({ err }, 'Failed to consume password reset token');
             throw err;
         }
-    },
+    }
 };

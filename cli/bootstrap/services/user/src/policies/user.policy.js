@@ -6,9 +6,9 @@ export const authorise = {
 
     /**
      * Authorise get single user
-     * 
-     * @param {} request 
-     * @param {*} reply 
+     *
+     * @param {} request
+     * @param {*} reply
      */
     getSingle: async (request, reply) => {
         if (!request.user) {
@@ -60,7 +60,7 @@ export const authorise = {
         if (config.publicCanCreateRoles.includes(config.defaultUserRole)) {
             return;
         }
-        
+
         // only admins can create other admin users
         if (!request.user || request.user.role !== 'service_admin') {
             reply.code(403).send({error: 'not authorised'});

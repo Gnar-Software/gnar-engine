@@ -1,43 +1,105 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { notification } from '../services/notification.service.js';
-import { config } from '../config.js';
-import { validateNotification } from '../schema/notification.schema.js';
+import { validateNotification, validateNotificationUpdate } from '../schema/notification.schema.js';
 
-
-/**
- * Get single notification
- */
-commands.register('notificationService.getSingleNotification', async ({id}) => {
-    if (id) {
-        return await notification.getById({id: id});
-    } else {
-        throw new error.badRequest('Notification email or id required');
+commands.register('notificationService.getSingleNotification', async ({ id }) => {
+    if (!id) {
+        throw new error.badRequest('Notification id required');
     }
+
+    return await notification.getById({ id });
 });
 
-/**
- * Get many notifications
- */
-commands.register('notificationService.getManyNotifications', async ({}) => {
-    return await notification.getAll();
+commands.register('notificationService.getManyNotifications', async ({ pageSize, pageNum }) => {
+    return await notification.getAll({ pageSize, pageNum });
 });
 
-/**
- * Create notifications
- */
+commands.register('notificationService.getNotificationsByUserId', async ({ userId, pageSize, pageNum }) => {
+    if (!userId) {
+        throw new error.badRequest('User ID required');
+    }
+
+    const parentNotifications = await notification.getAllByUserId({ userId, pageSize, pageNum });
+    const emailNotifications = await commands.execute('notificationService.getEmailNotificationsByUserId', { userId, pageSize, pageNum });
+    const storedNotifications = await commands.execute('notificationService.getStoredNotificationsByUserId', { userId, pageSize, pageNum });
+    const emailByParentId = new Map(emailNotifications.data.map(row => [row.notification_id, row]));
+    const storedByParentId = new Map(storedNotifications.data.map(row => [row.notification_id, row]));
+
+    return {
+        ...parentNotifications,
+        data: parentNotifications.data.map(parent => {
+            if (parent.type === 'email') {
+                return { ...parent, ...emailByParentId.get(parent.id) };
+            }
+
+            if (parent.type === 'stored') {
+                return { ...parent, ...storedByParentId.get(parent.id) };
+            }
+
+            return parent;
+        })
+    };
+});
+
+commands.register('notificationService.getNotificationsByType', async ({ userId, type, pageSize, pageNum }) => {
+    if (!userId || !type) {
+        throw new error.badRequest('User ID and notification type required');
+    }
+
+    return await notification.getByType({ userId, type, pageSize, pageNum });
+});
+
 commands.register('notificationService.createNotifications', async ({ notifications }) => {
     const validationErrors = [];
-    let createdNewNotifications = [];
+    const createdNewNotifications = [];
 
-    for (const newData of notifications) {
-        const { errors } = validateNotification(newData);
+    for (const data of notifications) {
+        const notificationData = {
+            type: data.type,
+            userId: data.userId,
+            idempotencyKey: data.idempotencyKey ?? null
+        };
+
+        const restData = { ...data };
+        delete restData.type;
+        delete restData.userId;
+        delete restData.idempotencyKey;
+
+        const { errors } = validateNotification(notificationData);
+
         if (errors?.length) {
             validationErrors.push(errors);
             continue;
         }
 
-        const created = await notification.create(newData);
-        createdNewNotifications.push(created);
+        const isIdempotent = await notification.checkIdempotent({
+            idempotencyKey: data.idempotencyKey
+        });
+
+        if (!isIdempotent) {
+            validationErrors.push(`Notification with idempotency key ${data.idempotencyKey} already exists`);
+            continue;
+        }
+
+        const created = await notification.create({ data: notificationData });
+        let childNotifications = [];
+
+        switch (data.type) {
+            case 'email':
+                childNotifications = await commands.execute('notificationService.createEmailNotifications', {
+                    emailNotifications: [{ ...restData, notificationId: created.id }]
+                });
+                break;
+            case 'stored':
+                childNotifications = await commands.execute('notificationService.createStoredNotifications', {
+                    storedNotifications: [{ ...restData, notificationId: created.id }]
+                });
+                break;
+            default:
+                logger.info(`Unknown notification type '${data.type}' for notification ID ${created.id}`);
+        }
+
+        createdNewNotifications.push({ ...created, ...childNotifications[0] });
     }
 
     if (validationErrors.length) {
@@ -47,50 +109,40 @@ commands.register('notificationService.createNotifications', async ({ notificati
     return createdNewNotifications;
 });
 
-/**
- * Update notification
- */
-commands.register('notificationService.updateNotification', async ({id, newNotificationData}) => {
-    
+commands.register('notificationService.updateNotification', async ({ id, data }) => {
     const validationErrors = [];
-    
+
     if (!id) {
         throw new error.badRequest('Notification ID required');
-    
     }
-    
-    const obj = await notification.getById({id: id});
-    
+
+    const obj = await notification.getById({ id });
+
     if (!obj) {
         throw new error.notFound('Notification not found');
-    
     }
-    
-    delete newNotificationData.id;
-    
-    const { errors } = validateNotificationUpdate(newNotificationData);
-    
+
+    delete data.id;
+
+    const { errors } = validateNotificationUpdate(data);
+
     if (errors?.length) {
         validationErrors.push(errors);
     }
-    
+
     if (validationErrors.length) {
         throw new error.badRequest(`Invalid notification data: ${validationErrors}`);
     }
-    
-    return await notification.update({
-        id: id,
-        updatedData: newNotificationData
-    });
+
+    return await notification.update({ id, data });
 });
 
-/**
- * Delete notification
- */
-commands.register('notificationService.deleteNotification', async ({id}) => {
-    const obj = await notification.getById({id: id});
+commands.register('notificationService.deleteNotification', async ({ id }) => {
+    const obj = await notification.getById({ id });
+
     if (!obj) {
         throw new error.notFound('Notification not found');
     }
-    return await notification.delete({id: id});
+
+    return await notification.delete({ id });
 });

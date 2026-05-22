@@ -26,15 +26,15 @@ export const user = {
         // Fetch paginated results
         const [rows] = await db.query(
             `
-            SELECT 
+            SELECT
                 *
             FROM
                 users
-            WHERE 
+            WHERE
                 (${whereClauses.join(' OR ')})
             LIMIT
-                ? 
-            OFFSET 
+                ?
+            OFFSET
                 ?`,
             [...params, pageSize, offset]
         );
@@ -42,11 +42,11 @@ export const user = {
         // Count total matching rows
         const [[{ total }]] = await db.query(
             `
-            SELECT 
-                COUNT(*) AS total 
-            FROM 
-                users 
-            WHERE 
+            SELECT
+                COUNT(*) AS total
+            FROM
+                users
+            WHERE
                 (${whereClauses.join(' OR ')})`,
             params
         );
@@ -209,6 +209,20 @@ export const user = {
             logger.error("Error deleting user: " + error);
             throw error;
         }
-    }
+    },
 
+    // Change password
+    changePassword: async ({ id, newPassword }) => {
+        try {
+            const [result] = await db.execute(
+                'UPDATE `users` SET `password` = ? WHERE `id` = ?',
+                [newPassword, id]
+            );
+
+            return result.affectedRows;
+        } catch (error) {
+            logger.error("Error changing password: " + error);
+            throw error;
+        }
+    }
 };

@@ -1,8 +1,19 @@
 import client from './client.js';
 
 export const blocks = {
-    getMany: async () => {
-        const { data } = await client.get('/blocks/');
+    getMany: async ({ page, pageSize } = {}) => {
+        const queryParams = new URLSearchParams();
+
+        if (page) {
+            queryParams.append('pageNum', page);
+        }
+
+        if (pageSize) {
+            queryParams.append('pageSize', pageSize);
+        }
+
+        const url = `/blocks/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const { data } = await client.get(url);
         return data;
     },
 
@@ -22,7 +33,6 @@ export const blocks = {
     },
 
     delete: async ( id ) => {
-        await client.delete(`/users/${id}`);
+        await client.delete(`/blocks/${id}`);
     }
 };
-

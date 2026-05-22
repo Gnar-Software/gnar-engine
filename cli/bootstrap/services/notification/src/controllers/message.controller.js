@@ -36,7 +36,7 @@ export const messageHandlers = {
     updateNotification: async (payload) => {
         const result = await commands.execute('updateNotification', {
             id: payload.data.id,
-            newNotificationData: payload.data
+            data: payload.data
         });
         return { notification: result };
     },

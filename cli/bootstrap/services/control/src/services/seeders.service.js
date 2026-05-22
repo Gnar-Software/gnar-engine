@@ -26,7 +26,7 @@ export const seeders = {
         let seedSuccess = true;
 
         const promises = services.map(async (service) => {
-            if (services.name == 'controlService') {
+            if (service.name == 'controlService') {
                 return;
             }
             logger.info(`Seeding service: ${service.name}`);

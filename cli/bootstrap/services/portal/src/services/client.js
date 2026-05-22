@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getAuthToken, setAuthToken, removeAuthToken, removeAuthUser } from './storage.js';
 
 // Determine the correct API URL based on the environment
-const baseApiUrl = 'http://localhost';
+const baseApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost';
 
 const client = axios.create({
     baseURL: baseApiUrl,
@@ -37,29 +37,32 @@ client.interceptors.response.use(
 
         if (newAuthToken) {
             const token = newAuthToken.split(' ')[1];
-            setAuthToken(token);
+            setAuthToken({ authToken: token });
             console.log('refreshed token');
         }
 
         return response;
     },
     (error) => {
-        // Log out if 401
-        if (error.response.status === 401) {
+        const status = error?.response?.status;
 
-            // remove auth token and user from storage
+        // Log out if 401 or 403
+        if (status === 401 || status === 403) {
             removeAuthToken();
             removeAuthUser();
 
-            // redirect to login page
-            window.location.href = '/portal/login'
+            // Avoid redirect loop if you're already on login
+            if (!window.location.pathname.startsWith('/portal/login')) {
+                window.location.href = '/portal/login';
+            }
 
+            return Promise.reject(error);
         }
 
-        if (error.response.data.message) {
-            return Promise.reject({
-                message: error.response.data.message
-            });
+        const message = error?.response?.data?.message;
+        const details = error?.response?.data?.details;
+        if (message || details) {
+            return Promise.reject({ message, details });
         }
 
         return Promise.reject(error);
@@ -67,4 +70,3 @@ client.interceptors.response.use(
 );
 
 export default client;
-

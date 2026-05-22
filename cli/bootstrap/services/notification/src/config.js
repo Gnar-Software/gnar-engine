@@ -6,7 +6,7 @@ export const config = {
     serviceName: 'notificationService',
 
     // environment
-    environment: process.env.NOTIFICATION_NODE_ENV || 'dev',
+    environment: process.env.NOTIFICATION_NODE_ENV || 'development',
     runTests: process.env.NOTIFICATION_RUN_TESTS || false,
 
     // microservice | modular-monolith
@@ -52,6 +52,26 @@ export const config = {
     webSockets: {
         reconnectInterval: 5000,
         maxInitialConnectionAttempts: 5
+    },
+
+    notificationTypes: [
+        'email',
+        'stored'
+    ],
+
+    // email delivery
+    email: {
+        from: process.env.NOTIFICATION_EMAIL_FROM || 'no-reply@example.com',
+        transport: process.env.NOTIFICATION_EMAIL_TRANSPORT || 'log',
+        overrideTo: process.env.NOTIFICATION_EMAIL_OVERRIDE_TO || ''
+    },
+
+    // aws config for SES
+    aws: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        sessionToken: process.env.AWS_SESSION_TOKEN,
+        region: process.env.AWS_REGION || 'eu-west-2'
     },
 
     hashNameSpace: '',

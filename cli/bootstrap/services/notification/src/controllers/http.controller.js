@@ -62,7 +62,7 @@ export const httpController = {
 		handler: async (request, reply) => {
 			const params = {
 				id: request.params.id,
-				newNotificationData: request.body
+				data: request.body
 			};
 			const result = await commands.execute('updateNotification', params);
 			reply.code(200).send({ notification: result });

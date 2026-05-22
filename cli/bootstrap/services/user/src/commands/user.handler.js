@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { user } from '../services/user.service.js';
-import { commands, logger, error } from '@gnar-engine/core';
+import { commands, logger, error, utils } from '@gnar-engine/core';
 import { auth } from '../services/authentication.service.js';
 import { passwordReset } from '../services/passwordReset.service.js';
 import { validateUser, validateServiceAdminUser, validateUserUpdate, validateServiceAdminUserUpdate } from '../schema/user.schema.js';
@@ -8,7 +8,7 @@ import { userSchema } from '../schema/user.schema.js';
 
 /**
  * Authentication
- * 
+ *
  * @param {Object} params
  * @param {string} params.email
  * @param {string} params.password
@@ -75,7 +75,7 @@ commands.register('userService.authenticate', async ({ username, password, apiKe
 
 /**
  * Get authenticated user
- * 
+ *
  * @param {Object} params
  * @param {string} params.token - Session token
  * @returns {Promise<Object>} The user data
@@ -109,7 +109,7 @@ commands.register('userService.getAuthenticatedUser', async ({ token }) => {
 
 /**
  * Get single user
- * 
+ *
  * @param {Object} params
  * @param {string|number} params.id - User ID
  * @returns {Promise<Object>} The user data
@@ -134,7 +134,7 @@ commands.register('userService.getSingleUser', async ({ id, email }) => {
 
 /**
  * Get many users
- * 
+ *
  * @param {Object} params
  * @param {number} params.pageSize - Number of users per page
  * @param {number} params.pageNum - Page number
@@ -196,7 +196,7 @@ commands.register('userService.searchUsers', async ({ term, pageSize, pageNum })
 
 /**
  * Creat users with random password
- * 
+ *
  * @param {Object} params
  * @param {Array} params.users - New user data
  */
@@ -268,7 +268,7 @@ commands.register('userService.getUserEnums', async () => {
 
 /**
  * Create users
- * 
+ *
  * @param {Object} params
  * @param {Object[]} params.users - Array of new user data
  * @returns {Promise<Array>} Array of new users
@@ -329,7 +329,7 @@ commands.register('userService.createUsers', async ({ users }) => {
 
 /**
  * Update user
- * 
+ *
  * @param {Object} params
  * @param {string|number} params.id - User ID
  * @param {Object[]} params.newUserData - New user data
@@ -401,7 +401,7 @@ commands.register('userService.updateUser', async ({ id, newUserData }) => {
 
 /**
  * Delete user
- * 
+ *
  * @param {Object} params
  * @param {string|number} params.id - User ID
  * @returns {Promise<Boolean>} Success

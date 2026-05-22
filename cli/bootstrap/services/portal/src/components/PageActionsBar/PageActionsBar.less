@@ -1,0 +1,68 @@
+.page-actions-bar {
+    color: @color-dark-2;
+    margin-bottom: 2rem;
+    gap: 1rem;
+
+    h1 {
+        margin: 0;
+        padding: 0;
+        color: inherit;
+        font-weight: bold;
+        font-size: 24px;
+    }
+
+    &.compact {
+        h1 {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+    }
+
+    .actions-bar-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        row-gap: 0.5rem;
+
+        .filter-field {
+            display: inline-flex;
+            flex-direction: column;
+            max-width: 215px;
+            min-width: 215px;
+            width: 100%;
+
+            input {
+                margin: 10px 0;
+                padding: 0.3rem 0.8rem;
+                min-height: 31px;
+                background: @color-white-1;
+                border-radius: 0.5rem;
+                box-sizing: border-box;
+                color: @color-dark-2;
+                font-size: 15px;
+
+                &:focus {
+                    outline: 1px solid @color-accent-1;
+                }
+            }
+
+            &.narrow {
+                max-width: 140px;
+                min-width: 140px;
+            }
+        }
+
+        .toolbar-search {
+            box-sizing: border-box;
+            flex: 0 0 215px;
+            max-width: 215px;
+            min-width: 215px;
+            margin: 10px 0;
+
+            .search-input {
+                min-height: 31px;
+                margin: 0;
+                padding: 0.3rem 0.4rem;
+            }
+        }
+    }
+}

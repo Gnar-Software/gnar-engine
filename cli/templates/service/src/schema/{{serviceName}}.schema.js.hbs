@@ -14,4 +14,14 @@ export const {{serviceName}}Schema = {
     }
 };
 
+export const {{serviceName}}UpdateSchema = {
+    ...{{serviceName}}Schema,
+    schemaName: '{{serviceName}}Service.{{serviceName}}UpdateSchema',
+    schema: {
+        ...{{serviceName}}Schema.schema,
+        required: []
+    }
+};
+
 export const validate{{pascalCase serviceName}} = schema.compile({{serviceName}}Schema);
+export const validate{{pascalCase serviceName}}Update = schema.compile({{serviceName}}UpdateSchema);

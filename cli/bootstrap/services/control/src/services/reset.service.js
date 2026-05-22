@@ -25,7 +25,7 @@ export const reset = {
         let resetSuccess = true;
 
         const promises = services.map(async (service) => {
-            if (services.name == 'controlService') {
+            if (service.name == 'controlService') {
                 return;
             }
 

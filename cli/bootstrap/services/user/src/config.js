@@ -16,7 +16,6 @@ export const config = {
 
     // web server
     http: {
-        allowedOrigins: ['localhost', 'localhost:4003'],
         allowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         rateLimiting: {
@@ -60,18 +59,22 @@ export const config = {
     userRoles: [
         'service_admin',
         'admin',
-        'customer'
+        'leaseholder'
     ],
 
     publicCanCreateRoles: [
 
     ],
 
-    defaultUserRole: 'customer',
+    defaultUserRole: 'leaseholder',
 
     authenticationOptions: {
         password_auth_enabled: true,
         api_key_auth_enabled: true
+    },
+
+    notifications: {
+        passwordResetFromEmail: process.env.USER_PASSWORD_RESET_FROM_EMAIL || 'no-reply@example.com'
     },
 
     hashNameSpace: '8a07b16c-327f-45c5-9484-8d843f57bb4b',

@@ -6,8 +6,10 @@ import { logger, db } from '@gnar-engine/core';
 export const up = async () => {
     logger.info('Creating table: notifications');
     await db.query(`
-        CREATE TABLE notifications (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS notifications (
+            id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+            type ENUM('email', 'stored'),
+            user_id CHAR(36),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )

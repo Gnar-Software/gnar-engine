@@ -1,4 +1,4 @@
-import { message, http, logger, db, registerService, webSockets, commands } from '@gnar-engine/core';
+import { message, http, logger, db, webSockets, commands } from '@gnar-engine/core';
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
 import { httpController as controlPlatformHttpController } from './controllers/http.controller.js';

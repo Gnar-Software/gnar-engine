@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './css/style.css'
 import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import AuthGuard from './routeGuards/AuthGuard.jsx'
 import LoginPage from './pages/LoginPage/LoginPage.jsx'
 import PortalLayout from './layouts/PortalLayout/PortalLayout.jsx'
 import DashboardPage from './pages/DashboardPage/DashboardPage.jsx'
@@ -24,25 +25,30 @@ const router = createBrowserRouter([
                 element: <LoginPage />,
             },
             {
-                path: "",
-                element: <PortalLayout />,
+                element: <AuthGuard />,
                 children: [
-                    { index: true, element: <DashboardPage /> },
-                    { path: "dashboard", element: <DashboardPage /> },
+                    {
+                        path: "",
+                        element: <PortalLayout />,
+                        children: [
+                            { index: true, element: <DashboardPage /> },
+                            { path: "dashboard", element: <DashboardPage /> },
 
-                    // Users
-                    { path: "users", element: <UsersPage /> },
-                    { path: "users/:id", element: <UserSinglePage /> },
+                            // Users
+                            { path: "users", element: <UsersPage /> },
+                            { path: "users/:id", element: <UserSinglePage /> },
 
-                    // CMS / Pages
-                    { path: "pages", element: <PagesPage /> },
-                    { path: "pages/:id", element: <PageSinglePage /> },
-                    { path: "blocks", element: <BlocksPage /> },
-                    { path: "blocks/:id", element: <BlockSinglePage /> },
-
-                    // Agent
-                    { path: "agent", element: <AgentPage /> }
-                ],
+                            // CMS / Pages
+                            { path: "pages", element: <PagesPage /> },
+                            { path: "pages/:id", element: <PageSinglePage /> },
+                            { path: "blocks", element: <BlocksPage /> },
+                            { path: "blocks/:id", element: <BlockSinglePage /> }
+                             
+                            // Agent
+                            { path: "agent", element: <AgentPage /> }
+                        ]
+                    }
+                ]
             }
         ]
     }

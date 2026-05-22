@@ -1,4 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { usePaginate } from '../../hooks/usePaginate.jsx';
+import { useTablesColumns } from '../../hooks/useTablesColumns.jsx';
+import { pageSizeOptions } from '../../data/paginationConfig.js';
+import ListMany from '../ListMany/ListMany.jsx';
+import Paginator from '../../elements/Paginator/Paginator.jsx';
+import ActionLink from '../../elements/ActionLink/ActionLink.jsx';
+import CustomSelect from '../../elements/CustomSelect/CustomSelect.jsx';
+import CustomMultiSelect from '../../elements/CustomMultiSelect/CustomMultiSelect.jsx';
+import PageActionsBar from '../PageActionsBar/PageActionsBar.jsx';
 
 function CrudList({
     entityKey,
@@ -7,79 +16,101 @@ function CrudList({
     entityPluralName,
     columns
 }) {
-
-    const [page, setPage] = useState(1);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const {
+        currentPage,
+        setCurrentPage,
+        pageSize,
+        setPageSize,
+        totalPages,
+        setTotalPages,
+        calculateTotalPages
+    } = usePaginate();
+    const { availableColumns, toggleColumn } = useTablesColumns({ tableKey: entityKey });
+    const configuredColumns = availableColumns?.length ? availableColumns : columns.map((col, index) => ({
+        id: index + 1,
+        ...col,
+        selected: true
+    }));
 
-    // Fetch data
     useEffect(() => {
         (async () => {
             try {
                 setLoading(true);
-                const newData = await fetchData({page});
+                setError('');
 
-                if (newData.length === 0) {
-                    setLoading(false);
+                const response = await fetchData({ page: currentPage, pageSize });
+                const list = Array.isArray(response?.[entityKey])
+                    ? response[entityKey]
+                    : response?.[entityKey]?.data || response?.data || [];
+                const pagination = response?.[entityKey]?.pagination || response?.pagination || {};
+
+                setItems(list);
+                setTotalPages(calculateTotalPages(pagination) || 1);
+
+                if (!list.length) {
                     setError(`No ${entityPluralName} found.`);
-                    return;
                 }
-
-                setItems(newData[entityKey]);
-                setLoading(false);
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error('Error fetching data:', error);
+                setError(error.message || `Error fetching ${entityPluralName}.`);
+            } finally {
                 setLoading(false);
             }
         })();
-    }, [entityKey, page]);
+    }, [entityKey, currentPage, pageSize]);
 
-    const navigateToCrudSingle = (id) => {
-        window.location.href = `/portal/${entityKey}/${id}`;
-    }
+    const navigateToCrudSingle = ({ rowId }) => {
+        window.location.href = `/portal/${entityKey}/${rowId}`;
+    };
+
+    const selectedColumns = configuredColumns
+        .filter(col => col.selected)
+        .map(col => ({ key: col.key, label: col.label }));
 
     return (
         <div className="crud-list">
-            <div className="top-action-bar">
-                <button onClick={() => {window.location.href = `/portal/${entityKey}/new`}}>Create New {entitySingleName}</button>
-            </div>
-            <div className="list-table">
-                <table>
-                    <thead>
-                        <tr>
-                            {columns.map(col => (
-                                <th key={col.key}>{col.label}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr>
-                                <td colSpan={columns.length}>Loading...</td>
-                            </tr>
-                        ) : error ? (
-                            <tr>
-                                <td colSpan={columns.length}>{error}</td>
-                            </tr>
-                        ) : items && items.length > 0 ? (
-                            items.map((item, index) => (
-                                <tr key={index} onClick={() => {navigateToCrudSingle(item.id)}}>
-                                    {columns.map(col => (
-                                        <td key={col.key}>{item[col.key]}</td>
-                                    ))}
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={columns.length}>No {entityPluralName} available.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <PageActionsBar>
+                <ActionLink
+                    handleClick={() => { window.location.href = `/portal/${entityKey}/new`; }}
+                    label={`+ Create New ${entitySingleName}`}
+                />
+                <CustomMultiSelect
+                    name={`${entityKey}-columns-filter`}
+                    placeholder="Columns"
+                    labelKey="label"
+                    options={configuredColumns}
+                    selectedOptions={selectedColumns}
+                    setSelectedOption={(option) => toggleColumn(option.key)}
+                />
+                <CustomSelect
+                    name={`${entityKey}-page-size`}
+                    placeholder={`Page size: ${pageSize}`}
+                    options={pageSizeOptions.map(size => ({ id: size, name: size }))}
+                    labelKey="name"
+                    setSelectedOption={(option) => { setCurrentPage(1); setPageSize(option.id); }}
+                />
+            </PageActionsBar>
+
+            {loading && <p className="account-loading-message p-1 bg-white c-gray">Loading {entityPluralName}...</p>}
+            {!loading && error && <div className="error-message-cont">{error}</div>}
+
+            <ListMany
+                columns={selectedColumns}
+                data={items}
+                onRowClick={navigateToCrudSingle}
+                showSelectAll={false}
+            />
+
+            <Paginator
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
         </div>
-    )
+    );
 }
 
 export default CrudList;

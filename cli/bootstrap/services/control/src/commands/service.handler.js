@@ -44,7 +44,7 @@ commands.register('controlService.registerAndGetPeers', async ({ config }) => {
 
 /**
  * Register a service in the registry
- * 
+ *
  * @param {Object} params
  * @param {Object} params.serviceName
  * @param {Object} params.replicaSlot
@@ -63,7 +63,7 @@ commands.register('controlService.registerServiceAndReplica', async ({ serviceNa
     }
 
     try {
-        service = await registry.getServiceByName({ 
+        service = await registry.getServiceByName({
             name: serviceName
         });
 
@@ -228,7 +228,7 @@ commands.register('controlService.peerConnectionDropped', async({ requestingHost
 
     // get the service name of the dropped peer
     try {
-        const droppedPeerReplica = await registry.getServiceReplicaByHostname({ 
+        const droppedPeerReplica = await registry.getServiceReplicaByHostname({
             replicaHostname: droppedPeerHostname
         });
 
@@ -266,7 +266,7 @@ commands.register('controlService.peerConnectionDropped', async({ requestingHost
 });
 
 /**
- * Periodically tidy up all disconnected replicas from registry 
+ * Periodically tidy up all disconnected replicas from registry
  */
 commands.register('controlService.removeDisconnectedReplicas', async() => {
     let services;
@@ -290,7 +290,7 @@ commands.register('controlService.removeDisconnectedReplicas', async() => {
 
                     if (replica.serviceName !== 'controlService' && !webSockets.wsConnections[replica.serviceName]?.[replica.replicaHostname]) {
                         logger.info('Removing currently disconnected replica from registry', replica.hostname);
-                
+
                         try {
                             await registry.removeServiceReplica({ replicaHostname: replica.replicaHostname });
                             await peerConnection.removeAllForReplica({ replicaHostname: replica.replicaHostname });

@@ -1,8 +1,9 @@
-import { message, http, logger, db, webSockets, test } from '@gnar-engine/core';
+import { message, http, logger, db, webSockets, test, manifest as commandManifest, commands } from '@gnar-engine/core';
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
 import { httpController as pagePlatformHttpController } from './controllers/page.http.controller.js';
 import { httpController as blockPlatformHttpController } from './controllers/block.http.controller.js';
+import { pageSchema, blockSchema, textInputSchema, richTextSchema, imageSchema, repeaterSchema } from './schema/page.schema.js';
 
 /**
  * Initialise service
@@ -32,6 +33,24 @@ export const initService = async () => {
             blockPlatformHttpController
 		]
 	});
+
+    // Register the command manifest after all commands are registered
+    await commands.execute('controlService.registerManifest', {
+        serviceName: config.serviceName,
+        manifest: {
+            description: config.serviceManifest.description,
+            ...commandManifest.manifest,
+            schemas: {
+                ...commandManifest.manifest.schemas,
+                [pageSchema.schemaName]: pageSchema.schema,
+                [blockSchema.schemaName]: blockSchema.schema,
+                [textInputSchema.schemaName]: textInputSchema.schema,
+                [richTextSchema.schemaName]: richTextSchema.schema,
+                [imageSchema.schemaName]: imageSchema.schema,
+                [repeaterSchema.schemaName]: repeaterSchema.schema
+            }
+        }
+    });
 
 	// Start the HTTP server
 	await http.start();

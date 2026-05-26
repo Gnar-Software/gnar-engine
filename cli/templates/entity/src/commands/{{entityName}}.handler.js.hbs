@@ -13,6 +13,11 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase entityName}}', a
     } else {
         throw new error.badRequest('{{pascalCase entityName}} id required');
     }
+}, {
+    description: 'Get one {{lowerCase entityName}} by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: '{{pascalCase entityName}} ID' }
+    }
 });
 
 /**
@@ -20,6 +25,18 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase entityName}}', a
  */
 commands.register('{{serviceName}}Service.getMany{{pascalCasePlural entityName}}', async ({ pageSize, pageNum, filters = {}, ids = [] } = {}) => {
     return await {{entityName}}.getAll({ pageSize, pageNum, filters, ids });
+}, {
+    description: 'Get a paginated list of {{lowerCasePlural entityName}}.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of {{lowerCasePlural entityName}} per page' },
+        pageNum: { type: 'number', description: 'Page number' },
+        filters: { type: 'object', description: 'Optional {{lowerCase entityName}} filters' },
+        ids: {
+            type: 'array',
+            description: 'Optional {{lowerCase entityName}} IDs to include',
+            items: { type: ['string', 'number'] }
+        }
+    }
 });
 
 /**
@@ -45,6 +62,14 @@ commands.register('{{serviceName}}Service.create{{pascalCasePlural entityName}}'
     }
 
     return createdNew{{pascalCasePlural entityName}};
+}, {
+    description: 'Create one or more {{lowerCasePlural entityName}}.',
+    parameters: {
+        {{lowerCasePlural entityName}}: {
+            type: 'array',
+            description: '{{pascalCasePlural entityName}} to create. {{pascalCase entityName}} object details are available in {{serviceName}}Service.{{entityName}}Schema.'
+        }
+    }
 });
 
 /**
@@ -80,6 +105,12 @@ commands.register('{{serviceName}}Service.update{{pascalCase entityName}}', asyn
         id: id,
         updatedData: new{{pascalCase entityName}}Data
     });
+}, {
+    description: 'Update one {{lowerCase entityName}} by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: '{{pascalCase entityName}} ID' },
+        new{{pascalCase entityName}}Data: { type: 'object', description: '{{pascalCase entityName}} update data. Fields are available in {{serviceName}}Service.{{entityName}}UpdateSchema.' }
+    }
 });
 
 /**
@@ -91,4 +122,9 @@ commands.register('{{serviceName}}Service.delete{{pascalCase entityName}}', asyn
         throw new error.notFound('{{pascalCase entityName}} not found');
     }
     return await {{entityName}}.delete({id: id});
+}, {
+    description: 'Delete one {{lowerCase entityName}} by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: '{{pascalCase entityName}} ID' }
+    }
 });

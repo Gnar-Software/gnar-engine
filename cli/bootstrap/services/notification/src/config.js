@@ -5,6 +5,10 @@ export const config = {
     // service name
     serviceName: 'notificationService',
 
+    serviceManifest: {
+        description: 'The notification service manages email and stored notifications, including notification templates, delivery scheduling, and send status tracking.'
+    },
+
     // environment
     environment: process.env.NOTIFICATION_NODE_ENV || 'development',
     runTests: process.env.NOTIFICATION_RUN_TESTS || false,

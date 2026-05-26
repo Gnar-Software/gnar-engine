@@ -5,6 +5,10 @@ export const config = {
     // service name
     serviceName: '{{serviceName}}Service',
 
+    serviceManifest: {
+        description: 'The {{lowerCase serviceName}} service manages {{lowerCasePlural serviceName}}.'
+    },
+
     // environment
     environment: process.env.{{upperCase serviceName}}_NODE_ENV || 'development',
     runTests: process.env.{{upperCase serviceName}}_RUN_TESTS || false,

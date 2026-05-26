@@ -8,10 +8,21 @@ commands.register('notificationService.getSingleNotification', async ({ id }) =>
     }
 
     return await notification.getById({ id });
+}, {
+    description: 'Get one parent notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Notification ID' }
+    }
 });
 
 commands.register('notificationService.getManyNotifications', async ({ pageSize, pageNum }) => {
     return await notification.getAll({ pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of parent notifications.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.getNotificationsByUserId', async ({ userId, pageSize, pageNum }) => {
@@ -39,6 +50,13 @@ commands.register('notificationService.getNotificationsByUserId', async ({ userI
             return parent;
         })
     };
+}, {
+    description: 'Get a paginated list of notifications for one user, including type-specific notification data.',
+    parameters: {
+        userId: { type: 'string', description: 'User ID' },
+        pageSize: { type: 'number', description: 'Number of notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.getNotificationsByType', async ({ userId, type, pageSize, pageNum }) => {
@@ -47,6 +65,14 @@ commands.register('notificationService.getNotificationsByType', async ({ userId,
     }
 
     return await notification.getByType({ userId, type, pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of notifications for one user filtered by notification type.',
+    parameters: {
+        userId: { type: 'string', description: 'User ID' },
+        type: { type: 'string', description: 'Notification type' },
+        pageSize: { type: 'number', description: 'Number of notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.createNotifications', async ({ notifications }) => {
@@ -107,6 +133,14 @@ commands.register('notificationService.createNotifications', async ({ notificati
     }
 
     return createdNewNotifications;
+}, {
+    description: 'Create one or more notifications and their type-specific child records.',
+    parameters: {
+        notifications: {
+            type: 'array',
+            description: 'Notifications to create. Notification object details are available in notificationService.notificationSchema.'
+        }
+    }
 });
 
 commands.register('notificationService.updateNotification', async ({ id, data }) => {
@@ -135,6 +169,12 @@ commands.register('notificationService.updateNotification', async ({ id, data })
     }
 
     return await notification.update({ id, data });
+}, {
+    description: 'Update one parent notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Notification ID' },
+        data: { type: 'object', description: 'Notification update data. Fields are available in notificationService.notificationUpdateSchema.' }
+    }
 });
 
 commands.register('notificationService.deleteNotification', async ({ id }) => {
@@ -145,4 +185,9 @@ commands.register('notificationService.deleteNotification', async ({ id }) => {
     }
 
     return await notification.delete({ id });
+}, {
+    description: 'Delete one parent notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Notification ID' }
+    }
 });

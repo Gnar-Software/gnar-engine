@@ -13,6 +13,11 @@ commands.register('pageService.getSinglePage', async ({id}) => {
     } else {
         throw new error.badRequest('Page email or id required');
     }
+}, {
+    description: 'Get one page by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Page ID' }
+    }
 });
 
 /**
@@ -20,6 +25,12 @@ commands.register('pageService.getSinglePage', async ({id}) => {
  */
 commands.register('pageService.getManyPages', async ({ pageSize, pageNum } = {}) => {
     return await page.getAll({ pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of pages.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of pages per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 /**
@@ -50,6 +61,15 @@ commands.register('pageService.createPages', async ({ pages, requestUser }) => {
     }
 
     return createdNewPages;
+}, {
+    description: 'Create one or more pages.',
+    parameters: {
+        pages: {
+            type: 'array',
+            description: 'Pages to create. Page object details are available in pageService.pageSchema.'
+        },
+        requestUser: { type: 'object', description: 'Authenticated user performing the request' }
+    }
 });
 
 
@@ -96,6 +116,13 @@ commands.register('pageService.updatePage', async ({id, newPageData, requestUser
         id: id,
         updatedData: newPageData
     });
+}, {
+    description: 'Update one page by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Page ID' },
+        newPageData: { type: 'object', description: 'Page update data. Fields are available in pageService.pageSchema.' },
+        requestUser: { type: 'object', description: 'Authenticated user performing the request' }
+    }
 });
 
 /**
@@ -107,6 +134,11 @@ commands.register('pageService.deletePage', async ({id}) => {
         throw new error.notFound('Page not found');
     }
     return await page.delete({id: id});
+}, {
+    description: 'Delete one page by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Page ID' }
+    }
 });
 
 
@@ -174,6 +206,12 @@ commands.register('pageService.processUploadsInData', async ({ data, requestUser
     };
 
     return await uploadFilesRecursive(data);
+}, {
+    description: 'Process base64 file uploads embedded in page data and replace them with stored file URLs.',
+    parameters: {
+        data: { type: ['object', 'array'], description: 'Page or block data containing upload fields' },
+        requestUser: { type: 'object', description: 'Authenticated user performing the upload' }
+    }
 });
 
 commands.register("pageService.exportPages", async () => {
@@ -195,6 +233,9 @@ commands.register("pageService.exportPages", async () => {
         fileName: "pages.json",
         jsonString,
     };
+}, {
+    description: 'Export all pages to a JSON backup file.',
+    parameters: {}
 });
 
 commands.register("pageService.exportBlocks", async () => {
@@ -224,6 +265,9 @@ commands.register("pageService.exportBlocks", async () => {
         fileName: "blocks.json",
         jsonString,
     };
+}, {
+    description: 'Export page-embedded blocks to a JSON backup file.',
+    parameters: {}
 });
 
 commands.register("pageService.importPages", async ({ pages: incomingPages, requestUser }) => {
@@ -277,6 +321,15 @@ commands.register("pageService.importPages", async ({ pages: incomingPages, requ
     }
 
     return result;
+}, {
+    description: 'Import pages from JSON data, creating new pages or updating existing pages by key.',
+    parameters: {
+        pages: {
+            type: 'array',
+            description: 'Pages to import. Page object details are available in pageService.pageSchema.'
+        },
+        requestUser: { type: 'object', description: 'Authenticated user performing the import' }
+    }
 });
 
 commands.register("pageService.importPagesFromJsonString", async ({ jsonString, requestUser }) => {
@@ -293,4 +346,10 @@ commands.register("pageService.importPagesFromJsonString", async ({ jsonString, 
         pages: pagesArray,
         requestUser,
     });
+}, {
+    description: 'Import pages from a JSON string.',
+    parameters: {
+        jsonString: { type: 'string', description: 'JSON string containing a pages array or an object with a pages array' },
+        requestUser: { type: 'object', description: 'Authenticated user performing the import' }
+    }
 });

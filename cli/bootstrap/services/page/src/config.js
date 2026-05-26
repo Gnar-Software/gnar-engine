@@ -5,6 +5,10 @@ export const config = {
     // service name
     serviceName: 'pageService',
 
+    serviceManifest: {
+        description: 'The page service is the CMS / content management system for managing headless front-ends. Pages are built from blocks. Pages contain the content, whilst blocks provide reusable content schema.'
+    },
+
     // environment
     environment: process.env.PAGE_NODE_ENV || 'developnent',
     runTests: process.env.PAGE_RUN_TESTS || false,

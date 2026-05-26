@@ -19,6 +19,10 @@
     }
 
     .agents-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
         min-width: 112px;
         margin: 0px;
         background: @dark-1;
@@ -28,6 +32,13 @@
             background: @white;
             color: @dark-1;
         }
+    }
+
+    .agents-button-icon {
+        display: block;
+        width: 19px;
+        height: 19px;
+        background: url('../assets/icon-agent.svg') center / contain no-repeat;
     }
 
     .agent-dropdown {

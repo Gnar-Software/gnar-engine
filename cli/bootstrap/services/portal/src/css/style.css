@@ -378,6 +378,10 @@ button.secondary-btn {
   justify-content: flex-end;
 }
 .portal-topbar .agents-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   min-width: 112px;
   margin: 0px;
   background: #242424;
@@ -386,6 +390,12 @@ button.secondary-btn {
 .portal-topbar .agents-button[aria-expanded="true"] {
   background: #ffffff;
   color: #242424;
+}
+.portal-topbar .agents-button-icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+  background: url('../assets/icon-agent.svg') center / contain no-repeat;
 }
 .portal-topbar .agent-dropdown {
   transition: 0s;

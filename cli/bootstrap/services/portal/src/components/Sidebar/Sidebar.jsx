@@ -18,11 +18,6 @@ function Sidebar() {
                     <li className="icon-users"><Link to="/portal/pages">Pages</Link></li>
                     <li><Link to="/portal/blocks">Blocks</Link></li>
                 </ul>
-                <span className="separator"></span>
-                <ul>
-                    <li className="icon-reports"><Link to="/portal/reports">Reports</Link></li>
-                    <li><Link to="/portal/logs">Logs</Link></li>
-                </ul>
             </div>
 
             <UserInfo />

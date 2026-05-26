@@ -356,8 +356,6 @@ async function buildAndUpContainers({
         provisionerBinds.push(`${gnarEngineCliConfig.coreDevPath}:${gnarEngineCliConfig.corePath}`);
     }
 
-    console.log('Secrets', secrets);
-
     const provisioner = await createContainer({
         name: provisionerTag,
         image: provisionerTag,
@@ -572,9 +570,13 @@ async function buildAndUpContainers({
     await provisioner.start();
     const provisionerResult = await provisioner.wait();
 
+    console.log('got here');
+
     if (provisionerResult.StatusCode !== 0) {
         throw new Error(`Provisioner exited with status code ${provisionerResult.StatusCode}. Services were not started.`);
     }
+
+    console.log('Starting services...') ||
 
     // start the containers
     await Promise.all(

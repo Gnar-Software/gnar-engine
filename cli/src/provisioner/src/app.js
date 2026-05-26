@@ -75,6 +75,7 @@ export const initService = async () => {
     }
 
 	console.log('G n a r  E n g i n e | Provisioner completed and exiting');
+    process.exit(0);
 }
 
 initService().catch((error) => {

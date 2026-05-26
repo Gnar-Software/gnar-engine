@@ -1,7 +1,11 @@
 .page-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     color: @color-dark-2;
     margin-bottom: 2rem;
     gap: 1rem;
+    flex-wrap: wrap;
 
     h1 {
         margin: 0;
@@ -19,9 +23,28 @@
     }
 
     .actions-bar-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
         flex-wrap: wrap;
         justify-content: flex-end;
         row-gap: 0.5rem;
+
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            min-height: 31px;
+            margin: 10px 0;
+            white-space: nowrap;
+        }
+
+        .custom-select-cont,
+        .custom-select {
+            width: 100%;
+            max-width: 215px;
+            min-width: 215px;
+        }
 
         .filter-field {
             display: inline-flex;

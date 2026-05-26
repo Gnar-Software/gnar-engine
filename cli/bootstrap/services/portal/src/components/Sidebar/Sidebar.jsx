@@ -15,7 +15,7 @@ function Sidebar() {
                 </ul>
                 <span className="separator"></span>
                 <ul>
-                    <li className="icon-users"><Link to="/portal/pages">Pages</Link></li>
+                    <li className="icon-page"><Link to="/portal/pages">Pages</Link></li>
                     <li><Link to="/portal/blocks">Blocks</Link></li>
                 </ul>
             </div>

@@ -1,0 +1,41 @@
+.user-single-page {
+    .user-actions-bar {
+        justify-content: flex-end;
+    }
+
+    .user-details-form {
+        max-width: 620px;
+    }
+
+    .button-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+
+        button {
+            width: 100%;
+        }
+    }
+
+    .danger-btn {
+        background: @error-red;
+        border-color: @error-red;
+        color: @white;
+    }
+}
+
+.success-messages {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    ul {
+        list-style: none;
+        margin: 0px;
+    }
+
+    li, a, span, p {
+        color: @green-main;
+    }
+}

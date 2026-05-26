@@ -58,15 +58,14 @@ export const config = {
     // service specific config
     userRoles: [
         'service_admin',
-        'admin',
-        'leaseholder'
+        'admin'
     ],
 
     publicCanCreateRoles: [
 
     ],
 
-    defaultUserRole: 'leaseholder',
+    defaultUserRole: 'admin',
 
     authenticationOptions: {
         password_auth_enabled: true,

@@ -10,7 +10,7 @@ export const userSchema = {
         properties: {
             email: { type: 'string', format: 'email' },
             password: { type: 'string', minLength: 8 },
-            role: { type: 'string', enum: config.allowedUserRoles, default: config.defaultUserRole },
+            role: { type: 'string', enum: config.userRoles, default: config.defaultUserRole },
             contactId: { type: 'string' },
             username: { type: 'string' }
         },
@@ -40,8 +40,9 @@ const userUpdateSchema = {
     schema: {
         type: 'object',
         properties: {
+            email: { type: 'string', format: 'email' },
             username: { type: 'string' },
-            role: { type: 'string', enum: config.allowedUserRoles, default: config.defaultUserRole },
+            role: { type: 'string', enum: config.userRoles, default: config.defaultUserRole },
             contactId: { type: 'string' }
         },
         additionalProperties: false

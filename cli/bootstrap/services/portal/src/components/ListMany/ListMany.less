@@ -2,7 +2,8 @@
     width: 100%;
     min-height: calc((100vh - 2rem * 4) - 220px - 2rem); // Adjust based on other UI elements
     overflow-x: auto;
-    background: @color-white-1;
+    background: @dark-2;
+    border: 1px solid @dark-3;
     border-radius: 0.5rem;
 }
 
@@ -13,8 +14,8 @@
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 
     thead {
-        background: @color-white-1;
-        border-bottom: 2px solid #e2e8f0;
+        background: @dark-3;
+        border-bottom: 1px solid @dark-grey;
 
         .column-header-extra {
             position: absolute;
@@ -52,16 +53,20 @@
 
     tbody {
         tr {
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid @dark-grey;
             transition: all 0.2s ease;
             cursor: pointer;
 
             &:hover {
-                background: linear-gradient(to right, #fafbfc, #f8fafc);
+                color: @green-main;
+
+                td {
+                    color: @green-main;
+                }
             }
 
             &.selected {
-                background: linear-gradient(to right, #eff6ff, #dbeafe);
+                background: @dark-grey;
             }
 
             &:last-child {
@@ -73,8 +78,9 @@
     td {
         padding: 0.5rem 0.8rem;
         font-size: 0.9375rem;
-        color: @color-dark-2;
+        color: @white;
         white-space: nowrap;
+        transition: color 0.2s;
 
         &:first-child {
             text-align: center;
@@ -112,16 +118,16 @@
     appearance: none;
     width: 15px;
     height: 15px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid @dark-grey;
     border-radius: 0.2rem;
     cursor: pointer;
     position: relative;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    background: @color-white-1;
+    background: @dark-2;
 
     &:hover {
         border-color: @color-accent-1;
-        background: #f0f9ff;
+        background: @dark-grey;
     }
 
     &:checked {

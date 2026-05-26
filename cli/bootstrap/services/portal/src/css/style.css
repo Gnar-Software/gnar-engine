@@ -366,6 +366,8 @@ button.secondary-btn {
   width: 100%;
   position: relative;
   z-index: 20;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
 }
 .portal-topbar .content {
   padding-left: 45px;
@@ -733,7 +735,8 @@ button.secondary-btn {
   width: 100%;
   min-height: calc((100vh - 2rem * 4) - 220px - 2rem);
   overflow-x: auto;
-  background: #ffffff;
+  background: #2C2C2C;
+  border: 1px solid #242424;
   border-radius: 0.5rem;
 }
 .many-details-table {
@@ -743,8 +746,8 @@ button.secondary-btn {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 .many-details-table thead {
-  background: #ffffff;
-  border-bottom: 2px solid #e2e8f0;
+  background: #242424;
+  border-bottom: 1px solid #3C3C3C;
 }
 .many-details-table thead .column-header-extra {
   position: absolute;
@@ -775,15 +778,18 @@ button.secondary-btn {
   text-align: right;
 }
 .many-details-table tbody tr {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #3C3C3C;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 .many-details-table tbody tr:hover {
-  background: linear-gradient(to right, #fafbfc, #f8fafc);
+  color: #47DCA6;
+}
+.many-details-table tbody tr:hover td {
+  color: #47DCA6;
 }
 .many-details-table tbody tr.selected {
-  background: linear-gradient(to right, #eff6ff, #dbeafe);
+  background: #3C3C3C;
 }
 .many-details-table tbody tr:last-child {
   border-bottom: none;
@@ -791,8 +797,9 @@ button.secondary-btn {
 .many-details-table td {
   padding: 0.5rem 0.8rem;
   font-size: 0.9375rem;
-  color: #2C2C2C;
+  color: #ffffff;
   white-space: nowrap;
+  transition: color 0.2s;
 }
 .many-details-table td:first-child {
   text-align: center;
@@ -822,16 +829,16 @@ button.secondary-btn {
   appearance: none;
   width: 15px;
   height: 15px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #3C3C3C;
   border-radius: 0.2rem;
   cursor: pointer;
   position: relative;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
+  background: #2C2C2C;
 }
 .checkbox-input:hover {
   border-color: #47DCA6;
-  background: #f0f9ff;
+  background: #3C3C3C;
 }
 .checkbox-input:checked {
   background: #47DCA6;

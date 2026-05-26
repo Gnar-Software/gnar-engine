@@ -2,3 +2,7 @@
 AGENTS.md
 plans
 plans/*
+
+# Bootstrap services
+cli/bootstrap/services/agent/
+cli/bootstrap/secrets.localdev.yml

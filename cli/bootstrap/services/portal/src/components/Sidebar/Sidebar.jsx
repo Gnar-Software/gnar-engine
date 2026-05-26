@@ -11,10 +11,6 @@ function Sidebar() {
                 </ul>
                 <span className="separator"></span>
                 <ul>
-                    <li className="icon-agent"><Link to="/portal/agent">Agent</Link></li>
-                </ul>
-                <span className="separator"></span>
-                <ul>
                     <li className="icon-users"><Link to="/portal/users">Users</Link></li>
                 </ul>
                 <span className="separator"></span>

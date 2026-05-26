@@ -423,6 +423,20 @@ button.secondary-btn {
   border-bottom-right-radius: 20px;
   box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2);
 }
+@media (max-width: 420px) {
+  .portal-topbar .content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .portal-topbar .agents-button {
+    min-width: 0px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .portal-topbar .agents-button-icon {
+    flex: 0 0 19px;
+  }
+}
 .agent-interface {
   display: grid;
   grid-template-columns: 310px minmax(0, 1fr);

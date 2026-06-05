@@ -1,7 +1,7 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { {{entityName}} } from '../services/{{entityName}}.service.js';
 import { config } from '../config.js';
-import { validate{{pascalCase entityName}}, validate{{pascalCase entityName}}Update } from '../schema/{{entityName}}.schema.js';
+import { validate{{pascalCase entityName}}, validate{{pascalCase entityName}}Update, {{entityName}}Schema, {{entityName}}UpdateSchema } from '../schema/{{entityName}}.schema.js';
 
 
 /**
@@ -16,7 +16,7 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase entityName}}', a
 }, {
     description: 'Get one {{lowerCase entityName}} by id.',
     parameters: {
-        id: { type: ['string', 'number'], description: '{{pascalCase entityName}} ID' }
+        id: { type: 'string', description: '{{pascalCase entityName}} ID' }
     }
 });
 
@@ -34,7 +34,7 @@ commands.register('{{serviceName}}Service.getMany{{pascalCasePlural entityName}}
         ids: {
             type: 'array',
             description: 'Optional {{lowerCase entityName}} IDs to include',
-            items: { type: ['string', 'number'] }
+            items: { type: 'string' }
         }
     }
 });
@@ -67,7 +67,8 @@ commands.register('{{serviceName}}Service.create{{pascalCasePlural entityName}}'
     parameters: {
         {{lowerCasePlural entityName}}: {
             type: 'array',
-            description: '{{pascalCasePlural entityName}} to create. {{pascalCase entityName}} object details are available in {{serviceName}}Service.{{entityName}}Schema.'
+            description: '{{pascalCasePlural entityName}} to create',
+            items: {{entityName}}Schema
         }
     }
 });
@@ -108,8 +109,8 @@ commands.register('{{serviceName}}Service.update{{pascalCase entityName}}', asyn
 }, {
     description: 'Update one {{lowerCase entityName}} by id.',
     parameters: {
-        id: { type: ['string', 'number'], description: '{{pascalCase entityName}} ID' },
-        new{{pascalCase entityName}}Data: { type: 'object', description: '{{pascalCase entityName}} update data. Fields are available in {{serviceName}}Service.{{entityName}}UpdateSchema.' }
+        id: { type: 'string', description: '{{pascalCase entityName}} ID' },
+        new{{pascalCase entityName}}Data: {{entityName}}UpdateSchema
     }
 });
 
@@ -125,6 +126,6 @@ commands.register('{{serviceName}}Service.delete{{pascalCase entityName}}', asyn
 }, {
     description: 'Delete one {{lowerCase entityName}} by id.',
     parameters: {
-        id: { type: ['string', 'number'], description: '{{pascalCase entityName}} ID' }
+        id: { type: 'string', description: '{{pascalCase entityName}} ID' }
     }
 });

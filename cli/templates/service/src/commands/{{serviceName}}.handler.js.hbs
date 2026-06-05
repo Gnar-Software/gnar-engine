@@ -1,7 +1,7 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { {{serviceName}} } from '../services/{{serviceName}}.service.js';
 import { config } from '../config.js';
-import { validate{{pascalCase serviceName}}, validate{{pascalCase serviceName}}Update } from '../schema/{{serviceName}}.schema.js';
+import { validate{{pascalCase serviceName}}, validate{{pascalCase serviceName}}Update, {{serviceName}}Schema, {{serviceName}}UpdateSchema } from '../schema/{{serviceName}}.schema.js';
 
 
 /**
@@ -16,7 +16,7 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase serviceName}}', 
 }, {
     description: 'Get one {{lowerCase serviceName}} by id.',
     parameters: {
-        id: { type: ['string', 'number'], description: '{{pascalCase serviceName}} ID' }
+        id: { type: 'string', description: '{{pascalCase serviceName}} ID' }
     }
 });
 
@@ -34,7 +34,7 @@ commands.register('{{serviceName}}Service.getMany{{pascalCasePlural serviceName}
         ids: {
             type: 'array',
             description: 'Optional {{lowerCase serviceName}} IDs to include',
-            items: { type: ['string', 'number'] }
+            items: { type: 'string' }
         }
     }
 });
@@ -67,7 +67,8 @@ commands.register('{{serviceName}}Service.create{{pascalCasePlural serviceName}}
     parameters: {
         {{lowerCasePlural serviceName}}: {
             type: 'array',
-            description: '{{pascalCasePlural serviceName}} to create. {{pascalCase serviceName}} object details are available in {{serviceName}}Service.{{serviceName}}Schema.'
+            description: '{{pascalCasePlural serviceName}} to create',
+            items: {{serviceName}}Schema
         }
     }
 });
@@ -110,8 +111,8 @@ commands.register('{{serviceName}}Service.update{{pascalCase serviceName}}', asy
 }, {
     description: 'Update one {{lowerCase serviceName}} by id.',
     parameters: {
-        id: { type: ['string', 'number'], description: '{{pascalCase serviceName}} ID' },
-        new{{pascalCase serviceName}}Data: { type: 'object', description: '{{pascalCase serviceName}} update data. Fields are available in {{serviceName}}Service.{{serviceName}}UpdateSchema.' }
+        id: { type: 'string', description: '{{pascalCase serviceName}} ID' },
+        new{{pascalCase serviceName}}Data: {{serviceName}}UpdateSchema
     }
 });
 
@@ -127,6 +128,6 @@ commands.register('{{serviceName}}Service.delete{{pascalCase serviceName}}', asy
 }, {
     description: 'Delete one {{lowerCase serviceName}} by id.',
     parameters: {
-        id: { type: ['string', 'number'], description: '{{pascalCase serviceName}} ID' }
+        id: { type: 'string', description: '{{pascalCase serviceName}} ID' }
     }
 });

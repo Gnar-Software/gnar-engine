@@ -34,7 +34,7 @@ export const helpers = {
     },
 
     plural: (str) => {
-        if (str.endsWith('y')) {
+        if (str.endsWith('y') && !/[aeiou]y$/i.test(str)) {
             return str.slice(0, -1).toLowerCase() + 'ies';
         }
         return str + 's'; 
@@ -42,7 +42,7 @@ export const helpers = {
 
     lowerCasePlural: (str) => {
         // A very simple pluralization. For production, use a proper pluralization lib.
-        if (str.endsWith('y')) {
+        if (str.endsWith('y') && !/[aeiou]y$/i.test(str)) {
             return str.slice(0, -1).toLowerCase() + 'ies';
         }
         return str.toLowerCase() + 's';

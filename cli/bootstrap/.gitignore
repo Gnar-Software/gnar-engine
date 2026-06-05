@@ -1,3 +1,7 @@
+.gnarengine/
+
+/services/sql-server/backup
+
 # Node modules
 **/node_modules/
 
@@ -5,7 +9,7 @@
 **/.env
 #secrets*
 **/.*
-!bootstrap/.gitignore
+!/.gitignore
 
 # Lock files
 **/package-lock.json
@@ -19,5 +23,13 @@ bootstrap/.gnarengine
 bootstrap/data/*
 docker-compose*.yml
 
+# Backups
+backups/
+backups/*
+
 # Temp files
 **.temp
+
+CLAUDE.md
+AGENTS.md
+docs/superpowers

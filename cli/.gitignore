@@ -5,7 +5,6 @@
 **/.env
 #secrets*
 **/.*
-!bootstrap/.gitignore
 
 # Lock files
 **/package-lock.json

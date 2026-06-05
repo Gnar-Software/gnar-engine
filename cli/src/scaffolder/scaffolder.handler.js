@@ -199,9 +199,15 @@ export const scaffolder = {
         bootstrapFiles.forEach(file => {
             let sourcePath;
             let targetPath;
+            let targetRelativePath = file.relativePath;
 
             sourcePath = file.fullPath;
-            targetPath = path.join(fullProjectPath, file.relativePath);
+
+            if (file.relativePath === 'gitignore') {
+                targetRelativePath = '.gitignore';
+            }
+
+            targetPath = path.join(fullProjectPath, targetRelativePath);
 
             // create random secrets
             if (file.relativePath === 'secrets.localdev.yml') {

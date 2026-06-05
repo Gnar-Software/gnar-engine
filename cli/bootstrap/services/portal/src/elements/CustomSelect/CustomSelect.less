@@ -1,4 +1,4 @@
-@select-box-options-height: 200px;
+@select-box-options-height: 400px;
 
 .custom-select-cont {
     display: inline-block;
@@ -11,20 +11,34 @@
 .custom-select {
     max-width: 215px;
     min-width: 215px;
+    width: 100%;
     position: relative;
 
     .custom-select-input {
         position: relative;
+        display: flex;
+        align-items: center;
         width: 100%;
-        padding: 6px 10px;
+        min-height: 31px;
+        padding: 8px 2rem 8px 0.8rem;
         margin: 10px 0;
         border: 1px solid @dark-grey;
         background: @dark-3;
-        border-radius: 25px;
+        border-radius: 17px;
         box-sizing: border-box;
         font-size: 15px;
-        color: @dark-1;
+        color: @light-grey;
         z-index: 3;
+
+        span {
+            color: inherit;
+            display: block;
+            line-height: 1.2;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         &:hover {
             cursor: pointer;
@@ -46,18 +60,17 @@
         width: 100%;
         top: 10px;
         left: 0px;
-        max-height: @select-box-options-height;
-        height: 0px !important;
+        max-height: 0px;
+        height: auto !important;
         overflow: hidden;
         background: @dark-3;
         border: 1px solid @dark-grey;
         box-sizing: border-box;
         border-radius: 15px;
         z-index: 2;
-        transition-duration: 0.3s;
+        transition: max-height 0.3s ease;
 
         .custom-select-options-inner {
-            min-height: @select-box-options-height;
             max-height: @select-box-options-height;
             overflow-y: auto;
         }
@@ -72,6 +85,9 @@
             transition-duration: 0.1s;
             color: @light-grey;
             font-size: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
 
             &:hover {
                 opacity: 1;
@@ -85,8 +101,9 @@
         z-index: 5;
         
         .custom-select-options {
-            height: 400px !important;
+            max-height: @select-box-options-height;
         }
+
         .custom-select-input {
             border: 1px solid @green-main;
 
@@ -98,5 +115,29 @@
 
     &.closing {
         z-index: 5;
+
+        .custom-select-options {
+            max-height: 0px;
+        }
+    }
+
+    &.filter {
+        .custom-select-options {
+            top: 100%;
+
+            .custom-select-option:first-child {
+                margin-top: 0;
+            }
+
+            .custom-select-option {
+                &.selected {
+                    color: @green-main;
+
+                    span {
+                        color: inherit;
+                    }
+                }
+            }
+        }
     }
 }

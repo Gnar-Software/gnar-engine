@@ -5,6 +5,8 @@
     width: 100%;
     position: relative;
     z-index: 20;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
 
     .content {
         padding-left: 45px;
@@ -19,6 +21,10 @@
     }
 
     .agents-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
         min-width: 112px;
         margin: 0px;
         background: @dark-1;
@@ -28,6 +34,13 @@
             background: @white;
             color: @dark-1;
         }
+    }
+
+    .agents-button-icon {
+        display: block;
+        width: 19px;
+        height: 19px;
+        background: url('../assets/icon-agent.svg') center / contain no-repeat;
     }
 
     .agent-dropdown {
@@ -50,14 +63,35 @@
             background: rgba(0,0,0,0.2) !important;
 
             .agent-dropdown-inner {
-                height: 83vh;
+                height: calc(100vh - 71px);
 
                 .agent-interface {
+                    height: 100%;
+                    min-height: 0px;
                     border-bottom-left-radius: 20px;
                     border-bottom-right-radius: 20px;
                     box-shadow: 10px 10px 20px rgba(0,0,0,0.2);
                 }
             }
+        }
+    }
+}
+
+@media (max-width: 420px) {
+    .portal-topbar {
+        .content {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .agents-button {
+            min-width: 0px;
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .agents-button-icon {
+            flex: 0 0 19px;
         }
     }
 }

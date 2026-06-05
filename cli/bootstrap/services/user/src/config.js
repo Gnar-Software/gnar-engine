@@ -6,6 +6,10 @@ export const config = {
     // service name
     serviceName: 'userService',
 
+    serviceManifest: {
+        description: 'The user service manages users, authentication, sessions, roles, API keys, and password reset flows.'
+    },
+
     // environment
     environment: process.env.USER_NODE_ENV || 'development',
     runTests: process.env.USER_RUN_TESTS || false,
@@ -58,15 +62,14 @@ export const config = {
     // service specific config
     userRoles: [
         'service_admin',
-        'admin',
-        'leaseholder'
+        'admin'
     ],
 
     publicCanCreateRoles: [
 
     ],
 
-    defaultUserRole: 'leaseholder',
+    defaultUserRole: 'admin',
 
     authenticationOptions: {
         password_auth_enabled: true,

@@ -10,6 +10,7 @@ const serviceSchema = {
             manifest: {
                 type: 'object',
                 properties: {
+                    description: { type: 'string' },
                     commandList: {
                         type: 'array',
                         items: { type: 'string' }

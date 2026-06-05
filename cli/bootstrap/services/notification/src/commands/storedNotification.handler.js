@@ -8,10 +8,21 @@ commands.register('notificationService.getSingleStoredNotification', async ({ id
     }
 
     return await storedNotification.getById({ id });
+}, {
+    description: 'Get one stored notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Stored notification ID' }
+    }
 });
 
 commands.register('notificationService.getManyStoredNotifications', async ({ pageSize, pageNum } = {}) => {
     return await storedNotification.getAll({ pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of stored notifications.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of stored notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.getStoredNotificationsByUserId', async ({ userId, pageSize, pageNum }) => {
@@ -20,6 +31,13 @@ commands.register('notificationService.getStoredNotificationsByUserId', async ({
     }
 
     return await storedNotification.getByUserId({ userId, pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of stored notifications for one user.',
+    parameters: {
+        userId: { type: 'string', description: 'User ID' },
+        pageSize: { type: 'number', description: 'Number of stored notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.createStoredNotifications', async ({ storedNotifications }) => {
@@ -43,6 +61,14 @@ commands.register('notificationService.createStoredNotifications', async ({ stor
     }
 
     return createdNewStoredNotifications;
+}, {
+    description: 'Create one or more stored notifications.',
+    parameters: {
+        storedNotifications: {
+            type: 'array',
+            description: 'Stored notifications to create. Stored notification object details are available in notificationService.storedNotificationSchema.'
+        }
+    }
 });
 
 commands.register('notificationService.updateStoredNotification', async ({ id, data }) => {
@@ -71,6 +97,12 @@ commands.register('notificationService.updateStoredNotification', async ({ id, d
     }
 
     return await storedNotification.update({ id, data });
+}, {
+    description: 'Update one stored notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Stored notification ID' },
+        data: { type: 'object', description: 'Stored notification update data. Fields are available in notificationService.storedNotificationUpdateSchema.' }
+    }
 });
 
 commands.register('notificationService.deleteStoredNotification', async ({ id }) => {
@@ -81,4 +113,9 @@ commands.register('notificationService.deleteStoredNotification', async ({ id })
     }
 
     return await storedNotification.delete({ id });
+}, {
+    description: 'Delete one stored notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Stored notification ID' }
+    }
 });

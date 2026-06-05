@@ -11,6 +11,11 @@ commands.register('pageService.getSingleBlock', async ({id}) => {
     } else {
         throw new error.badRequest('Block id required');
     }
+}, {
+    description: 'Get one reusable block by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Block ID' }
+    }
 });
 
 /**
@@ -18,6 +23,12 @@ commands.register('pageService.getSingleBlock', async ({id}) => {
  */
 commands.register('pageService.getManyBlocks', async ({ pageSize, pageNum } = {}) => {
     return await block.getAll({ pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of reusable blocks.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of blocks per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 /**
@@ -43,6 +54,14 @@ commands.register('pageService.createBlocks', async ({ blocks }) => {
     }
 
     return createdNewBlocks;
+}, {
+    description: 'Create one or more reusable blocks.',
+    parameters: {
+        blocks: {
+            type: 'array',
+            description: 'Blocks to create. Block object details are available in pageService.blockSchema.'
+        }
+    }
 });
 
 /**
@@ -78,6 +97,12 @@ commands.register('pageService.updateBlock', async ({id, newBlockData}) => {
         id: id,
         updatedData: newBlockData
     });
+}, {
+    description: 'Update one reusable block by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Block ID' },
+        newBlockData: { type: 'object', description: 'Block update data. Fields are available in pageService.blockSchema.' }
+    }
 });
 
 /**
@@ -89,6 +114,11 @@ commands.register('pageService.deleteBlock', async ({id}) => {
         throw new error.notFound('Block not found');
     }
     return await block.delete({id: id});
+}, {
+    description: 'Delete one reusable block by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Block ID' }
+    }
 });
 
 
@@ -108,6 +138,9 @@ commands.register("pageService.exportBlocksCollection", async () => {
   });
 
   return { fileName: "blocks.json", jsonString };
+}, {
+  description: 'Export all reusable blocks to a JSON backup file.',
+  parameters: {}
 });
 
 commands.register("pageService.importBlocks", async ({ blocks: incomingBlocks }) => {
@@ -151,6 +184,14 @@ commands.register("pageService.importBlocks", async ({ blocks: incomingBlocks })
   }
 
   return result;
+}, {
+  description: 'Import reusable blocks from JSON data, creating new blocks or updating existing blocks by key.',
+  parameters: {
+    blocks: {
+      type: 'array',
+      description: 'Blocks to import. Block object details are available in pageService.blockSchema.'
+    }
+  }
 });
 
 commands.register("pageService.importBlocksFromJsonString", async ({ jsonString }) => {
@@ -166,4 +207,9 @@ commands.register("pageService.importBlocksFromJsonString", async ({ jsonString 
   return await commands.execute("pageService.importBlocks", {
     blocks: blocksArray,
   });
+}, {
+  description: 'Import reusable blocks from a JSON string.',
+  parameters: {
+    jsonString: { type: 'string', description: 'JSON string containing a blocks array or an object with a blocks array' }
+  }
 });

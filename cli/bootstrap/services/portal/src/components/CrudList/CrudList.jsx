@@ -17,8 +17,6 @@ function CrudList({
     columns
 }) {
     const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const {
         currentPage,
         setCurrentPage,
@@ -38,9 +36,6 @@ function CrudList({
     useEffect(() => {
         (async () => {
             try {
-                setLoading(true);
-                setError('');
-
                 const response = await fetchData({ page: currentPage, pageSize });
                 const list = Array.isArray(response?.[entityKey])
                     ? response[entityKey]
@@ -49,15 +44,8 @@ function CrudList({
 
                 setItems(list);
                 setTotalPages(calculateTotalPages(pagination) || 1);
-
-                if (!list.length) {
-                    setError(`No ${entityPluralName} found.`);
-                }
             } catch (error) {
                 console.error('Error fetching data:', error);
-                setError(error.message || `Error fetching ${entityPluralName}.`);
-            } finally {
-                setLoading(false);
             }
         })();
     }, [entityKey, currentPage, pageSize]);
@@ -93,9 +81,6 @@ function CrudList({
                     setSelectedOption={(option) => { setCurrentPage(1); setPageSize(option.id); }}
                 />
             </PageActionsBar>
-
-            {loading && <p className="account-loading-message p-1 bg-white c-gray">Loading {entityPluralName}...</p>}
-            {!loading && error && <div className="error-message-cont">{error}</div>}
 
             <ListMany
                 columns={selectedColumns}

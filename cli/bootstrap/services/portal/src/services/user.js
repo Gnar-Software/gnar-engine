@@ -32,6 +32,11 @@ export const user = {
         return data;
     },
 
+    createUserWithRandomPassword: async ({ user }) => {
+        const { data } = await client.post('/users/create-with-random-password/', { user });
+        return data;
+    },
+
     update: async ({ id, user }) => {
         const { data } = await client.post(`/users/${id}`, user);
         return data;
@@ -52,5 +57,10 @@ export const user = {
 
     changePassword: async ({ email, token, password }) => {
         await client.post('/users/change-password', { email, token, password });
+    },
+
+    getEnums: async () => {
+        const { data } = await client.get('/users/enums');
+        return data;
     },
 };

@@ -16,6 +16,7 @@ function Topbar() {
                     aria-expanded={dropDownOpen}
                     onClick={() => setDropdownOpen(!dropDownOpen)}
                 >
+                    <span className="agents-button-icon" aria-hidden="true"></span>
                     Agent
                 </button>
                 ) : (
@@ -25,6 +26,7 @@ function Topbar() {
                         aria-expanded={dropDownOpen}
                         onClick={() => setDropdownOpen(!dropDownOpen)}
                     >
+                        <span className="agents-button-icon" aria-hidden="true"></span>
                         Close
                     </button>
                 )}

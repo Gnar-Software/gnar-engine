@@ -38,6 +38,7 @@ export const initService = async () => {
     await commands.execute('controlService.registerManifest', {
         serviceName: config.serviceName,
         manifest: {
+            description: config.serviceManifest.description,
             ...commandManifest.manifest,
             schemas: {
                 ...commandManifest.manifest.schemas,

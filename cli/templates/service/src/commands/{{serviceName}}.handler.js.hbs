@@ -13,6 +13,11 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase serviceName}}', 
     } else {
         throw new error.badRequest('{{pascalCase serviceName}} email or id required');
     }
+}, {
+    description: 'Get one {{lowerCase serviceName}} by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: '{{pascalCase serviceName}} ID' }
+    }
 });
 
 /**
@@ -20,6 +25,18 @@ commands.register('{{serviceName}}Service.getSingle{{pascalCase serviceName}}', 
  */
 commands.register('{{serviceName}}Service.getMany{{pascalCasePlural serviceName}}', async ({ pageSize, pageNum, filters = {}, ids = [] } = {}) => {
     return await {{serviceName}}.getAll({ pageSize, pageNum, filters, ids });
+}, {
+    description: 'Get a paginated list of {{lowerCasePlural serviceName}}.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of {{lowerCasePlural serviceName}} per page' },
+        pageNum: { type: 'number', description: 'Page number' },
+        filters: { type: 'object', description: 'Optional {{lowerCase serviceName}} filters' },
+        ids: {
+            type: 'array',
+            description: 'Optional {{lowerCase serviceName}} IDs to include',
+            items: { type: ['string', 'number'] }
+        }
+    }
 });
 
 /**
@@ -45,6 +62,14 @@ commands.register('{{serviceName}}Service.create{{pascalCasePlural serviceName}}
     }
 
     return createdNew{{pascalCasePlural serviceName}};
+}, {
+    description: 'Create one or more {{lowerCasePlural serviceName}}.',
+    parameters: {
+        {{lowerCasePlural serviceName}}: {
+            type: 'array',
+            description: '{{pascalCasePlural serviceName}} to create. {{pascalCase serviceName}} object details are available in {{serviceName}}Service.{{serviceName}}Schema.'
+        }
+    }
 });
 
 /**
@@ -82,6 +107,12 @@ commands.register('{{serviceName}}Service.update{{pascalCase serviceName}}', asy
         id: id,
         updatedData: new{{pascalCase serviceName}}Data
     });
+}, {
+    description: 'Update one {{lowerCase serviceName}} by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: '{{pascalCase serviceName}} ID' },
+        new{{pascalCase serviceName}}Data: { type: 'object', description: '{{pascalCase serviceName}} update data. Fields are available in {{serviceName}}Service.{{serviceName}}UpdateSchema.' }
+    }
 });
 
 /**
@@ -93,4 +124,9 @@ commands.register('{{serviceName}}Service.delete{{pascalCase serviceName}}', asy
         throw new error.notFound('{{pascalCase serviceName}} not found');
     }
     return await {{serviceName}}.delete({id: id});
+}, {
+    description: 'Delete one {{lowerCase serviceName}} by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: '{{pascalCase serviceName}} ID' }
+    }
 });

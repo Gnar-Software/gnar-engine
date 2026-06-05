@@ -11,21 +11,12 @@ function Sidebar() {
                 </ul>
                 <span className="separator"></span>
                 <ul>
-                    <li className="icon-agent"><Link to="/portal/agent">Agent</Link></li>
-                </ul>
-                <span className="separator"></span>
-                <ul>
                     <li className="icon-users"><Link to="/portal/users">Users</Link></li>
                 </ul>
                 <span className="separator"></span>
                 <ul>
-                    <li className="icon-users"><Link to="/portal/pages">Pages</Link></li>
+                    <li className="icon-page"><Link to="/portal/pages">Pages</Link></li>
                     <li><Link to="/portal/blocks">Blocks</Link></li>
-                </ul>
-                <span className="separator"></span>
-                <ul>
-                    <li className="icon-reports"><Link to="/portal/reports">Reports</Link></li>
-                    <li><Link to="/portal/logs">Logs</Link></li>
                 </ul>
             </div>
 

@@ -7,6 +7,12 @@ import { compileNotificationTemplate } from '../services/template.service.js';
 
 commands.register('notificationService.compileTemplate', async ({ templateSlug, data = {} }) => {
     return await compileNotificationTemplate({ templateSlug, data });
+}, {
+    description: 'Compile a notification template with data.',
+    parameters: {
+        templateSlug: { type: 'string', description: 'Template slug' },
+        data: { type: 'object', description: 'Template data' }
+    }
 });
 
 commands.register('notificationService.getSingleEmailNotification', async ({ id }) => {
@@ -15,6 +21,11 @@ commands.register('notificationService.getSingleEmailNotification', async ({ id 
     }
 
     return await emailNotification.getById({ id });
+}, {
+    description: 'Get one email notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Email notification ID' }
+    }
 });
 
 commands.register('notificationService.getEmailNotificationsByUserId', async ({ userId, pageSize, pageNum }) => {
@@ -23,10 +34,23 @@ commands.register('notificationService.getEmailNotificationsByUserId', async ({ 
     }
 
     return await emailNotification.getByUserId({ userId, pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of email notifications for one user.',
+    parameters: {
+        userId: { type: 'string', description: 'User ID' },
+        pageSize: { type: 'number', description: 'Number of email notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.getManyEmailNotifications', async ({ pageSize, pageNum } = {}) => {
     return await emailNotification.getAll({ pageSize, pageNum });
+}, {
+    description: 'Get a paginated list of email notifications.',
+    parameters: {
+        pageSize: { type: 'number', description: 'Number of email notifications per page' },
+        pageNum: { type: 'number', description: 'Page number' }
+    }
 });
 
 commands.register('notificationService.createEmailNotifications', async ({ emailNotifications }) => {
@@ -96,6 +120,14 @@ commands.register('notificationService.createEmailNotifications', async ({ email
     }
 
     return createdNewEmailNotifications;
+}, {
+    description: 'Create one or more email notifications and schedule delivery.',
+    parameters: {
+        emailNotifications: {
+            type: 'array',
+            description: 'Email notifications to create. Email notification object details are available in notificationService.emailNotificationSchema.'
+        }
+    }
 });
 
 commands.register('notificationService.updateEmailNotification', async ({ id, data }) => {
@@ -124,6 +156,12 @@ commands.register('notificationService.updateEmailNotification', async ({ id, da
     }
 
     return await emailNotification.update({ id, data });
+}, {
+    description: 'Update one email notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Email notification ID' },
+        data: { type: 'object', description: 'Email notification update data. Fields are available in notificationService.emailNotificationUpdateSchema.' }
+    }
 });
 
 commands.register('notificationService.deleteEmailNotification', async ({ id }) => {
@@ -134,6 +172,11 @@ commands.register('notificationService.deleteEmailNotification', async ({ id }) 
     }
 
     return await emailNotification.delete({ id });
+}, {
+    description: 'Delete one email notification by id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Email notification ID' }
+    }
 });
 
 commands.register('notificationService.sendEmailNotification', async ({ id, notificationId } = {}) => {
@@ -205,5 +248,11 @@ commands.register('notificationService.sendEmailNotification', async ({ id, noti
         }
 
         throw err;
+    }
+}, {
+    description: 'Send an email notification by email notification id or parent notification id.',
+    parameters: {
+        id: { type: ['string', 'number'], description: 'Email notification ID' },
+        notificationId: { type: ['string', 'number'], description: 'Parent notification ID' }
     }
 });

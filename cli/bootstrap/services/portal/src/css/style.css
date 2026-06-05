@@ -366,6 +366,8 @@ button.secondary-btn {
   width: 100%;
   position: relative;
   z-index: 20;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
 }
 .portal-topbar .content {
   padding-left: 45px;
@@ -378,6 +380,10 @@ button.secondary-btn {
   justify-content: flex-end;
 }
 .portal-topbar .agents-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   min-width: 112px;
   margin: 0px;
   background: #242424;
@@ -386,6 +392,12 @@ button.secondary-btn {
 .portal-topbar .agents-button[aria-expanded="true"] {
   background: #ffffff;
   color: #242424;
+}
+.portal-topbar .agents-button-icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+  background: url('../assets/icon-agent.svg') center / contain no-repeat;
 }
 .portal-topbar .agent-dropdown {
   transition: 0s;
@@ -404,12 +416,28 @@ button.secondary-btn {
   background: rgba(0, 0, 0, 0.2) !important;
 }
 .portal-topbar.dropdown-open .agent-dropdown .agent-dropdown-inner {
-  height: 83vh;
+  height: calc(100vh - 71px);
 }
 .portal-topbar.dropdown-open .agent-dropdown .agent-dropdown-inner .agent-interface {
+  height: 100%;
+  min-height: 0px;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
   box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2);
+}
+@media (max-width: 420px) {
+  .portal-topbar .content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .portal-topbar .agents-button {
+    min-width: 0px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .portal-topbar .agents-button-icon {
+    flex: 0 0 19px;
+  }
 }
 .agent-interface {
   display: grid;
@@ -556,6 +584,25 @@ button.secondary-btn {
   max-width: 560px;
   background: #242424;
 }
+.agent-status-message {
+  max-width: 360px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #242424;
+  border: 1px solid #3C3C3C;
+}
+.agent-status-message span {
+  display: inline-block;
+  margin-bottom: 5px;
+  color: #868686;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.agent-status-message p {
+  margin: 0px;
+  color: #D9D9D9;
+  line-height: 1.4;
+}
 .agent-empty-state {
   display: flex;
   height: 100%;
@@ -688,7 +735,8 @@ button.secondary-btn {
   width: 100%;
   min-height: calc((100vh - 2rem * 4) - 220px - 2rem);
   overflow-x: auto;
-  background: #ffffff;
+  background: #2C2C2C;
+  border: 1px solid #242424;
   border-radius: 0.5rem;
 }
 .many-details-table {
@@ -698,8 +746,8 @@ button.secondary-btn {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 .many-details-table thead {
-  background: #ffffff;
-  border-bottom: 2px solid #e2e8f0;
+  background: #242424;
+  border-bottom: 1px solid #3C3C3C;
 }
 .many-details-table thead .column-header-extra {
   position: absolute;
@@ -730,15 +778,18 @@ button.secondary-btn {
   text-align: right;
 }
 .many-details-table tbody tr {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #3C3C3C;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 .many-details-table tbody tr:hover {
-  background: linear-gradient(to right, #fafbfc, #f8fafc);
+  color: #47DCA6;
+}
+.many-details-table tbody tr:hover td {
+  color: #47DCA6;
 }
 .many-details-table tbody tr.selected {
-  background: linear-gradient(to right, #eff6ff, #dbeafe);
+  background: #3C3C3C;
 }
 .many-details-table tbody tr:last-child {
   border-bottom: none;
@@ -746,8 +797,9 @@ button.secondary-btn {
 .many-details-table td {
   padding: 0.5rem 0.8rem;
   font-size: 0.9375rem;
-  color: #2C2C2C;
+  color: #ffffff;
   white-space: nowrap;
+  transition: color 0.2s;
 }
 .many-details-table td:first-child {
   text-align: center;
@@ -777,16 +829,16 @@ button.secondary-btn {
   appearance: none;
   width: 15px;
   height: 15px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #3C3C3C;
   border-radius: 0.2rem;
   cursor: pointer;
   position: relative;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
+  background: #2C2C2C;
 }
 .checkbox-input:hover {
   border-color: #47DCA6;
-  background: #f0f9ff;
+  background: #3C3C3C;
 }
 .checkbox-input:checked {
   background: #47DCA6;
@@ -835,9 +887,13 @@ button.secondary-btn {
   }
 }
 .page-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: #2C2C2C;
   margin-bottom: 2rem;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 .page-actions-bar h1 {
   margin: 0;
@@ -851,9 +907,26 @@ button.secondary-btn {
   font-weight: 400;
 }
 .page-actions-bar .actions-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
   justify-content: flex-end;
   row-gap: 0.5rem;
+}
+.page-actions-bar .actions-bar-actions .action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 31px;
+  margin: 10px 0;
+  white-space: nowrap;
+}
+.page-actions-bar .actions-bar-actions .custom-select-cont,
+.page-actions-bar .actions-bar-actions .custom-select {
+  width: 100%;
+  max-width: 215px;
+  min-width: 215px;
 }
 .page-actions-bar .actions-bar-actions .filter-field {
   display: inline-flex;
@@ -1193,20 +1266,33 @@ button.secondary-btn {
 .custom-select {
   max-width: 215px;
   min-width: 215px;
+  width: 100%;
   position: relative;
 }
 .custom-select .custom-select-input {
   position: relative;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 6px 10px;
+  min-height: 31px;
+  padding: 8px 2rem 8px 0.8rem;
   margin: 10px 0;
   border: 1px solid #3C3C3C;
   background: #242424;
-  border-radius: 25px;
+  border-radius: 17px;
   box-sizing: border-box;
   font-size: 15px;
-  color: #242424;
+  color: #D9D9D9;
   z-index: 3;
+}
+.custom-select .custom-select-input span {
+  color: inherit;
+  display: block;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .custom-select .custom-select-input:hover {
   cursor: pointer;
@@ -1225,19 +1311,18 @@ button.secondary-btn {
   width: 100%;
   top: 10px;
   left: 0px;
-  max-height: 200px;
-  height: 0px !important;
+  max-height: 0px;
+  height: auto !important;
   overflow: hidden;
   background: #242424;
   border: 1px solid #3C3C3C;
   box-sizing: border-box;
   border-radius: 15px;
   z-index: 2;
-  transition-duration: 0.3s;
+  transition: max-height 0.3s ease;
 }
 .custom-select .custom-select-options .custom-select-options-inner {
-  min-height: 200px;
-  max-height: 200px;
+  max-height: 400px;
   overflow-y: auto;
 }
 .custom-select .custom-select-options .custom-select-option:first-child {
@@ -1249,6 +1334,9 @@ button.secondary-btn {
   transition-duration: 0.1s;
   color: #D9D9D9;
   font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .custom-select .custom-select-options .custom-select-option:hover {
   opacity: 1;
@@ -1259,7 +1347,7 @@ button.secondary-btn {
   z-index: 5;
 }
 .custom-select.open .custom-select-options {
-  height: 400px !important;
+  max-height: 400px;
 }
 .custom-select.open .custom-select-input {
   border: 1px solid #47DCA6;
@@ -1269,6 +1357,21 @@ button.secondary-btn {
 }
 .custom-select.closing {
   z-index: 5;
+}
+.custom-select.closing .custom-select-options {
+  max-height: 0px;
+}
+.custom-select.filter .custom-select-options {
+  top: 100%;
+}
+.custom-select.filter .custom-select-options .custom-select-option:first-child {
+  margin-top: 0;
+}
+.custom-select.filter .custom-select-options .custom-select-option.selected {
+  color: #47DCA6;
+}
+.custom-select.filter .custom-select-options .custom-select-option.selected span {
+  color: inherit;
 }
 .quill {
   margin-top: 10px;
@@ -1394,6 +1497,41 @@ button.secondary-btn {
 }
 .login-page .forgotten-password {
   width: 100%;
+}
+.user-single-page .user-actions-bar {
+  justify-content: flex-end;
+}
+.user-single-page .user-details-form {
+  max-width: 620px;
+}
+.user-single-page .button-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+}
+.user-single-page .button-stack button {
+  width: 100%;
+}
+.user-single-page .danger-btn {
+  background: #FF4D4F;
+  border-color: #FF4D4F;
+  color: #ffffff;
+}
+.success-messages {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+.success-messages ul {
+  list-style: none;
+  margin: 0px;
+}
+.success-messages li,
+.success-messages a,
+.success-messages span,
+.success-messages p {
+  color: #47DCA6;
 }
 #MagiCSS-bookmarklet span {
   color: black !important;

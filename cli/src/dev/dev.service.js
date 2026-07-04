@@ -356,8 +356,6 @@ async function buildAndUpContainers({
         provisionerBinds.push(`${gnarEngineCliConfig.coreDevPath}:${gnarEngineCliConfig.corePath}`);
     }
 
-    console.log('Secrets', secrets);
-
     const provisioner = await createContainer({
         name: provisionerTag,
         image: provisionerTag,

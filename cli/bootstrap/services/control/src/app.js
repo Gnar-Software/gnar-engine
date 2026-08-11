@@ -9,13 +9,12 @@ import { httpController as controlPlatformHttpController } from './controllers/h
  */
 export const initService = async () => {
 
-    // Run migrations
-    db.migrations.runMigrations({config});
 
     // Import command handlers after the command bus is initialised
     await import('./commands/control.handler.js');
     await import('./commands/service.handler.js');
     await import('./commands/task.handler.js');
+    await import('./commands/recurringtask.handler.js');
 
     // Initialise and register message handlers
     await message.init({
@@ -23,8 +22,16 @@ export const initService = async () => {
         handlers: messageHandlers
     });
 
+    // Run migrations
+    await db.migrations.runMigrations({config});
+
     // Initialise websocket client & server
     await webSockets.init(config.webSockets, config.serviceName);
+
+    // Control service replica tidy up
+    setInterval(async () => {
+        await commands.execute('controlService.removeDisconnectedReplicas');
+    }, 1000); // every second
 
     // Register http routes
     await http.registerRoutes({
@@ -33,11 +40,21 @@ export const initService = async () => {
         ]
     });
 
+    // wait for 5 seconds to allow inbound connections before doing anything else
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     // Start the HTTP server
     await http.start();
 
-    // Register service with control service
-    await registerService();
+    // Process tasks
+    setInterval(async () => {
+        await commands.execute('controlService.handleTaskBatch');
+    }, 5000); // every 5 seconds
+
+    // Schedule tasks from recurring tasks
+    setInterval(async () => {
+        await commands.execute('controlService.scheduleFromRecurringTasks');
+    }, 60000); // every minute
 
     logger.info('G n a r  E n g i n e | Control Service initialised successfully.');
 }

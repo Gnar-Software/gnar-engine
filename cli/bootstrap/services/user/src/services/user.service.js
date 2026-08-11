@@ -8,44 +8,59 @@ import { config} from '../config.js';
 export const user = {
 
     // Get all users
-    getAll: async ({ pageSize = 100, pageNum = 1, filters = {}, orderBy = { createdAt: 'DESC' } }) => {
+    getAll: async ({ pageSize = 100, pageNum = 1, filters = {}, ids = [], orderBy = { email: 'ASC' } }) => {
         pageSize = Number(pageSize);
-        pageNum  = Number(pageNum);
+        pageNum = Number(pageNum);
+
         const offset = (pageNum - 1) * pageSize;
 
-        const filterKeys = Object.keys(filters);
         const whereClauses = [];
         const params = [];
 
-        for (const key of filterKeys) {
+        Object.keys(filters).forEach(key => {
             whereClauses.push(`${db.sql.helpers.toSnake(key)} = ?`);
             params.push(filters[key]);
+        });
+
+        if (ids?.length) {
+            whereClauses.push(`id IN (${ids.map(() => '?').join(', ')})`);
+            params.push(...ids);
         }
 
-        const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+        const whereSql = whereClauses.length
+            ? `WHERE ${whereClauses.join(' AND ')}`
+            : '';
 
         const orderByKeys = Object.keys(orderBy);
         const orderByClauses = orderByKeys.map(key => `${db.sql.helpers.toSnake(key)} ${orderBy[key]}`);
         const orderBySql = orderByClauses.length ? `ORDER BY ${orderByClauses.join(', ')}` : '';
 
         const [rows] = await db.query(
-            `SELECT id, username, email, role FROM `users`' ${whereSql} ${orderBySql} LIMIT ? OFFSET ?`,
+            `SELECT * FROM users ${whereSql} ${orderBySql} LIMIT ? OFFSET ?`,
             [...params, pageSize, offset]
         );
 
         const [[{ total }]] = await db.query(
-            `SELECT COUNT(*) AS total FROM settlements ${whereSql}`,
+            `SELECT COUNT(*) AS total FROM users ${whereSql}`,
             params
         );
 
+        const users = rows.map(row => db.sql.helpers.objectToCamelCase(row));
+
+        // santize the users by removing the password and apiKey fields
+        users = users.map(user => {
+            const { password, apiKey, ...rest } = user;
+            return rest;
+        });
+
         return {
-            data: rows.map(row => db.sql.helpers.objectToCamelCase(row)),
+            data: users,
             pagination: {
                 pageSize,
                 pageNum,
                 total
             }
-        }
+        };
     },
 
     // Create a user

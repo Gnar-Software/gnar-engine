@@ -7,7 +7,7 @@ export const up = async () => {
     logger.info('Creating table: notifications');
     await db.query(`
         CREATE TABLE notifications (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id CHAR(36) PRIMARY KEY,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )

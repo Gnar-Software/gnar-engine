@@ -72,7 +72,12 @@ export const httpController = {
 		preHandler: async (request, reply) => authorise.getMany(request, reply),
 		handler: async (request, reply) => {
 			// params from request
-			const params = {};
+			const params = {
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum,
+				filters: request.query.filters ? JSON.parse(request.query.filters) : {},
+				orderBy: request.query.orderBy ? JSON.parse(request.query.orderBy) : undefined,
+			};
 
 			// execute
 			const users = await commands.execute('getManyUsers', params);

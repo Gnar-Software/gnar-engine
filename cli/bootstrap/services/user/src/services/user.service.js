@@ -8,21 +8,48 @@ import { config} from '../config.js';
 export const user = {
 
     // Get all users
-    getAll: async () => {
-        try {
-            const [results, fields] = await db.execute(
-                'SELECT id, username, email, role FROM `users`'
-            );
+    getAll: async ({ pageSize = 100, pageNum = 1, filters = {}, orderBy = { createdAt: 'DESC' } }) => {
+        pageSize = Number(pageSize);
+        pageNum  = Number(pageNum);
+        const offset = (pageNum - 1) * pageSize;
 
-            return results;
-        } catch (error) {
-            logger.error("Error fetching users:", error);
-            throw error;
+        const filterKeys = Object.keys(filters);
+        const whereClauses = [];
+        const params = [];
+
+        for (const key of filterKeys) {
+            whereClauses.push(`${db.sql.helpers.toSnake(key)} = ?`);
+            params.push(filters[key]);
+        }
+
+        const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        const orderByKeys = Object.keys(orderBy);
+        const orderByClauses = orderByKeys.map(key => `${db.sql.helpers.toSnake(key)} ${orderBy[key]}`);
+        const orderBySql = orderByClauses.length ? `ORDER BY ${orderByClauses.join(', ')}` : '';
+
+        const [rows] = await db.query(
+            `SELECT id, username, email, role FROM `users`' ${whereSql} ${orderBySql} LIMIT ? OFFSET ?`,
+            [...params, pageSize, offset]
+        );
+
+        const [[{ total }]] = await db.query(
+            `SELECT COUNT(*) AS total FROM settlements ${whereSql}`,
+            params
+        );
+
+        return {
+            data: rows.map(row => db.sql.helpers.objectToCamelCase(row)),
+            pagination: {
+                pageSize,
+                pageNum,
+                total
+            }
         }
     },
 
     // Create a user
-    create: async ({email, role, password = null, username = null, apiKey = null}) => {
+    create: async ({ email, role, password = null, username = null, apiKey = null }) => {
         try {
             const id = utils.uuid();
             let passwordHash = null;
@@ -49,7 +76,7 @@ export const user = {
     },
 
     // Get a user by ID
-    getById: async ({id}) => {
+    getById: async ({ id }) => {
         try {
 
             const [result] = await db.execute(
@@ -69,7 +96,7 @@ export const user = {
     },
 
     // Get a user by email
-    getByEmail: async ({email}) => {
+    getByEmail: async ({ email }) => {
         try {
             const [result] = await db.execute(
                 'SELECT * FROM `users` WHERE `email` = ?',
@@ -88,7 +115,7 @@ export const user = {
     },
 
     // Update a user
-    update: async ({id, username, email, role}) => {
+    update: async ({ id, username, email, role }) => {
         try {
             const [result] = await db.execute(
                 'UPDATE `users` SET `username` = ?, `email` = ?, `role` = ? WHERE `id` = ?',
@@ -108,7 +135,7 @@ export const user = {
     },
 
     // Delete a user
-    delete: async ({id}) => {
+    delete: async ({ id }) => {
         try {
             const [sessionResult] = await db.execute(
                 'DELETE FROM sessions WHERE user_id = ?',

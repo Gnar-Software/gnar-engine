@@ -45,7 +45,7 @@ export const user = {
             params
         );
 
-        const users = rows.map(row => db.sql.helpers.objectToCamelCase(row));
+        let users = rows.map(row => db.sql.helpers.objectToCamelCase(row));
 
         // santize the users by removing the password and apiKey fields
         users = users.map(user => {

@@ -1,0 +1,233 @@
+.many-details {
+    width: 100%;
+    min-height: calc((100vh - 2rem * 4) - 220px - 2rem); // Adjust based on other UI elements
+    overflow-x: auto;
+    background: @color-white-1;
+    border-radius: 0.5rem;
+
+    // Active while Ctrl + dragging to scroll the table horizontally
+    &.drag-scrolling {
+        cursor: grabbing;
+        user-select: none;
+    }
+
+    &.balance-row-highlight {
+
+        .many-details-table tbody {
+
+            tr {
+
+                &:last-of-type {
+                    font-weight: @font-weight-medium;
+                    background: @color-gray-3;
+                }
+            }
+        }
+    }
+
+    &.many-details-spaced {
+        padding-top: 1rem;
+    }
+
+    &.no-min-height {
+        min-height: unset;
+    }
+}
+
+.many-details-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    thead {
+        background: @color-white-1;
+        border-bottom: 2px solid #e2e8f0;
+
+        .column-header-extra {
+            position: absolute;
+            top: -0.5rem;
+            font-size: @font-size-small;
+            color: @color-gray-1;
+        }
+    }
+
+    th {
+        position: relative;
+        padding: 1.2rem 0.8rem;
+        text-align: left;
+        font-size: @font-size-small;
+        font-weight: 400;
+        color: @color-gray-1;
+        text-transform: capitalize;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+
+        &.select-all-column {
+            border-radius: 12px 0 0 0;
+            width: 50px;
+            text-align: center;
+        }
+
+        &:last-child {
+            border-radius: 0 12px 0 0;
+        }
+
+        &.financial-input {
+            text-align: right;
+        }
+
+        &.sortable-column {
+            cursor: pointer;
+            user-select: none;
+
+            &:hover {
+                color: @color-dark-2;
+            }
+        }
+
+        &.sorted-column {
+            color: @color-dark-2;
+            font-weight: @font-weight-medium;
+        }
+
+        .sort-chevron {
+            display: inline-block;
+            margin-left: 0.35rem;
+            font-size: 0.75rem;
+            line-height: 1;
+            color: @color-pink-1;
+        }
+    }
+
+    tbody {
+        tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+            cursor: pointer;
+
+            &:hover {
+                background: linear-gradient(to right, #fafbfc, #f8fafc);
+            }
+
+            &.selected {
+                background: linear-gradient(to right, #eff6ff, #dbeafe);
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+    }
+
+    td {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.9375rem;
+        color: @color-dark-2;
+        white-space: nowrap;
+
+        &.select-row-column {
+            text-align: center;
+            width: 50px;
+        }
+
+        // Special styling for created_at column
+        &.created-at,
+        &[data-column="created_at"],
+        &[data-column="createdAt"],
+        &[data-column="updated_at"],
+        &[data-column="updatedAt"] {
+            color: @color-gray-2;
+        }
+
+        &.financial-input {
+            text-align: right;
+
+            input.table-cell-input {
+                text-align: inherit;
+            }
+        }
+    }
+}
+
+/* Custom Checkbox Styling */
+.checkbox-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.checkbox-input {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: @color-white-1;
+
+    &:hover {
+        border-color: @color-pink-1;
+        background: #f0f9ff;
+    }
+
+    &:checked {
+        background: @color-pink-1;
+        border-color: @color-pink-1;
+
+        &::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: @color-white-1;
+            font-size: @font-size-small;
+            font-weight: bold;
+        }
+    }
+
+    &.indeterminate {
+        background: @color-pink-1;
+        border-color: @color-pink-1;
+
+        &::after {
+            content: '−';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: @color-white-1;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    }
+}
+
+/* Empty and loading states */
+.empty-state,
+.loading-state {
+    padding: 3rem;
+    text-align: center;
+    color: @color-gray-2;
+    font-size: 0.9375rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .many-details-table {
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        th {
+            font-size: 0.8125rem;
+        }
+    }
+}

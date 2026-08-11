@@ -14,7 +14,7 @@ export const auth = {
      * @returns {string} Session token
      */
     createSessionToken: async (userId) => {
-      
+
         try {
             const token = utils.uuid();
 
@@ -29,7 +29,7 @@ export const auth = {
             throw error;
         }
     },
-    
+
     /**
      * Get authenticated user from token
      * 
@@ -49,14 +49,19 @@ export const auth = {
             }
 
             const session = result[0];
+            const userId = session.user_id;
             const createdAt = new Date(session.created_at);
-            const now = new Date(); 
+            const expiresAt = new Date(session.expires_at);
+            const now = new Date();
             const oneHour = 60 * 60 * 1000;
             if (now - createdAt > oneHour) {
                 return null;
             }
 
-            return result[0].user_id;
+            return {
+                userId,
+                tokenExpiresAt: expiresAt,
+            };
         } catch (error) {
             logger.error("Error fetching authenticated user:" + error);
             throw error;
@@ -65,36 +70,39 @@ export const auth = {
 
     /**
      * Verify user credentials
-     * 
+     *
      * @param {Object} params
      * @param {string} params.username - Username (or email)
      * @param {string} params.password - Password
-     * @returns {int} User ID
+     * @returns {int|null} User ID
      */
-    verifyCredentials: async ({username, password}) => {
-
-        const passwordHash = utils.hash(password, config.hashNameSpace);
-
+    verifyCredentials: async ({ username, password }) => {
         try {
-            // try username
-            let [result] = await db.execute(
-                'SELECT * FROM `users` WHERE `username` = ? AND `password` = ?',
-                [username, passwordHash]
+            // Fetch by username OR email
+            const [result] = await db.execute(
+                'SELECT * FROM `users` WHERE `username` = ? OR `email` = ? LIMIT 1',
+                [username, username]
             );
 
-            if (result.length > 0) {
-                return result[0].id;
+            if (result.length === 0) {
+                return null;
             }
 
-            // try username as email
-            [result] = await db.execute(
-                'SELECT * FROM `users` WHERE `email` = ? AND `password` = ?',
-                [username, passwordHash]
+            const user = result[0];
+
+            // Verify password against stored hash
+            const isValid = await utils.verifyHash(
+                password,
+                user.password,
+                config.hashNameSpace
             );
 
-            if (result.length > 0) {
-                return result[0].id;
+            if (!isValid) {
+                return null;
             }
+
+            return user.id;
+
         } catch (error) {
             logger.error("Error verifying credentials:" + error);
             throw error;
@@ -109,7 +117,7 @@ export const auth = {
      * @param {string} params.username - Username
      * @returns {int} User ID
      */
-    verifyApiKey: async ({apiKey, username}) => {
+    verifyApiKey: async ({ apiKey, username }) => {
         try {
             const [result] = await db.execute(
                 'SELECT * FROM `users` WHERE `api_key` = ? AND `username` = ?',

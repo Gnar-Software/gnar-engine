@@ -1,0 +1,159 @@
+@select-box-options-height: 400px;
+
+.custom-select-cont {
+    display: inline-block;
+
+    label {
+        width: 100%;
+    }
+}
+
+.custom-select {
+    max-width: 215px;
+    min-width: 215px;
+    width: 100%;
+    position: relative;
+
+    .custom-select-input {
+        position: relative;
+        width: 100%;
+        padding: 0.3rem 0.8rem;
+        margin: 10px 0;
+        background: @color-white-1;
+        border-radius: 0.5rem;
+        box-sizing: border-box;
+        font-size: 15px;
+        color: @color-dark-2;
+        z-index: 3;
+        gap: 0.4rem;
+        padding-right: 2rem;
+
+        span {
+            color: inherit;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        // &.error {
+        //     border-color: @color-pink-1; 
+        // }
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        &:after {
+            content: url('../assets/icons/chevron-down.svg');
+            transition-duration: 0.1s;
+            position: absolute;
+            right: 8px;
+            top: calc(@font-size-base / 2);
+            transform-origin: center;
+            height: 20px;
+        }
+
+        &.select-error {
+            border-color: @color-pink-1;
+        }
+    }
+
+    .custom-select-options {
+        position: absolute;
+        width: 100%;
+        // Small gap between the input and the options panel.
+        top: calc(100% + 6px);
+        left: 0px;
+        max-height: 0px;
+        height: auto !important;
+        overflow: hidden;
+        background: @color-white-1;
+        box-sizing: border-box;
+        // Transparent while collapsed so no stray line shows; the gray hairline
+        // border only appears once the dropdown is open.
+        border: 1px solid transparent;
+        border-radius: 15px;
+        z-index: 2;
+        transition: max-height 0.3s ease;
+
+        .custom-select-options-inner {
+            max-height: @select-box-options-height;
+            overflow-y: auto;
+        }
+
+        .custom-select-option {
+            padding: 10px;
+            opacity: 0.8;
+            transition-duration: 0.1s;
+            color: @color-dark-2;
+            font-size: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            span {
+                color: inherit;
+            }
+
+            &:hover {
+                opacity: 1;
+                cursor: pointer;
+                // Same subtle gray hover as the ListMany table rows.
+                background: linear-gradient(to right, #fafbfc, #f8fafc);
+            }
+
+            &.selected {
+                opacity: 1;
+                color: @color-pink-1;
+            }
+        }
+    }
+
+    &.open {
+        z-index: 5;
+
+        .custom-select-options {
+            max-height: @select-box-options-height;
+            border-color: @color-gray-3;
+        }
+
+        .custom-select-input {
+
+            &:after {
+                transform: rotate(180deg);
+            }
+        }
+    }
+
+    &.closing {
+        z-index: 5;
+
+        .custom-select-options {
+            max-height: 0px;
+            border-color: @color-gray-3;
+        }
+    }
+
+    &.open-up {
+        .custom-select-options {
+            top: auto;
+            bottom: calc(100% + 6px);
+        }
+    }
+
+    &.wide-300 {
+        max-width: 300px;
+        width: 100%;
+    }
+}
+
+.error-cont {
+    position: absolute;
+    bottom: -0.8rem;
+
+    p {
+        color: @color-pink-1;
+        font-size: 0.8rem;
+    }
+}

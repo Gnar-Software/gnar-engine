@@ -25,13 +25,16 @@ export const initDatabaseTables = async () => {
         CREATE TABLE tasks (
             id CHAR(36) PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
-            payload TEXT,
-            status ENUM('scheduled', 'queued', 'completed', 'failed', 'cancelled') DEFAULT 'scheduled',
-            scheduled TIMESTAMP,
-            recurring_interval ENUM('daily', 'weekly', 'monthly', 'yearly', 'none') DEFAULT 'none',
+            payload JSON NOT NULL,
+            status VARCHAR(255) DEFAULT 'scheduled',
+            scheduled TIMESTAMP NOT NULL,
+            recurring_interval ENUM('hourly', 'daily', 'weekly', 'monthly', 'yearly') DEFAULT NULL,
             recurring_interval_count INT DEFAULT 0,
-            handler_service_name VARCHAR(255) NOT NULL,
-            handler_name VARCHAR(255) NOT NULL,
+            handler VARCHAR(255) NOT NULL,
+            retry_attempts INT DEFAULT 0,
+            recurring_task_id CHAR(36) NULL,
+            reschedule_centrally_on_failure TINYINT(1) DEFAULT TRUE,
+            idempotency_key VARCHAR(255) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )`;

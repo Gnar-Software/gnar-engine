@@ -1,0 +1,44 @@
+.image-input {
+    position: relative;
+    
+    & > .image-input-actions {
+        display: flex;
+        margin-top: 10px;
+        flex-direction: row-reverse;
+        gap: 0px;
+    }
+    .upload-area {
+        border-color: @dark-grey !important;
+        min-width: 190px;
+        margin-bottom: auto;
+        flex-grow: 2;
+    }
+    .preview-area {
+        .image-preview {
+            margin-right: 35px;
+
+            img {
+                max-width: 100%;
+                object-fit: contain;
+            }
+        }
+    }
+
+
+    .icon-delete {
+        min-width: 20px;
+        min-height: 20px;
+        display: inline-block;   
+        background-size: contain;
+        background-repeat: no-repeat;
+        position: absolute;
+        right: -25px;
+        top: -3px;
+        opacity: 0.7;
+    
+        &:hover {
+            cursor: pointer;
+            opacity: 1;
+        }
+    }
+}

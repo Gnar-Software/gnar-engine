@@ -1,0 +1,111 @@
+.paginator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    padding: 1.5rem 0;
+}
+
+.paginator-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6b7280;
+}
+
+.paginator-button:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #374151;
+}
+
+.paginator-:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.paginator-pages {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.paginator-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1rem;
+    max-width: 1rem;
+    height: 1rem;
+    padding: 0.7rem;
+    border: 1px solid transparent;
+    background-color: @color-white-1;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    font-weight: 400;
+    color: @color-dark-3;
+}
+
+.paginator-page:hover:not(:disabled):not(.active) {
+    background: @color-pink-1;
+    color: @color-white-1;
+}
+
+.paginator-page.active {
+    background-color: @color-pink-1;
+    color: @color-white-1;
+    cursor: default;
+}
+
+.paginator-page.ellipsis {
+    cursor: default;
+    pointer-events: none;
+    background-color: transparent;
+}
+
+.paginator-page.ellipsis:hover {
+    background-color: transparent;
+}
+
+.paginator-next {
+    color: @color-pink-1;
+    padding-left: 0.5rem;
+    cursor: pointer;
+
+    &.previous {
+        padding-left: 0;
+        padding-right: 0.5rem;
+    }
+
+    &:hover {
+        color: @color-pink-2;
+    }
+
+    &.disabled {
+        color: @color-gray-2 !important;
+        cursor: not-allowed;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .paginator {
+        gap: 0.25rem;
+    }
+
+    .paginator-button,
+    .paginator-page {
+        min-width: 2rem;
+        height: 2rem;
+        font-size: 0.8125rem;
+    }
+}

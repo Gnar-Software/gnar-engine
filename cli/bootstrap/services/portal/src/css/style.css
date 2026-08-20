@@ -653,6 +653,9 @@ button.secondary-btn {
   position: absolute;
   bottom: 30px;
 }
+.user-info:hover {
+  cursor: pointer;
+}
 .user-info .user-info-mini {
   align-items: center;
 }
@@ -1027,7 +1030,7 @@ button.secondary-btn {
   position: relative;
   width: 100%;
   padding: 8px 10px;
-  margin: 0 0 25px;
+  margin: 8px 0 25px;
   border: 1px solid #3C3C3C;
   background: #242424;
   border-radius: 17px;
@@ -1119,7 +1122,7 @@ button.secondary-btn {
   position: relative;
   width: 100%;
   padding: 8px 10px;
-  margin: 0 0 25px;
+  margin: 8px 0 25px;
   background: #242424;
   border: 1px solid #3C3C3C;
   border-radius: 17px;
@@ -1517,6 +1520,89 @@ button.secondary-btn {
 .remove-repeater-row:hover {
   cursor: pointer;
   opacity: 1;
+}
+.account-dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+}
+.account-dropdown {
+  position: absolute;
+  bottom: calc(0% + 90px);
+  left: 30;
+  width: 310px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 50;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 300ms ease-out, opacity 300ms ease-out;
+}
+.account-dropdown.open {
+  max-height: 600px;
+  opacity: 1;
+}
+.account-dropdown-content {
+  padding: 1rem;
+}
+.account-dropdown-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.account-avatar {
+  width: 48px;
+  height: 48px;
+  background-color: #242424;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+.account-details .account-name {
+  font-weight: 500;
+  color: #242424;
+}
+.account-details .account-email {
+  font-size: 0.875rem;
+  color: #3C3C3C;
+  margin: 0;
+}
+.account-dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #242424;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  font-size: 1rem;
+}
+.menu-item:hover {
+  background: #f3f4f6;
+}
+.menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.5rem 0;
 }
 .login-page {
   width: 100%;

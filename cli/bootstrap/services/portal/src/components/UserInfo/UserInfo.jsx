@@ -29,7 +29,7 @@ function UserInfo() {
                 onClose={() => setDropdownOpen(false)}
             />
 
-            <div className="user-info">
+            <div className="user-info" onClick={handleDropdownToggle}>
                 {authUser && !loading && (
                     <div className="user-info-mini flex-row">
                         {gravatarUrl && (

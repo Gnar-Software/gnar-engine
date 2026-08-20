@@ -9,10 +9,10 @@
 
 .account-dropdown {
   position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
+  bottom: calc(0% + 90px);
+  left: 30;
   width: 310px;
-  background: @color-white-1;
+  background: @white;
   border-radius: 8px;
   box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.15);
   overflow: hidden;
@@ -42,7 +42,7 @@
 .account-avatar {
     width: 48px;
     height: 48px;
-    background-color: @color-pink-1;
+    background-color: @dark-3;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -54,12 +54,12 @@
 .account-details {
     .account-name {
         font-weight: 500;
-        color: @color-dark-2;
+        color: @dark-3;
     }
 
     .account-email {
         font-size: 0.875rem;
-        color: @color-gray-1;
+        color: @dark-grey;
         margin: 0;
     }
 }
@@ -80,7 +80,7 @@
     border: none;
     background: transparent;
     border-radius: 6px;
-    color: @color-dark-2;
+    color: @dark-3;
     cursor: pointer;
     transition: background-color 150ms ease;
     font-size: 1rem;

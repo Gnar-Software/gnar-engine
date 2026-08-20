@@ -17,7 +17,8 @@
                 background-position: left center;
                 background-repeat: no-repeat;
 
-                a {
+                a,
+                span {
                     display: block;
                     text-decoration: none;
                     color: @mid-grey;
@@ -28,7 +29,12 @@
                     cursor: pointer;
                 }
 
-                &:first-of-type a {
+                span {
+                    cursor: default;
+                }
+
+                &:first-of-type a,
+                &:first-of-type span {
                     color: @white;
                 }
             }

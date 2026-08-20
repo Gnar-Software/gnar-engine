@@ -24,8 +24,9 @@ function Sidebar() {
                 </ul>
                 <span className="separator"></span>
                 <ul>
-                    <li className="icon-reports"><Link to="/portal/reports">Reports</Link></li>
-                    <li><Link to="/portal/logs">Logs</Link></li>
+                    <li className="icon-cog"><span>System</span></li>
+                    <li><Link to="/portal/tasks">Tasks</Link></li>
+                    <li><Link to="/portal/recurring-tasks">Recurring Tasks</Link></li>
                 </ul>
             </div>
 

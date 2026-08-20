@@ -1,0 +1,42 @@
+.task-details-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 600px;
+    height: 100vh;
+    padding: 60px 24px 24px;
+    box-sizing: border-box;
+    background: @dark-1;
+    border-left: 1px solid @dark-3;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    overflow-y: auto;
+    z-index: 1000;
+
+    h2 {
+        margin-top: 0;
+    }
+
+    pre {
+        padding: 12px;
+        border: 1px solid @dark-3;
+        overflow-x: auto;
+        white-space: pre-wrap;
+    }
+}
+
+.task-details-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    min-width: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+}
+
+.task-details-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}

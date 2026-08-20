@@ -61,25 +61,28 @@ function UsersPage() {
         <div>
             <div className="flex-row">
                 <h1>Manage Users</h1>
-                <div className="page-action-bar">
-                    <CustomMultiSelect
-                        label='Filter by Columns'
-                        name='users-columns-filter'
-                        placeholder='Select Columns'
-                        labelKey='label'
-                        options={availableColumns}
-                        selectedOptions={availableColumns.filter(col => col.selected)}
-                        setSelectedOption={(option) => toggleColumn(option.key)}
-                    />
-                    <CustomSelect
-                        label='Page Size'
-                        name='users-page-size-filter'
-                        placeholder={`Page size: ${pageSize}`}
-                        options={pageSizeOptions.map(size => ({ id: size, name: size }))}
-                        labelKey='name'
-                        setSelectedOption={(option) => { setCurrentPage(1); setPageSize(option.id) }}
-                    />
+                <div className="top-action-bar">
+                    <button onClick={() => { navigate('/portal/users/new'); }}>Create New User</button>
                 </div>
+            </div>
+
+            <div className="page-action-bar">
+                <CustomMultiSelect
+                    label='Filter by Columns'
+                    name='users-columns-filter'
+                    placeholder='Select Columns'
+                    labelKey='label'
+                    options={availableColumns}
+                    selectedOptions={availableColumns.filter(col => col.selected)}
+                    setSelectedOption={(option) => toggleColumn(option.key)}
+                />
+                <CustomSelect
+                    name='users-page-size-filter'
+                    placeholder={`Page size: ${pageSize}`}
+                    options={pageSizeOptions.map(size => ({ id: size, name: size }))}
+                    labelKey='name'
+                    setSelectedOption={(option) => { setCurrentPage(1); setPageSize(option.id) }}
+                />
             </div>
 
             <PaginationTop

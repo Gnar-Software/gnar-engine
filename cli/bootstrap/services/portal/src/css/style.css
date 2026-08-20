@@ -165,7 +165,9 @@ body #root {
 .page-action-bar {
   display: flex;
   flex-direction: row;
+  justify-content: flex-end;
   gap: 20px;
+  align-items: flex-end;
 }
 input[type="text"],
 input[type="password"],
@@ -227,7 +229,10 @@ button.secondary-btn {
   background: url('../assets/icons/icon-users.svg');
 }
 .icon-settings {
-  background: url('../assets/icons/icon-settings.svg');
+  background: url('../assets/icons/icon-cog.svg');
+}
+.icon-cog {
+  background: url('../assets/icons/icon-cog.svg');
 }
 .icon-reports {
   background: url('../assets/icons/icon-reports.svg');
@@ -294,7 +299,7 @@ button.secondary-btn {
 .portal-main {
   background: #2C2C2C;
   min-height: calc(100vh - 71px);
-  width: 100vw;
+  width: 100%;
   position: absolute;
   top: 71px;
   left: 0px;
@@ -351,7 +356,8 @@ button.secondary-btn {
   background-position: left center;
   background-repeat: no-repeat;
 }
-.portal-sidebar .inner ul li a {
+.portal-sidebar .inner ul li a,
+.portal-sidebar .inner ul li span {
   display: block;
   text-decoration: none;
   color: #868686;
@@ -361,7 +367,11 @@ button.secondary-btn {
   font-size: 18px;
   cursor: pointer;
 }
-.portal-sidebar .inner ul li:first-of-type a {
+.portal-sidebar .inner ul li span {
+  cursor: default;
+}
+.portal-sidebar .inner ul li:first-of-type a,
+.portal-sidebar .inner ul li:first-of-type span {
   color: #ffffff;
 }
 .portal-topbar {
@@ -926,9 +936,8 @@ button.secondary-btn {
   background-image: url('../assets/icons/icon-padlock.svg');
 }
 .login-form {
-  max-width: 610px;
+  max-width: 400px;
   width: 100%;
-  background: #ffffff;
 }
 .login-form input {
   max-width: 300px;
@@ -1643,10 +1652,48 @@ button.secondary-btn {
   background-image: url('../assets/icons/icon-padlock.svg');
 }
 .login-page .login-form {
-  max-width: 450px;
+  max-width: 400px;
 }
 .login-page .forgotten-password {
   width: 100%;
+}
+.task-details-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 600px;
+  height: 100vh;
+  padding: 60px 24px 24px;
+  box-sizing: border-box;
+  background: #242424;
+  border-left: 1px solid #242424;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  overflow-y: auto;
+  z-index: 1000;
+}
+.task-details-panel h2 {
+  margin-top: 0;
+}
+.task-details-panel pre {
+  padding: 12px;
+  border: 1px solid #242424;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.task-details-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  min-width: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+.task-details-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
 }
 #MagiCSS-bookmarklet span {
   color: black !important;

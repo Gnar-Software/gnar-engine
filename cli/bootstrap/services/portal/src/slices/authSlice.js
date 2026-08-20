@@ -51,7 +51,10 @@ export const authSlice = createSlice({
                     state.authUser = action.payload.user;
 
                     // store in local storage
-                    setAuthToken(action.payload.token);
+                    setAuthToken({
+                        authToken: action.payload.token,
+                        expiresAt: action.payload?.user?.tokenExpiresAt
+                    });
                     setAuthUser(JSON.stringify(action.payload.user));
 
                     // redirect to portal

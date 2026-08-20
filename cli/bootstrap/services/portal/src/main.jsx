@@ -13,6 +13,8 @@ import PageSinglePage from './pages/PageSinglePage/PageSinglePage.jsx'
 import BlocksPage from './pages/BlocksPage/BlocksPage.jsx'
 import BlockSinglePage from './pages/BlockSinglePage/BlockSinglePage.jsx'
 import AgentPage from './pages/AgentPage/AgentPage.jsx'
+import TasksPage from './pages/TasksPage/TasksPage.jsx'
+import RecurringTasksPage from './pages/TasksPage/RecurringTasksPage.jsx'
 
 const router = createBrowserRouter([
     {
@@ -41,7 +43,11 @@ const router = createBrowserRouter([
                     { path: "blocks/:id", element: <BlockSinglePage /> },
 
                     // Agent
-                    { path: "agent", element: <AgentPage /> }
+                    { path: "agent", element: <AgentPage /> },
+
+                    // System
+                    { path: "tasks", element: <TasksPage /> },
+                    { path: "recurring-tasks", element: <RecurringTasksPage /> }
                 ],
             }
         ]

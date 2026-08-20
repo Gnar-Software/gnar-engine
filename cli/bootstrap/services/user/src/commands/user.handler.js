@@ -117,12 +117,11 @@ commands.register('userService.getSingleUser', async ({ id, email }) => {
  * @param {Object} params
  * @param {number} params.pageSize - Number of users per page
  * @param {number} params.pageNum - Page number
- * @param {Object} params.filters - Optional filters (e.g. role)
  * @returns {Promise<Object>} The user data
  */
-commands.register('userService.getManyUsers', async ({ pageSize, pageNum, filters, ids, orderBy }) => {
+commands.register('userService.getManyUsers', async ({ pageSize, pageNum, ids, orderBy }) => {
 
-    const result = await user.getAll({ pageNum, pageSize, filters, ids, orderBy });
+    const result = await user.getAll({ pageNum, pageSize, ids, orderBy });
     return result;
 });
 

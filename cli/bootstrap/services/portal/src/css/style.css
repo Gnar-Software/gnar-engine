@@ -679,48 +679,6 @@ button.secondary-btn {
   width: 35px;
   border-radius: 20px;
 }
-.list-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.list-table table thead th {
-  padding-top: 24px;
-  padding-bottom: 24px;
-  font-size: 16px;
-  font-weight: 400;
-  text-align: left;
-  border: none;
-  background: #242424;
-  overflow: hidden;
-}
-.list-table table thead th:first-child {
-  border-top-left-radius: 10px;
-  padding-left: 30px;
-}
-.list-table table thead th:last-child {
-  border-top-right-radius: 10px;
-  padding-right: 30px;
-}
-.list-table table tr td {
-  padding-top: 15px;
-  padding-bottom: 15px;
-  transition: color 0.2s;
-}
-.list-table table tr td:first-child {
-  padding-left: 30px;
-}
-.list-table table tr td:last-child {
-  padding-right: 30px;
-}
-.list-table table tr:nth-child(even) td {
-  background: #242424;
-}
-.list-table table tr:hover {
-  cursor: pointer;
-}
-.list-table table tr:hover td {
-  color: #47DCA6;
-}
 .many-details {
   width: 100%;
   min-height: calc((100vh - 2rem * 4) - 220px - 2rem);

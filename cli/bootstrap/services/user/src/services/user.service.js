@@ -8,7 +8,7 @@ import { config} from '../config.js';
 export const user = {
 
     // Get all users
-    getAll: async ({ pageSize = 100, pageNum = 1, filters = {}, ids = [], orderBy = { email: 'ASC' } }) => {
+    getAll: async ({ pageSize = 100, pageNum = 1, ids = [], orderBy = { email: 'ASC' } }) => {
         pageSize = Number(pageSize);
         pageNum = Number(pageNum);
 
@@ -16,11 +16,6 @@ export const user = {
 
         const whereClauses = [];
         const params = [];
-
-        Object.keys(filters).forEach(key => {
-            whereClauses.push(`${db.sql.helpers.toSnake(key)} = ?`);
-            params.push(filters[key]);
-        });
 
         if (ids?.length) {
             whereClauses.push(`id IN (${ids.map(() => '?').join(', ')})`);

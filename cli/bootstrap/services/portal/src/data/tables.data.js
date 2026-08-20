@@ -11,5 +11,21 @@ export const tablesConfig = {
         ],
         filters: [],
         orderBy: { key: '', direction: 'ASC' },
+    },
+    pages: {
+        availableColumns: [
+            { id: 1, key: 'id', label: 'ID', selected: true },
+            { id: 2, key: 'name', label: 'Page name', selected: true },
+        ],
+        filters: [],
+        orderBy: { key: '', direction: 'ASC' },
+    },
+    blocks: {
+        availableColumns: [
+            { id: 1, key: 'id', label: 'ID', selected: true },
+            { id: 2, key: 'name', label: 'Block name', selected: true },
+        ],
+        filters: [],
+        orderBy: { key: '', direction: 'ASC' },
     }
 }

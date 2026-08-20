@@ -221,25 +221,25 @@ button.secondary-btn {
   border: 1px solid #3C3C3C;
 }
 .icon-dashboard {
-  background: url('../assets/icon-home.svg');
+  background: url('../assets/icons/icon-home.svg');
 }
 .icon-users {
-  background: url('../assets/icon-users.svg');
+  background: url('../assets/icons/icon-users.svg');
 }
 .icon-settings {
-  background: url('../assets/icon-settings.svg');
+  background: url('../assets/icons/icon-settings.svg');
 }
 .icon-reports {
-  background: url('../assets/icon-reports.svg');
+  background: url('../assets/icons/icon-reports.svg');
 }
 .icon-agent {
-  background: url('../assets/icon-agent.svg');
+  background: url('../assets/icons/icon-agent.svg');
 }
 .icon-page {
-  background: url('../assets/icon-page.svg');
+  background: url('../assets/icons/icon-page.svg');
 }
 .icon-delete {
-  background: url('../assets/icon-delete.svg');
+  background: url('../assets/icons/icon-delete.svg');
 }
 .card {
   border: 1px solid #3C3C3C;
@@ -917,10 +917,10 @@ button.secondary-btn {
   background-size: 18px 18px;
 }
 .username {
-  background-image: url('../assets/icon-user.svg');
+  background-image: url('../assets/icons/icon-user.svg');
 }
 .password {
-  background-image: url('../assets/icon-padlock.svg');
+  background-image: url('../assets/icons/icon-padlock.svg');
 }
 .login-form {
   max-width: 610px;
@@ -1551,10 +1551,10 @@ button.secondary-btn {
   background-size: 18px 18px;
 }
 .login-page .username {
-  background-image: url('../assets/icon-user.svg');
+  background-image: url('../assets/icons/icon-user.svg');
 }
 .login-page .password {
-  background-image: url('../assets/icon-padlock.svg');
+  background-image: url('../assets/icons/icon-padlock.svg');
 }
 .login-page .login-form {
   max-width: 450px;

@@ -1,0 +1,55 @@
+.username,
+.password {
+    padding-left: 50px;
+    position: relative;
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 18px 18px;
+}
+
+.username {
+    background-image: url('../assets/icons/icon-user.svg');
+}
+
+.password {
+    background-image: url('../assets/icons/icon-padlock.svg');
+}
+
+.login-form {
+    max-width: 400px;
+    width: 100%;
+
+    input {
+        max-width: 300px;
+    }
+
+    // Password field with a show/hide toggle. Keeps the input at the same
+    // width as the other login fields and aligns the eye icon to the input.
+    .password-field {
+        max-width: 300px;
+
+        input {
+            width: 100%;
+            padding-right: 2.5rem;
+            box-sizing: border-box;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 1rem;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: @green-main;
+        }
+    }
+}
+
+.forgotten-password {
+    width: 100%;
+}

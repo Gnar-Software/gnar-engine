@@ -22,7 +22,7 @@ export const user = {
     },
 
     update: async ({ id, user }) => {
-        const { data } = await client.post(`/users/${id}`, { user });
+        const { data } = await client.post(`/users/${id}`, user);
         return data;
     },
 
@@ -38,4 +38,3 @@ export const user = {
         await client.post('/users/change-password', { email, token, password });
     },
 };
-

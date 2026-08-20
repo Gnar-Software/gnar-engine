@@ -17,6 +17,7 @@ client.interceptors.request.use(
         let authToken = getAuthToken();
 
         if (authToken) {
+            config.headers = config.headers || {};
             config.headers['Authorization'] = `Bearer ${authToken}`;
         }
 
@@ -37,7 +38,7 @@ client.interceptors.response.use(
 
         if (newAuthToken) {
             const token = newAuthToken.split(' ')[1];
-            setAuthToken(token);
+            setAuthToken({ authToken: token });
             console.log('refreshed token');
         }
 
@@ -45,20 +46,22 @@ client.interceptors.response.use(
     },
     (error) => {
         // Log out if 401
-        if (error.response.status === 401) {
+        if (error.response?.status === 401) {
 
             // remove auth token and user from storage
             removeAuthToken();
             removeAuthUser();
 
-            // redirect to login page
-            window.location.href = '/portal/login'
+            // Avoid redirect loop if already on login
+            if (!window.location.pathname.startsWith('/portal/login')) {
+                window.location.href = '/portal/login';
+            }
 
         }
 
-        if (error.response.data.message) {
+        if (error.response?.data?.details || error.response?.data?.message) {
             return Promise.reject({
-                message: error.response.data.message
+                message: error.response.data.details || error.response.data.message
             });
         }
 
@@ -67,4 +70,3 @@ client.interceptors.response.use(
 );
 
 export default client;
-

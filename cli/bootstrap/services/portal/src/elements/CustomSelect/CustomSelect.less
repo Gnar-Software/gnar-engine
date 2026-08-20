@@ -1,5 +1,3 @@
-@select-box-options-height: 200px;
-
 .custom-select-cont {
     display: inline-block;
 
@@ -16,26 +14,32 @@
     .custom-select-input {
         position: relative;
         width: 100%;
-        padding: 6px 10px;
-        margin: 10px 0;
+        padding: 8px 10px;
+        margin: 8px 0 25px;
         border: 1px solid @dark-grey;
         background: @dark-3;
-        border-radius: 25px;
+        border-radius: 17px;
         box-sizing: border-box;
-        font-size: 15px;
-        color: @dark-1;
+        font-size: 14px;
+        color: @white;
         z-index: 3;
+        transition: border-color 0.3s;
 
         &:hover {
             cursor: pointer;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: @green-main;
         }
 
         &:after {
             content: url('../assets/chevron.svg');
             transition-duration: 0.1s;
             position: absolute;
-            right: 8px;
-            top: 5px;
+            right: 10px;
+            top: 7px;
             transform-origin: center;
             height: 20px;
         }
@@ -44,21 +48,21 @@
     .custom-select-options {
         position: absolute;
         width: 100%;
-        top: 10px;
+        top: calc(100% - 19px);
         left: 0px;
-        max-height: @select-box-options-height;
+        max-height: 200px;
         height: 0px !important;
         overflow: hidden;
         background: @dark-3;
         border: 1px solid @dark-grey;
         box-sizing: border-box;
-        border-radius: 15px;
+        border-radius: 17px;
         z-index: 2;
         transition-duration: 0.3s;
 
         .custom-select-options-inner {
-            min-height: @select-box-options-height;
-            max-height: @select-box-options-height;
+            min-height: 200px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
@@ -71,7 +75,7 @@
             opacity: 0.8;
             transition-duration: 0.1s;
             color: @light-grey;
-            font-size: 15px;
+            font-size: 14px;
 
             &:hover {
                 opacity: 1;

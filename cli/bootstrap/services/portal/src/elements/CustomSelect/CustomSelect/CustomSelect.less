@@ -1,0 +1,163 @@
+.custom-select-cont {
+    display: inline-block;
+
+    label {
+        width: 100%;
+    }
+}
+
+.custom-select {
+    max-width: 215px;
+    min-width: 215px;
+    width: 100%;
+    position: relative;
+
+    .custom-select-input {
+        position: relative;
+        width: 100%;
+        padding: 8px 10px;
+        margin: 8px 0 25px;
+        background: @dark-3;
+        border: 1px solid @dark-grey;
+        border-radius: 17px;
+        box-sizing: border-box;
+        font-size: 14px;
+        color: @white;
+        z-index: 3;
+        gap: 0.4rem;
+        padding-right: 2rem;
+        transition: border-color 0.3s;
+
+        span {
+            color: inherit;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        // &.error {
+        //     border-color: @error-red; 
+        // }
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: @green-main;
+        }
+
+        &:after {
+            content: url('../assets/icons/chevron-down.svg');
+            transition-duration: 0.1s;
+            position: absolute;
+            right: 10px;
+            top: 7px;
+            transform-origin: center;
+            height: 20px;
+        }
+
+        &.select-error {
+            border-color: @error-red;
+        }
+    }
+
+    .custom-select-options {
+        position: absolute;
+        width: 100%;
+        // Small gap between the input and the options panel.
+        top: calc(100% + 6px);
+        left: 0px;
+        max-height: 0px;
+        height: auto !important;
+        overflow: hidden;
+        background: @dark-3;
+        box-sizing: border-box;
+        // Transparent while collapsed so no stray line shows; the gray hairline
+        // border only appears once the dropdown is open.
+        border: 1px solid transparent;
+        border-radius: 17px;
+        z-index: 2;
+        transition: max-height 0.3s ease;
+
+        .custom-select-options-inner {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .custom-select-option {
+            padding: 10px;
+            opacity: 0.8;
+            transition-duration: 0.1s;
+            color: @light-grey;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            span {
+                color: inherit;
+            }
+
+            &:hover {
+                opacity: 1;
+                cursor: pointer;
+                color: @green-main;
+            }
+
+            &.selected {
+                opacity: 1;
+                color: @green-main;
+            }
+        }
+    }
+
+    &.open {
+        z-index: 5;
+
+        .custom-select-options {
+            max-height: 400px;
+            border-color: @dark-grey;
+        }
+
+        .custom-select-input {
+
+            &:after {
+                transform: rotate(180deg);
+            }
+        }
+    }
+
+    &.closing {
+        z-index: 5;
+
+        .custom-select-options {
+            max-height: 0px;
+            border-color: @dark-grey;
+        }
+    }
+
+    &.open-up {
+        .custom-select-options {
+            top: auto;
+            bottom: calc(100% + 6px);
+        }
+    }
+
+    &.wide-300 {
+        max-width: 300px;
+        width: 100%;
+    }
+}
+
+.error-cont {
+    position: absolute;
+    bottom: -0.8rem;
+
+    p {
+        color: @error-red;
+        font-size: 0.8rem;
+    }
+}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AgentInterface from "../AgentInterface/AgentInterface";
+import { agentEnabled } from "../../config.js";
 
 
 function Topbar() {
@@ -10,14 +11,18 @@ function Topbar() {
         <div className={`portal-topbar ${dropDownOpen ? 'dropdown-open' : ''}`}>
             <div className="content flex-row">
                 {!dropDownOpen ? (
-                <button
-                    className="agents-button"
-                    type="button"
-                    aria-expanded={dropDownOpen}
-                    onClick={() => setDropdownOpen(!dropDownOpen)}
-                >
-                    Agent
-                </button>
+                    <>
+                    {agentEnabled && 
+                        <button
+                            className="agents-button"
+                            type="button"
+                            aria-expanded={dropDownOpen}
+                            onClick={() => setDropdownOpen(!dropDownOpen)}
+                        >
+                            Agent
+                        </button>
+                    }
+                    </>
                 ) : (
                     <button
                         className="agents-button active"
@@ -32,7 +37,7 @@ function Topbar() {
 
             <div className="agent-dropdown">
                 <div className="agent-dropdown-inner">
-                    <AgentInterface />
+                    { agentEnabled && <AgentInterface /> }
                 </div>
             </div>
         </div>

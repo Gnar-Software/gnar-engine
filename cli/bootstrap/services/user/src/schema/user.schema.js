@@ -10,7 +10,7 @@ const userSchema = {
         properties: {
             email: { type: 'string', format: 'email' },
             password: { type: 'string', minLength: 8 },
-            role: { type: 'string', enum: config.allowedUserRoles, default: config.defaultUserRole },
+            role: { type: 'string', enum: config.userRoles, default: config.defaultUserRole },
             contactId: { type: 'string' },
             username: { type: 'string' }
         },
@@ -27,7 +27,8 @@ const serviceAdminUserSchema = {
         properties: {
             email: { type: 'string', format: 'email' },
             role: { type: 'string', enum: ['service_admin'] },
-            contactId: { type: 'string' }
+            contactId: { type: 'string' },
+            username: { type: 'string' }
         },
         required: ['email'],
         additionalProperties: false
@@ -41,8 +42,9 @@ const userUpdateSchema = {
         type: 'object',
         properties: {
             email: { type: 'string', format: 'email' },
-            role: { type: 'string', enum: config.allowedUserRoles, default: config.defaultUserRole },
-            contactId: { type: 'string' }
+            role: { type: 'string', enum: config.userRoles, default: config.defaultUserRole },
+            contactId: { type: 'string' },
+            username: { type: 'string' }
         },
         additionalProperties: false
     }
@@ -56,7 +58,8 @@ const serviceAdminUserUpdateSchema = {
         properties: {
             email: { type: 'string', format: 'email' },
             role: { type: 'string', enum: ['service_admin'] },
-            contactId: { type: 'string' }
+            contactId: { type: 'string' },
+            username: { type: 'string' }
         },
         additionalProperties: false
     }

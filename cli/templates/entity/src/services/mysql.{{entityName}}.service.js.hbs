@@ -8,7 +8,7 @@ export const {{entityName}} = {
             return null;
         }
 
-        return db.sql.helpers.objectToCamelCase(result);
+        return db.sql.helpers.objectToCamelCase(result[0]);
     },
 
     async getAll({ pageSize = 100, pageNum = 1 }) {

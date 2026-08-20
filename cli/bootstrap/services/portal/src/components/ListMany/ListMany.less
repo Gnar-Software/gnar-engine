@@ -1,0 +1,264 @@
+.many-details {
+    width: 100%;
+    min-height: calc((100vh - 2rem * 4) - 220px - 2rem); // Adjust based on other UI elements
+    overflow-x: auto;
+    background: transparent;
+    border-radius: 0.5rem;
+
+    // Active while Ctrl + dragging to scroll the table horizontally
+    &.drag-scrolling {
+        cursor: grabbing;
+        user-select: none;
+    }
+
+    &.balance-row-highlight {
+
+        .many-details-table tbody {
+
+            tr {
+
+                &:last-of-type {
+                    font-weight: 500;
+
+                    td {
+                        background: @dark-grey;
+                    }
+                }
+            }
+        }
+    }
+
+    &.many-details-spaced {
+        padding-top: 1rem;
+    }
+
+    &.no-min-height {
+        min-height: unset;
+    }
+}
+
+.many-details-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    thead {
+        background: @dark-3;
+
+        .column-header-extra {
+            position: absolute;
+            top: -0.5rem;
+            font-size: 12px;
+            color: @mid-grey;
+        }
+    }
+
+    th {
+        position: relative;
+        padding: 24px 0.8rem;
+        text-align: left;
+        font-size: 16px;
+        font-weight: 400;
+        color: @white;
+        text-transform: capitalize;
+        white-space: nowrap;
+        background: @dark-3;
+
+        &.select-all-column {
+            border-radius: 10px 0 0 0;
+            width: 50px;
+            text-align: center;
+        }
+
+        &:first-child {
+            border-top-left-radius: 10px;
+            padding-left: 30px;
+        }
+
+        &:last-child {
+            border-radius: 0 10px 0 0;
+            padding-right: 30px;
+        }
+
+        &.financial-input {
+            text-align: right;
+        }
+
+        &.sortable-column {
+            cursor: pointer;
+            user-select: none;
+
+            &:hover {
+                color: @green-main;
+            }
+        }
+
+        &.sorted-column {
+            color: @green-main;
+            font-weight: 500;
+        }
+
+        .sort-chevron {
+            display: inline-block;
+            margin-left: 0.35rem;
+            font-size: 0.75rem;
+            line-height: 1;
+            color: @green-main;
+        }
+    }
+
+    tbody {
+        tr {
+            transition: all 0.2s ease;
+            cursor: pointer;
+
+            &:nth-child(even) {
+                td {
+                    background: @dark-3;
+                }
+            }
+
+            &:hover {
+                td {
+                    color: @green-main;
+                }
+            }
+
+            &.selected {
+                td {
+                    background: @dark-grey;
+                }
+            }
+
+            &:last-child {
+                td {
+                    border-bottom: none;
+                }
+            }
+        }
+    }
+
+    td {
+        padding: 15px 0.8rem;
+        font-size: 0.9375rem;
+        white-space: nowrap;
+        transition: color 0.2s;
+
+        &:first-child {
+            padding-left: 30px;
+        }
+
+        &:last-child {
+            padding-right: 30px;
+        }
+
+        &.select-row-column {
+            text-align: center;
+            width: 50px;
+        }
+
+        // Special styling for created_at column
+        &.created-at,
+        &[data-column="created_at"],
+        &[data-column="createdAt"],
+        &[data-column="updated_at"],
+        &[data-column="updatedAt"] {
+            color: @mid-grey;
+        }
+
+        &.financial-input {
+            text-align: right;
+
+            input.table-cell-input {
+                text-align: inherit;
+            }
+        }
+    }
+
+    tbody tr:hover td {
+        color: @green-main;
+    }
+}
+
+/* Custom Checkbox Styling */
+.checkbox-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.checkbox-input {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border: 1px solid @dark-grey;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: @dark-3;
+
+    &:hover {
+        border-color: @green-main;
+        background: @dark-3;
+    }
+
+    &:checked {
+        background: @green-main;
+        border-color: @green-main;
+
+        &::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: @white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    }
+
+    &.indeterminate {
+        background: @green-main;
+        border-color: @green-main;
+
+        &::after {
+            content: '−';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: @white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    }
+}
+
+/* Empty and loading states */
+.empty-state,
+.loading-state {
+    padding: 3rem;
+    text-align: center;
+    color: @mid-grey;
+    font-size: 0.9375rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .many-details-table {
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        th {
+            font-size: 0.8125rem;
+        }
+    }
+}

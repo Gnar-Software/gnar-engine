@@ -87,17 +87,95 @@ export const httpController = {
 		preHandler: async (request, reply) => authorise.executeTaskByApi(request, reply),
 		handler: async (request, reply) => {
 
-			const status = request.query.status || 'scheduled';
+			const params = {
+				status: request.query.status || 'scheduled',
+				orderDirection: request.query.orderDirection || 'ASC'
+			};
 
 			// execute
-			const tasks = await commands.execute('getTasksByStatus', status);
+			const tasks = await commands.execute('getTasksByStatus', params);
 
 			// handle response
 			reply.code(200).send(
 				{
-					status: status,
+					status: params.status,
 					tasks: tasks
 				}
+			);
+		},
+	},
+
+	/**
+	 * Get recurring tasks
+	 */
+	recurringTasksGet: {
+		method: 'GET',
+		url: '/tasks/recurring',
+		preHandler: async (request, reply) => authorise.executeTaskByApi(request, reply),
+		handler: async (request, reply) => {
+
+			// params from request
+			const params = {
+				pageNum: request.query.pageNum,
+				pageSize: request.query.pageSize,
+				filters: request.query.filters ? JSON.parse(request.query.filters) : {},
+				orderBy: request.query.orderBy ? JSON.parse(request.query.orderBy) : { key: 'nextRunAt', direction: 'ASC' }
+			};
+
+			// execute
+			const recurringTasks = await commands.execute('getManyRecurringTasks', params);
+
+			// handle response
+			reply.code(200).send(
+				{ recurringTasks: recurringTasks }
+			);
+		},
+	},
+
+	/**
+	 * Delete recurring task
+	 */
+	recurringTasksDelete: {
+		method: 'DELETE',
+		url: '/tasks/recurring/:id',
+		preHandler: async (request, reply) => authorise.delete(request, reply),
+		handler: async (request, reply) => {
+
+			// params from request
+			const params = {
+				id: request.params.id
+			};
+
+			// execute
+			await commands.execute('deleteRecurringTask', params);
+
+			// handle response
+			reply.code(200).send(
+				{ message: 'Recurring task deleted' }
+			);
+		},
+	},
+
+	/**
+	 * Delete task
+	 */
+	tasksDelete: {
+		method: 'DELETE',
+		url: '/tasks/:id',
+		preHandler: async (request, reply) => authorise.delete(request, reply),
+		handler: async (request, reply) => {
+
+			// params from request
+			const params = {
+				id: request.params.id
+			};
+
+			// execute
+			await commands.execute('deleteTask', params);
+
+			// handle response
+			reply.code(200).send(
+				{ message: 'Task deleted' }
 			);
 		},
 	},

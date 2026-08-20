@@ -83,7 +83,11 @@ export const user = {
                 [id]
             );
 
-            return newUser[0];
+            // sanitize
+            const userObj = newUser[0];
+            const { password, apiKey, ...rest } = userObj;
+
+            return rest;
         } catch (error) {
             logger.error("Error creating user:", error);
             throw error;
@@ -103,7 +107,11 @@ export const user = {
                 return null;
             }
 
-            return result[0];
+            // sanitize
+            const userObj = result[0];
+            const { password, apiKey, ...rest } = userObj;
+
+            return rest;
         } catch (error) {
             logger.error("Error fetching user:", error);
             throw error;
@@ -122,7 +130,11 @@ export const user = {
                 return null;
             }
 
-            return result[0];
+            // sanitize
+            const userObj = result[0];
+            const { password, apiKey, ...rest } = userObj;
+
+            return rest;
         } catch (error) {
             logger.error("Error fetching user by email:", error);
             throw error;
@@ -142,7 +154,11 @@ export const user = {
                 [id]
             );
 
-            return updatedUser[0];
+            // sanitize
+            const userObj = updatedUser[0];
+            const { password, apiKey, ...rest } = userObj;
+
+            return rest;
         } catch (error) {
             logger.error("Error updating user:", error);
             throw error;

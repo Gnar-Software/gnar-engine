@@ -102,9 +102,9 @@ commands.register('userService.getAuthenticatedUser', async ({ token }) => {
 commands.register('userService.getSingleUser', async ({ id, email }) => {
 
     if (id) {
-        return sanitizeUser(await user.getById({ id: id }));
+        return await user.getById({ id: id });
     } else if (email) {
-        return sanitizeUser(await user.getByEmail({ email: email }));
+        return await user.getByEmail({ email: email });
     } else {
         throw new error.badRequest('User email or id required');
     }
@@ -144,9 +144,6 @@ commands.register('userService.searchUsers', async ({ term, pageSize, pageNum })
 
     const keys = ['email', 'username', ]
     const result =  await user.search({ term, keys, pageSize, pageNum });
-
-    // remove sensitive data
-    result.data = sanitizeUsers(result.data);
 
     return result;
 });
@@ -210,7 +207,7 @@ commands.register('userService.createUserWithRandomPassword', async ({ users, se
         }
     }
 
-    return sanitizeUsers(createdNewUsers);
+    return createdNewUsers;
 });
 
 
@@ -275,7 +272,7 @@ commands.register('userService.createUsers', async ({ users, sendNotification = 
         }
     }
 
-    return sanitizeUsers(createdNewUsers);
+    return createdNewUsers;
 });
 
 
@@ -336,12 +333,12 @@ commands.register('userService.updateUser', async ({ id, newUserData }) => {
     }
 
     // update
-    return sanitizeUser(await user.update({
+    return await user.update({
         id: id,
         username: newUserData.username ?? userObj.username ?? '',
         email: newUserData.email ?? userObj.email ?? '',
         role: newUserData.role ?? userObj.role ?? config.defaultUserRole
-    }));
+    });
 });
 
 
@@ -439,7 +436,6 @@ commands.register('userService.requestPasswordReset', async ({ email, createComp
     }
 });
 
-
 /**
  * Change password
  *
@@ -491,4 +487,3 @@ commands.register('userService.changePassword', async ({ email, token, password 
 
     return { success: true };
 });
-

@@ -1,9 +1,16 @@
 import AgentInterface from "../../components/AgentInterface/AgentInterface.jsx";
+import { agentEnabled } from "../../config.js";
 
 function AgentPage() {
     return (
         <div className="agent-page">
-            <AgentInterface />
+            {agentEnabled ? 
+                ( 
+                    <AgentInterface />
+                ) : (
+                    <p>Agent disabled</p>
+                )
+            }
         </div>
     );
 }

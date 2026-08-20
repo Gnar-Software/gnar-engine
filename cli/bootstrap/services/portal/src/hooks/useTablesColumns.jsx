@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
+import { tablesConfig } from '../data/tables.data.js';
+import { getAvailableTableColumns, getStoredOrderBy, updateTableData, updateTableOrderBy } from '../utils/localStorageUtils.js';
 
-const STORAGE_KEY = 'tableData';
 
 /**
  * Use tables columns hook to manage the available colums and the order by for the tables.
@@ -15,51 +16,9 @@ const STORAGE_KEY = 'tableData';
  *   setOrderByColumn: Function
  * }}
  */
-export function useTablesColumns({ tableKey, availableColumns: initialAvailableColumns, filters: initialFilters, orderBy: initialOrderBy }) {
-    const getStoredTableData = () => {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-        } catch (error) {
-            console.error('Error reading table data from localStorage:', error);
-            return {};
-        }
-    };
-
-    const updateStoredTableData = (updates) => {
-        if (!tableKey) {
-            return;
-        }
-
-        const storedData = getStoredTableData();
-        const updatedData = {
-            ...storedData,
-            [tableKey]: {
-                ...(storedData[tableKey] || {}),
-                ...updates,
-            }
-        };
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-    };
-
-    const getStoredAvailableColumns = () => {
-        if (!tableKey) {
-            return null;
-        }
-
-        return getStoredTableData()?.[tableKey]?.availableColumns || null;
-    };
-
-    const getStoredOrderBy = () => {
-        if (!tableKey) {
-            return null;
-        }
-
-        return getStoredTableData()?.[tableKey]?.orderBy || null;
-    };
-    
-    const [availableColumns, setAvailableColumns] = useState(() => getStoredAvailableColumns() || initialAvailableColumns);
-    const [orderBy, setOrderBy] = useState(() => getStoredOrderBy() || initialOrderBy);
+export function useTablesColumns({ tableKey }) {
+    const [availableColumns, setAvailableColumns] = useState(() => fetchAvailableColumns(tableKey));
+    const [orderBy, setOrderBy] = useState(() => fetchOrderBy(tableKey));
 
     /**
      * Toggle the selected state of a column
@@ -77,12 +36,12 @@ export function useTablesColumns({ tableKey, availableColumns: initialAvailableC
                 return { ...col, selected: !col.selected };
             }
             return col;
-        });
+        })
 
         // Update the states (localStorage and hook state)
         setAvailableColumns(updatedColumns);
-        updateStoredTableData({ availableColumns: updatedColumns });
-    };
+        updateTableData(tableKey, updatedColumns);
+    }
 
     /**
      * Set the order by column. Clicking the currently ordered column flips the
@@ -97,8 +56,8 @@ export function useTablesColumns({ tableKey, availableColumns: initialAvailableC
 
         // Update the states (localStorage and hook state)
         setOrderBy(nextOrderBy);
-        updateStoredTableData({ orderBy: nextOrderBy });
-    };
+        updateTableOrderBy(tableKey, nextOrderBy);
+    }
 
     // Wire format expected by the back end: { [columnKey]: 'ASC' | 'DESC' }.
     // Undefined while no column is chosen, so the back end applies its own default order.
@@ -113,5 +72,46 @@ export function useTablesColumns({ tableKey, availableColumns: initialAvailableC
         orderBy,
         orderByParam,
         setOrderByColumn
-    };
+    }
+
+}
+
+// Fetch available columns for the table
+function fetchAvailableColumns(tableKey) {
+
+    // Check if the table data is stored in local storage
+    const storedData = getAvailableTableColumns(tableKey);
+    if (storedData) {
+
+        const defaultConfig = tablesConfig[tableKey] || {};
+        const defaultColumns = defaultConfig.availableColumns || [];
+        const storedKeys = storedData.map(col => col.key).join('|');
+        const defaultKeys = defaultColumns.map(col => col.key).join('|');
+
+        if (storedKeys !== defaultKeys) {
+            updateTableData(tableKey, defaultConfig.availableColumns || []);
+            return defaultConfig.availableColumns || [];
+        }
+
+        return storedData;
+    }
+
+    // Fallback to default config if no stored data
+    const tableConfig = tablesConfig[tableKey] || {};
+    updateTableData(tableKey, tableConfig.availableColumns || []); // Store the default config in local storage for future reference
+    return tableConfig?.availableColumns || [];
+}
+
+// Fetch the order by for the table, preferring stored data over the default config.
+// The stored key can be a column key or a column sortKey (for joined columns), so it
+// is not validated against the config column keys here.
+function fetchOrderBy(tableKey) {
+    const defaultOrderBy = tablesConfig[tableKey]?.orderBy || { key: '', direction: 'ASC' };
+    const storedOrderBy = getStoredOrderBy(tableKey);
+
+    if (storedOrderBy?.key) {
+        return { key: storedOrderBy.key, direction: storedOrderBy.direction || 'ASC' };
+    }
+
+    return { key: defaultOrderBy.key || '', direction: defaultOrderBy.direction || 'ASC' };
 }

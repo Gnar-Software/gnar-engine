@@ -17,17 +17,7 @@ function UsersPage() {
     const [usersData, setUsersData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const { currentPage, setCurrentPage, pageSize, setPageSize, totalPages, totalResults, setPagination } = usePagination();
-    const { availableColumns, toggleColumn, orderBy, orderByParam, setOrderByColumn } = useTablesColumns({
-        tableKey: 'users',
-        availableColumns: [
-            { id: 1, key: 'id', label: 'ID', selected: true },
-            { id: 2, key: 'username', label: 'Username', selected: true },
-            { id: 3, key: 'email', label: 'Email', selected: true },
-            { id: 4, key: 'role', label: 'Role', selected: true },
-        ],
-        filters: [],
-        orderBy: { key: '', direction: 'ASC' },
-    });
+    const { availableColumns, toggleColumn, orderBy, orderByParam, setOrderByColumn } = useTablesColumns({ tableKey: 'users' })
 
     // Fetch users with pagination
     useEffect(() => {
@@ -62,33 +52,34 @@ function UsersPage() {
 
     }, [currentPage, pageSize, orderByParam]);
 
-    // Handle row click to navigate to lease details page
-    const handleRowClick = ({ leaseId }) => {
-        navigate(`${userId}`);
+    // Handle row click to navigate to single user page
+    const handleRowClick = ({ rowId }) => {
+        navigate(`/portal/users/${rowId}`);
     }
 
     return (
         <div>
-            <h1>Manage Users</h1>
-
-            <div>
-                <CustomMultiSelect
-                    label='Filter by Columns'
-                    name='users-columns-filter'
-                    placeholder='Select Columns'
-                    labelKey='label'
-                    options={availableColumns}
-                    selectedOptions={availableColumns.filter(col => col.selected)}
-                    setSelectedOption={(option) => toggleColumn(option.key)}
-                />
-                <CustomSelect
-                    label='Page Size'
-                    name='users-page-size-filter'
-                    placeholder={`Page size: ${pageSize}`}
-                    options={pageSizeOptions.map(size => ({ id: size, name: size }))}
-                    labelKey='name'
-                    setSelectedOption={(option) => { setCurrentPage(1); setPageSize(option.id) }}
-                />
+            <div className="flex-row">
+                <h1>Manage Users</h1>
+                <div className="page-action-bar">
+                    <CustomMultiSelect
+                        label='Filter by Columns'
+                        name='users-columns-filter'
+                        placeholder='Select Columns'
+                        labelKey='label'
+                        options={availableColumns}
+                        selectedOptions={availableColumns.filter(col => col.selected)}
+                        setSelectedOption={(option) => toggleColumn(option.key)}
+                    />
+                    <CustomSelect
+                        label='Page Size'
+                        name='users-page-size-filter'
+                        placeholder={`Page size: ${pageSize}`}
+                        options={pageSizeOptions.map(size => ({ id: size, name: size }))}
+                        labelKey='name'
+                        setSelectedOption={(option) => { setCurrentPage(1); setPageSize(option.id) }}
+                    />
+                </div>
             </div>
 
             <PaginationTop
@@ -97,14 +88,13 @@ function UsersPage() {
             />
 
             <ListMany
-                columns={[
-                    { key: 'id', label: 'ID' },
-                    { key: 'username', label: 'Username' },
-                    { key: 'email', label: 'Email' },
-                    { key: 'role', label: 'Role' }
-                ]}
+                columns={availableColumns.filter(col => col.selected).map(col => ({ key: col.key, label: col.label }))}
                 data={usersData}
-                onRowClick={({ rowId }) => handleRowClick({ userId: rowId })}
+                isLoading={isLoading}
+                loadingMessage='Loading users...'
+                orderBy={orderBy}
+                onColumnHeaderClick={setOrderByColumn}
+                onRowClick={handleRowClick}
             />
 
             <Paginator

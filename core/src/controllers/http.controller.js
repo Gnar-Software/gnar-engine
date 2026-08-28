@@ -29,6 +29,13 @@ export const httpController = {
         if (config?.rateLimiting?.max && config?.rateLimiting?.timeWindow) {
             http.register(rateLimit, config.rateLimiting);
         }
+
+        // Additional content type parsers, Fastify has native support for 'application/json' and 'text/plain' only.
+        const contentTypeParsers = new Map((config.contentTypeParsers || []).map(parser => [parser.contentType, parser]));
+
+        contentTypeParsers.forEach(parser => {
+            http.addContentTypeParser(parser.contentType, { parseAs: parser.parseAs }, parser.parseFunction);
+        });
     },
 
     registerRoutes: ({controllers}) => {

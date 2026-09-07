@@ -1,96 +1,147 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { notification } from '../services/notification.service.js';
-import { config } from '../config.js';
-import { validateNotification } from '../schema/notification.schema.js';
-
+import { validateNotification, validateNotificationUpdate } from '../schema/notification.schema.js';
 
 /**
  * Get single notification
  */
-commands.register('notificationService.getSingleNotification', async ({id}) => {
-    if (id) {
-        return await notification.getById({id: id});
-    } else {
-        throw new error.badRequest('Notification email or id required');
+commands.register('notificationService.getSingleNotification', async ({ id }) => {
+    if (!id) {
+        throw new error.badRequest('Notification id required');
     }
+
+    return await notification.getById({ id });
 });
 
 /**
  * Get many notifications
  */
-commands.register('notificationService.getManyNotifications', async ({}) => {
-    return await notification.getAll();
+commands.register('notificationService.getManyNotifications', async ({ pageSize, pageNum } = {}) => {
+    return await notification.getAll({ pageSize, pageNum });
 });
 
 /**
  * Create notifications
+ *
+ * The parent row carries the kind of notification; everything else in the
+ * object is handed to the handler for that kind, which stores it and takes it
+ * from there.
  */
 commands.register('notificationService.createNotifications', async ({ notifications }) => {
     const validationErrors = [];
-    let createdNewNotifications = [];
+    const createdNewNotifications = [];
 
-    for (const newData of notifications) {
-        const { errors } = validateNotification(newData);
+    for (const data of notifications) {
+
+        const notificationData = {
+            type: data.type,
+            userId: data.userId ?? null,
+            idempotencyKey: data.idempotencyKey ?? null,
+        };
+
+        const restData = { ...data };
+        delete restData.type;
+        delete restData.userId;
+
+        const { errors } = validateNotification(notificationData);
+
         if (errors?.length) {
             validationErrors.push(errors);
             continue;
         }
 
-        const created = await notification.create(newData);
-        createdNewNotifications.push(created);
+        /**
+         * A repeat under the same key is not sent twice. What it is instead
+         * depends on what became of the first one: if that email never went,
+         * the repeat is the sender asking again for something they never got,
+         * and dropping it strands the notification with nobody able to raise it
+         * a second time. So the send is retried on the record already stored
+         * rather than a second record being written.
+         */
+        const existing = await notification.getByIdempotencyKey({
+            idempotencyKey: data.idempotencyKey
+        });
+
+        if (existing) {
+            logger.info(`Notification with idempotency key ${data.idempotencyKey} already exists`);
+
+            if (existing.type === 'email') {
+                const retried = await commands.execute('notificationService.retryFailedEmailNotification', {
+                    notificationId: existing.id
+                });
+
+                if (retried) {
+                    createdNewNotifications.push(retried);
+                    continue;
+                }
+            }
+
+            continue;
+        }
+
+        const created = await notification.create({ data: notificationData });
+
+        let childNotifications = [];
+
+        if (Object.keys(restData).length > 0) {
+            switch (data.type) {
+                case 'email':
+                    childNotifications = await commands.execute('notificationService.createEmailNotifications', {
+                        emailNotifications: [{ ...restData, notificationId: created.id }]
+                    });
+                    break;
+                default:
+                    logger.info(`Unknown notification type '${data.type}' for notification ${created.id}`);
+            }
+        }
+
+        createdNewNotifications.push({ ...created, ...childNotifications[0] });
     }
 
     if (validationErrors.length) {
         throw new error.badRequest(`Invalid notification data: ${validationErrors}`);
     }
 
+    // Carries what was acted on: written for the first time, or already stored
+    // and sent again. A repeat that needed nothing doing is not in here, so an
+    // empty return means every one of them had already been dealt with.
     return createdNewNotifications;
 });
 
 /**
  * Update notification
  */
-commands.register('notificationService.updateNotification', async ({id, newNotificationData}) => {
-    
-    const validationErrors = [];
-    
+commands.register('notificationService.updateNotification', async ({ id, data }) => {
     if (!id) {
-        throw new error.badRequest('Notification ID required');
-    
+        throw new error.badRequest('Notification id required');
     }
-    
-    const obj = await notification.getById({id: id});
-    
+
+    const obj = await notification.getById({ id });
+
     if (!obj) {
         throw new error.notFound('Notification not found');
-    
     }
-    
-    delete newNotificationData.id;
-    
-    const { errors } = validateNotificationUpdate(newNotificationData);
-    
+
+    delete data.id;
+
+    const { errors } = validateNotificationUpdate(data);
+
     if (errors?.length) {
-        validationErrors.push(errors);
+        throw new error.badRequest(`Invalid notification data: ${errors}`);
     }
-    
-    if (validationErrors.length) {
-        throw new error.badRequest(`Invalid notification data: ${validationErrors}`);
-    }
-    
-    return await notification.update({
-        id: id,
-        updatedData: newNotificationData
-    });
+
+    return await notification.update({ id, data });
 });
 
 /**
  * Delete notification
  */
-commands.register('notificationService.deleteNotification', async ({id}) => {
-    const obj = await notification.getById({id: id});
+commands.register('notificationService.deleteNotification', async ({ id }) => {
+    const obj = await notification.getById({ id });
+
     if (!obj) {
         throw new error.notFound('Notification not found');
     }
-    return await notification.delete({id: id});
+
+    return await notification.delete({ id });
 });

@@ -17,7 +17,7 @@ export const httpController = {
 			const params = {
 				id: request.params.id
 			};
-			const result = await commands.execute('getSingleNotification', params);
+			const result = await commands.execute('notificationService.getSingleNotification', params);
 			reply.code(200).send({ notification: result });
 		}
 	},
@@ -30,8 +30,11 @@ export const httpController = {
 		url: '/notifications/',
 		preHandler: async (request, reply) => authorise.getMany(request, reply),
 		handler: async (request, reply) => {
-			const params = {};
-			const results = await commands.execute('getManyNotifications', params);
+			const params = {
+				pageSize: request.query.pageSize,
+				pageNum: request.query.pageNum
+			};
+			const results = await commands.execute('notificationService.getManyNotifications', params);
 			reply.code(200).send({ notifications: results });
 		}
 	},
@@ -47,7 +50,7 @@ export const httpController = {
 			const params = {
 				notifications: [request.body.notification]
 			};
-			const results = await commands.execute('createNotifications', params);
+			const results = await commands.execute('notificationService.createNotifications', params);
 			reply.code(200).send({ notifications: results });
 		},
 	},
@@ -62,9 +65,9 @@ export const httpController = {
 		handler: async (request, reply) => {
 			const params = {
 				id: request.params.id,
-				newNotificationData: request.body
+				data: request.body
 			};
-			const result = await commands.execute('updateNotification', params);
+			const result = await commands.execute('notificationService.updateNotification', params);
 			reply.code(200).send({ notification: result });
 		},
 	},
@@ -80,7 +83,7 @@ export const httpController = {
 			const params = {
 				id: request.params.id
 			};
-			await commands.execute('deleteNotification', params);
+			await commands.execute('notificationService.deleteNotification', params);
 			reply.code(200).send({ message: 'Notification deleted' });
 		},
 	},

@@ -2,6 +2,7 @@ import { message, http, logger, db, registerService, webSockets, test } from '@g
 import { config } from './config.js';
 import { messageHandlers } from './controllers/message.controller.js';
 import { httpController as notificationPlatformHttpController } from './controllers/http.controller.js';
+import { sesService } from './services/ses.service.js';
 
 /**
  * Initialise service
@@ -16,8 +17,12 @@ export const initService = async () => {
     // Run seeders
 	db.seeders.runSeeders({config});
 
+	// Initialise the email transport
+	await sesService.init();
+
 	// Import command handlers after the command bus is initialised
 	await import('./commands/notification.handler.js');
+	await import('./commands/emailNotification.handler.js');
 	// Add more handlers as needed
 
 	// Initialise and register message handlers

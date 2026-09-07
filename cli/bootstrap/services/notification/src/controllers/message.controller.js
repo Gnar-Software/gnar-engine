@@ -1,28 +1,35 @@
 import { commands } from '@gnar-engine/core';
 
+/**
+ * Message handlers
+ *
+ * The queue side of the same commands the http controller reaches. A command
+ * name with no service on it resolves against this service.
+ */
 export const messageHandlers = {
 
     getNotification: async (payload) => {
-        let result;
-        if (payload.data?.id) {
-            result = await commands.execute('getSingleNotification', {
-                id: payload.data.id
-            });
-        } else if (payload.data?.email) {
-            result = await commands.execute('getSingleNotification', {
-                email: payload.data.email
-            });
-        } else {
-            throw new Error('No notification ID or email provided');
+        if (!payload.data?.id) {
+            throw new Error('No notification id provided');
         }
+
+        const result = await commands.execute('getSingleNotification', {
+            id: payload.data.id
+        });
+
         if (!result) {
             throw new Error('Notification not found');
         }
+
         return { notification: result };
     },
 
     getManyNotifications: async (payload) => {
-        const results = await commands.execute('getManyNotifications', {});
+        const results = await commands.execute('getManyNotifications', {
+            pageSize: payload.data?.pageSize,
+            pageNum: payload.data?.pageNum
+        });
+
         return { notifications: results };
     },
 
@@ -30,14 +37,18 @@ export const messageHandlers = {
         const results = await commands.execute('createNotifications', {
             notifications: [payload.data.notification]
         });
+
         return { notifications: results };
     },
 
     updateNotification: async (payload) => {
+        const { id, ...data } = payload.data;
+
         const result = await commands.execute('updateNotification', {
-            id: payload.data.id,
-            newNotificationData: payload.data
+            id,
+            data
         });
+
         return { notification: result };
     },
 
@@ -45,6 +56,7 @@ export const messageHandlers = {
         await commands.execute('deleteNotification', {
             id: payload.data.id
         });
+
         return { message: 'Notification deleted' };
     },
 

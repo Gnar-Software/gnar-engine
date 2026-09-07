@@ -374,6 +374,7 @@ async function buildAndUpContainers({
     services[nginxName] = await createContainer({
         name: nginxName,
         image: 'nginx:latest',
+        pull: true,
         ports: { 80: 80, 443: 443 },
         binds: [
             `${gnarHiddenDir}/nginx/nginx.conf:/etc/nginx/nginx.conf`,
@@ -388,6 +389,7 @@ async function buildAndUpContainers({
     services[rabbitMqName] = await createContainer({
         name: rabbitMqName,
         image: 'rabbitmq:management',
+        pull: true,
         env: {
             RABBITMQ_DEFAULT_USER: secrets.global.RABBITMQ_USER || '',
             RABBITMQ_DEFAULT_PASS: secrets.global.RABBITMQ_PASS || ''
@@ -507,6 +509,7 @@ async function buildAndUpContainers({
             databaseServices[mysqlContainerName] = await createContainer({
                 name: `ge-${config.environment}-${config.namespace}-${host}`,
                 image: 'mysql',
+                pull: true,
                 env: {
                     MYSQL_HOST: host,
                     MYSQL_ROOT_PASSWORD: secrets.provision.MYSQL_ROOT_PASSWORD
@@ -539,6 +542,7 @@ async function buildAndUpContainers({
             databaseServices[mongoContainerName] = await createContainer({
                 name: `ge-${config.environment}-${config.namespace}-${host}`,
                 image: 'mongo:latest',
+                pull: true,
                 env: {
                     MONGO_INITDB_ROOT_USERNAME: 'root',
                     MONGO_INITDB_ROOT_PASSWORD: secrets.provision.MONGO_ROOT_PASSWORD

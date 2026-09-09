@@ -128,7 +128,6 @@ const GnarEngine = {
         const loggerIsCloud = process.env.GLOBAL_LOGGER_MODE === 'gnar-cloud';
         const loggerIsConfigured = process.env.GNAR_CLOUD_LOG_ENDPOINT
             && process.env.GNAR_CLOUD_LOGGER_TOKEN
-            && process.env.SERVICE_NAME
             && process.env.ACCOUNT_ID
             && process.env.PROJECT_ID
             && process.env.ENVIRONMENT_NAME
@@ -152,8 +151,8 @@ const GnarEngine = {
 
         GnarEngine.logger.init({
             // The platform injects SERVICE_NAME from the deploy config, which is the name
-            // tenants query their logs by; outside cloud mode the engine's own name is right.
-            serviceName: loggerTransports.length > 0 ? process.env.SERVICE_NAME : config.serviceName,
+            // tenants query their logs by.
+            serviceName: process.env.SERVICE_NAME || config.serviceName,
             transports: loggerTransports,
             flushIntervalMs: config.cloud?.logger?.flushIntervalMs,
             batchSize: config.cloud?.logger?.batchSize,
@@ -278,3 +277,8 @@ await GnarEngine.init(config);
 
 export default GnarEngine;
 export const { commands, http, message, db, schema, logger, error, utils, registerService, webSockets, test, storage, rabbit, manifest } = GnarEngine;
+
+// Exported so an application can wire the transport at its own collector by hand, rather than
+// only through GLOBAL_LOGGER_MODE. Nothing in it is Gnar Cloud specific - the url, header name
+// and token are all parameters.
+export { httpTransport };

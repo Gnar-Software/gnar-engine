@@ -100,6 +100,28 @@ export const loggerService = {
         }
     },
 
+    /**
+     * Detach every transport and return the logger to stdout.
+     *
+     * For a service that is itself the log sink: it must not ship its own logs into the
+     * pipeline it serves, or handling a batch produces more logs to handle. Anything already
+     * buffered is written to stdout rather than dropped.
+     *
+     * @returns {void}
+     */
+    removeTransports: () => {
+        if (loggerService.timer) {
+            clearInterval(loggerService.timer);
+            loggerService.timer = null;
+        }
+
+        // Whatever was buffered before the transports were detached still deserves an outlet.
+        const buffered = loggerService.logs.splice(0, loggerService.logs.length);
+
+        loggerService.transports = [];
+        buffered.forEach(log => loggerService.writeToConsole({ log }));
+    },
+
     addLog: ({ args1, args2, args3, args4, level, testResult, test }) => {
         const args = [args1, args2, args3, args4].filter(arg => arg !== undefined);
         const message = args.map(arg => {

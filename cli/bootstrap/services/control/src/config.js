@@ -60,5 +60,19 @@ export const config = {
     // central task scheduler
     tasks: {
         forwardScheduleNum: 15
+    },
+
+    // Gnar Cloud
+    // Log aggregation switches on from GLOBAL_LOGGER_MODE and the tenant context the platform
+    // injects, not from this block. These are optional overrides for the logger's batching.
+    cloud: {
+        logger: {
+            flushIntervalMs: 2000,
+            batchSize: 500,
+            maxBatchBytes: 800 * 1024,
+            maxBufferSize: 10000,
+            timeoutMs: 5000,
+            maxRetries: 3
+        }
     }
 }

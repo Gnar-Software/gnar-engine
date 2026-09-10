@@ -2,12 +2,8 @@ export const loggerService = {
 
     serviceName: '',
     context: {},
-    logs: [],
     transports: [],
-    flushIntervalMs: 5000,
-    batchSize: 500,
-    maxBatchBytes: 800 * 1024,
-    maxBufferSize: 10000,
+    logs: [],
     timer: null,
     flushing: false,
     overflowed: false,

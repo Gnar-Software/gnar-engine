@@ -120,23 +120,23 @@ const GnarEngine = {
 		// anything left unset falls back to the defaults held by the logger and the transport.
 		GnarEngine.logger = loggerService;
 
-        // In cloud mode the platform injects the endpoint, a per-deployment token and the
-        // tenant context. Anything missing degrades to stdout with a loud warning rather than
-        // throwing: a token that failed to mint must never crash-loop a tenant's service, and
-        // kubectl logs still shows everything.
+        // In export mode the host platform injects the endpoint, a token and the tenant
+        // context. The core ships logs to whatever collector it is pointed at. Anything missing degrades to stdout
+        // with a loud warning rather than throwing: a token that failed to mint must never
+        // crash-loop a service, and the container's logs still show everything.
         const loggerTransports = [];
-        const loggerIsCloud = process.env.GLOBAL_LOGGER_MODE === 'gnar-cloud';
-        const loggerIsConfigured = process.env.GNAR_CLOUD_LOG_ENDPOINT
-            && process.env.GNAR_CLOUD_LOGGER_TOKEN
+        const loggerIsExporting = process.env.GLOBAL_LOGGER_MODE === 'export';
+        const loggerIsConfigured = process.env.GLOBAL_LOGGER_ENDPOINT
+            && process.env.GLOBAL_LOGGER_TOKEN
             && process.env.ACCOUNT_ID
             && process.env.PROJECT_ID
             && process.env.ENVIRONMENT_NAME
             && process.env.SOURCE_TYPE;
 
-        if (loggerIsCloud && loggerIsConfigured) {
+        if (loggerIsExporting && loggerIsConfigured) {
             httpTransport.init({
-                url: process.env.GNAR_CLOUD_LOG_ENDPOINT,
-                token: process.env.GNAR_CLOUD_LOGGER_TOKEN,
+                url: process.env.GLOBAL_LOGGER_ENDPOINT,
+                token: process.env.GLOBAL_LOGGER_TOKEN,
                 tokenHeader: 'X-Gnar-Logger-Token',
                 timeoutMs: config.cloud?.logger?.timeoutMs,
                 maxRetries: config.cloud?.logger?.maxRetries
@@ -145,8 +145,8 @@ const GnarEngine = {
             loggerTransports.push(httpTransport);
         }
 
-        if (loggerIsCloud && !loggerIsConfigured) {
-            console.error('[gnar-logger] GLOBAL_LOGGER_MODE is gnar-cloud but the endpoint, token or tenant context is incomplete - falling back to stdout');
+        if (loggerIsExporting && !loggerIsConfigured) {
+            console.error('[gnar-logger] GLOBAL_LOGGER_MODE is export but the endpoint, token or tenant context is incomplete - falling back to stdout');
         }
 
         GnarEngine.logger.init({
@@ -279,6 +279,6 @@ export default GnarEngine;
 export const { commands, http, message, db, schema, logger, error, utils, registerService, webSockets, test, storage, rabbit, manifest } = GnarEngine;
 
 // Exported so an application can wire the transport at its own collector by hand, rather than
-// only through GLOBAL_LOGGER_MODE. Nothing in it is Gnar Cloud specific - the url, header name
-// and token are all parameters.
+// only through GLOBAL_LOGGER_MODE. Nothing in it is tied to a particular platform - the url,
+// header name and token are all parameters.
 export { httpTransport };

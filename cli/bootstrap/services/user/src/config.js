@@ -76,9 +76,9 @@ export const config = {
 
     hashNameSpace: '8a07b16c-327f-45c5-9484-8d843f57bb4b',
 
-    // Gnar Cloud
-    // Log aggregation switches on from GLOBAL_LOGGER_MODE and the tenant context the platform
-    // injects, not from this block. These are optional overrides for the logger's batching.
+    // Log export
+    // Log aggregation switches on from GLOBAL_LOGGER_MODE=export and the context the host
+    // platform injects, not from this block. These are optional overrides for the batching.
     cloud: {
         logger: {
             flushIntervalMs: 2000,

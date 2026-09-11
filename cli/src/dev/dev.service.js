@@ -456,6 +456,13 @@ async function buildAndUpContainers({
             })
         }
 
+        // Binds passed through as given. extra_binds rewrites its path to a
+        // generated data directory, so it cannot name an existing host path
+        // such as the docker socket.
+        if (svc.host_binds) {
+            svc.host_binds.forEach(bind => serviceVolumes.push(bind));
+        }
+
         // split from "port:port" to { port: port }
         const ports = {};
         for (const portMapping of svc.ports || []) {

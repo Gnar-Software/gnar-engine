@@ -3,6 +3,7 @@ import Docker from "dockerode";
 import process from "process";
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from 'url';
 import yaml from "js-yaml";
 import { gnarEngineCliConfig } from "../config.js";
@@ -456,6 +457,15 @@ async function buildAndUpContainers({
             })
         }
 
+        // mounts of a path on this machine, taken as they are written
+        for (const bind of svc.host_binds || []) {
+            serviceVolumes.push(resolveHostBind({
+                bind: bind,
+                serviceName: svc.name,
+                projectDir: projectDir
+            }));
+        }
+
         // split from "port:port" to { port: port }
         const ports = {};
         for (const portMapping of svc.ports || []) {
@@ -587,4 +597,53 @@ async function buildAndUpContainers({
  */
 async function assertGnarEngineHiddenDir(gnarHiddenDir) {
     await fs.mkdir(gnarHiddenDir, { recursive: true });
+}
+
+/**
+ * Resolve one host_binds entry into a docker bind.
+ *
+ * Written as "host:container", with docker's optional mode suffix. The host
+ * side is kept as it is given rather than rewritten under .gnarengine, which
+ * is what separates this from extra_binds: a service can reach a path that
+ * already exists on the machine running the cli, the docker socket being the
+ * case that asked for it.
+ *
+ * A relative path is resolved against the project and a leading ~ against the
+ * home directory, because docker reads a host side that is not absolute as the
+ * name of a volume, and would silently create an empty one instead of mounting
+ * what was asked for.
+ *
+ * @param {object} options
+ * @param {string} options.bind - The entry as written in deploy.localdev.yml
+ * @param {string} options.serviceName - The service the entry belongs to
+ * @param {string} options.projectDir - The project directory
+ * @returns {string} A bind docker accepts, as "host:container[:mode]"
+ */
+function resolveHostBind({ bind, serviceName, projectDir }) {
+
+    const parts = String(bind).split(':');
+
+    if (parts.length < 2 || parts.length > 3) {
+        throw new Error(`Service ${serviceName} has a host_binds entry that is not "host:container": ${bind}`);
+    }
+
+    const [hostPath, containerPath, mode] = parts;
+
+    if (!hostPath || !containerPath) {
+        throw new Error(`Service ${serviceName} has a host_binds entry with an empty path: ${bind}`);
+    }
+
+    if (!containerPath.startsWith('/')) {
+        throw new Error(`Service ${serviceName} has a host_binds entry whose container path is not absolute: ${bind}`);
+    }
+
+    let resolvedHostPath = hostPath;
+
+    if (hostPath.startsWith('~')) {
+        resolvedHostPath = path.join(os.homedir(), hostPath.slice(1));
+    } else if (!path.isAbsolute(hostPath)) {
+        resolvedHostPath = path.resolve(projectDir, hostPath);
+    }
+
+    return [resolvedHostPath, containerPath, mode].filter(Boolean).join(':');
 }

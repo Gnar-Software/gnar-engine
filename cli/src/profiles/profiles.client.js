@@ -10,50 +10,39 @@ export const profiles = {
     configPath: path.join(os.homedir(), '.gnarengine', 'config.json'),
 
     getAllProfiles: function (ignoreNotFound = false) {
-        if (!fs.existsSync(this.configPath)) {
-            if (!ignoreNotFound) {
-                console.error(`Config file not found at ${this.configPath}`);
-            }
-            return {};
+        if (!fs.existsSync(this.configPath) && !ignoreNotFound) {
+            console.error(`Config file not found at ${this.configPath}`);
         }
 
-        const config = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
-        return config || {};
+        return this.readConfig();
     },
 
     getActiveProfile: function () {
-        const allProfiles = this.getAllProfiles();
+        const config = this.readConfig();
+        const allProfiles = config.profiles || {};
 
-        if (!allProfiles || Object.keys(allProfiles).length === 0) {
+        if (!Object.keys(allProfiles).length) {
             console.error('No profiles found');
             return null;
         }
 
-        if (!fs.existsSync(this.configPath)) {
-            if (!ignoreNotFound) {
-                console.error(`Config file not found at ${this.configPath}`);
-            }
-            return {};
-        }
-
-        const config = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
-        const activeProfile = config.activeProfile;
-
-        return { 
-            name: activeProfile, 
-            profile: allProfiles.profiles[activeProfile]
+        return {
+            name: config.activeProfile,
+            profile: allProfiles[config.activeProfile]
         };
     },
 
     setActiveProfile: function ({ profileName }) {
-        if (!fs.existsSync(this.configPath)) {
-            console.error(`Config file not found at ${this.configPath}`);
+        const config = this.readConfig();
+
+        if (!config.profiles?.[profileName]) {
+            console.error(`Profile "${profileName}" not found`);
             return;
         }
 
-        const config = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
         config.activeProfile = profileName;
-        fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+
+        this.writeConfig(config);
     },
 
     createProfile: function ({ profileName, config }) {
@@ -114,11 +103,41 @@ export const profiles = {
     },
 
     saveProfiles: function (profilesObj) {
+        // Written back alongside whatever else the file holds, such as the
+        // active profile and the gnar cloud settings, rather than over it.
+        this.writeConfig({ ...this.readConfig(), profiles: profilesObj });
+    },
+
+    /**
+     * Read the whole config file.
+     *
+     * @returns {Object} The file's contents, empty when there is no file yet
+     */
+    readConfig: function () {
+        if (!fs.existsSync(this.configPath)) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(fs.readFileSync(this.configPath, 'utf-8')) || {};
+        } catch (err) {
+            throw new Error(`${this.configPath} is not valid JSON: ${err.message}`);
+        }
+    },
+
+    /**
+     * Write the whole config file.
+     *
+     * @param {Object} config Contents to write
+     * @returns {void}
+     */
+    writeConfig: function (config) {
         const dir = path.dirname(this.configPath);
+
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
 
-        fs.writeFileSync(this.configPath, JSON.stringify({profiles: profilesObj}, null, 2));
+        fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
     }
 };

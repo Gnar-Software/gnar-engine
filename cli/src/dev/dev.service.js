@@ -602,19 +602,8 @@ async function assertGnarEngineHiddenDir(gnarHiddenDir) {
 /**
  * Resolve one host_binds entry into a docker bind.
  *
- * Written as "host:container", with docker's optional mode suffix. The host
- * side is kept as it is given rather than rewritten under .gnarengine, which
- * is what separates this from extra_binds: a service can reach a path that
- * already exists on the machine running the cli, the docker socket being the
- * case that asked for it.
- *
- * A relative path is resolved against the project and a leading ~ against the
- * home directory, because docker reads a host side that is not absolute as the
- * name of a volume, and would silently create an empty one instead of mounting
- * what was asked for.
- *
  * @param {object} options
- * @param {string} options.bind - The entry as written in deploy.localdev.yml
+ * @param {string} options.bind - The entry as written in deploy.<env>.yml
  * @param {string} options.serviceName - The service the entry belongs to
  * @param {string} options.projectDir - The project directory
  * @returns {string} A bind docker accepts, as "host:container[:mode]"

@@ -6,6 +6,7 @@ import { registerDevCommands } from './dev/commands.js';
 import { registerControlCommands } from './control/commands.js';
 import { registerScaffolderCommands } from './scaffolder/commands.js';
 import { registerAgentCommands } from './agent/commands.js';
+import { registerCloudCommands } from './cloud/command.js';
 import path from 'path';
 
 // Create a new program
@@ -17,6 +18,7 @@ registerProfileCommand(program);
 registerControlCommands(program);
 registerScaffolderCommands(program);
 registerAgentCommands(program);
+registerCloudCommands(program);
 
 // Help
 program

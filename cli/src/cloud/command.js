@@ -52,7 +52,7 @@ export function registerCloudCommands(program) {
             console.log(`✅ Saved to ${cloud.configLocation()}`);
             console.log(`   api url: ${saved.apiUrl}`);
             console.log(`   email:   ${saved.email}`);
-            console.log(`   key:     ${'*'.repeat(12)}`);
+            console.log(`   key:     ${cloud.maskKey(saved.key)}`);
         });
 
     // cloud show
@@ -69,7 +69,7 @@ export function registerCloudCommands(program) {
 
             console.log(`   api url: ${settings.apiUrl || '(not set)'}`);
             console.log(`   email:   ${settings.email || '(not set)'}`);
-            console.log(`   key:     ${settings.key ? '*'.repeat(12) : '(not set)'}`);
+            console.log(`   key:     ${cloud.maskKey(settings.key)}`);
         });
 
     // cloud login

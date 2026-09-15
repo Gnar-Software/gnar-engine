@@ -8,6 +8,23 @@ export const cloud = {
     defaultApiUrl: 'https://api.gnarcloud.com',
 
     /**
+     * A key described rather than shown.
+     *
+     * Its length is given because a key fully hidden gives no way to tell a
+     * real one from something typed to get past the prompt.
+     *
+     * @param {string} key The stored key
+     * @returns {string} Something safe to print
+     */
+    maskKey(key) {
+        if (!key) {
+            return '(not set)';
+        }
+
+        return `${'*'.repeat(12)} (${key.length} characters)`;
+    },
+
+    /**
      * Where the settings are kept.
      *
      * @returns {string} Path to the config file

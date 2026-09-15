@@ -53,11 +53,19 @@ export const cloud = {
     async authenticate() {
         const settings = cloud.requireSettings();
 
-        const response = await fetch(`${settings.apiUrl}/authenticate/`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ email: settings.email, apiKey: settings.key })
-        });
+        let response;
+
+        // fetch says only "fetch failed" when it cannot reach an address, which
+        // does not say which address, so the reason is put back.
+        try {
+            response = await fetch(`${settings.apiUrl}/authenticate/`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ email: settings.email, apiKey: settings.key })
+            });
+        } catch (err) {
+            throw new Error(`Could not reach Gnar Cloud at ${settings.apiUrl} (${err.cause?.code || err.message}). Check the address with: gnar cloud show`);
+        }
 
         if (!response.ok) {
             const detail = await response.text().catch(() => '');
@@ -99,7 +107,13 @@ export const cloud = {
             }
         });
 
-        let response = await send(token);
+        let response;
+
+        try {
+            response = await send(token);
+        } catch (err) {
+            throw new Error(`Could not reach Gnar Cloud at ${settings.apiUrl} (${err.cause?.code || err.message}). Check the address with: gnar cloud show`);
+        }
 
         if (response.status === 401 || response.status === 403) {
             response = await send(await cloud.authenticate());

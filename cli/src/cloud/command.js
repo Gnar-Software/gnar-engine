@@ -43,8 +43,6 @@ export function registerCloudCommands(program) {
                 delete answers.key;
             }
 
-            // The address is stored without its trailing slash so that a path
-            // can be joined onto it without doubling up.
             answers.apiUrl = answers.apiUrl.replace(/\/+$/, '');
 
             const saved = cloud.saveSettings(answers);

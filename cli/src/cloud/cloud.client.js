@@ -72,8 +72,6 @@ export const cloud = {
 
         let response;
 
-        // fetch says only "fetch failed" when it cannot reach an address, which
-        // does not say which address, so the reason is put back.
         try {
             response = await fetch(`${settings.apiUrl}/authenticate/`, {
                 method: 'POST',

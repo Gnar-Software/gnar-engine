@@ -135,9 +135,14 @@ export const profiles = {
         const dir = path.dirname(this.configPath);
 
         if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+            fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
         }
 
-        fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+        fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
+
+        // The file holds keys in the clear, so it is kept to this account. The
+        // mode above only applies to a file being created, and a file written
+        // before this did was left readable by anyone on the machine.
+        fs.chmodSync(this.configPath, 0o600);
     }
 };

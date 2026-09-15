@@ -64,7 +64,7 @@ export const profiles = {
     },
 
     updateProfile: function ({ profileName, config }) {
-        if (!profileName || !config.CLI_API_URL || !config.CLI_API_USERNAME || !config.CLI_API_KEY) {
+        if (!profileName || !config.CLI_API_URL || !config.CLI_API_USERNAME) {
             throw new Error('Invalid profile data');
         }
 

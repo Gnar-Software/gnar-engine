@@ -164,8 +164,6 @@ export function registerProfileCommand(program) {
                     AWS_ACCESS_KEY_ID: answers.AWS_ACCESS_KEY_ID,
                     AWS_SECRET_ACCESS_KEY: answers.AWS_SECRET_ACCESS_KEY,
                     AWS_REGION: answers.AWS_REGION,
-                    // Which Gnar Cloud environment this profile speaks for.
-                    // Left null until the developer pairs it with one.
                     GNAR_CLOUD_PROJECT_ID: answers.GNAR_CLOUD_PROJECT_ID || null,
                     GNAR_CLOUD_ENVIRONMENT_ID: answers.GNAR_CLOUD_ENVIRONMENT_ID || null
                 }

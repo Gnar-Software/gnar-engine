@@ -148,7 +148,9 @@ export function registerProfileCommand(program) {
                 { name: 'PROJECT_DIR', message: 'Project directory', default: currentProfile.PROJECT_DIR || process.cwd() },
                 { name: 'AWS_ACCESS_KEY_ID', message: 'AWS Access Key', default: currentProfile.AWS_ACCESS_KEY_ID },
                 { name: 'AWS_SECRET_ACCESS_KEY', message: 'AWS Secret Access Key', default: currentProfile.AWS_SECRET_ACCESS_KEY },
-                { name: 'AWS_REGION', message: 'AWS Region', default: currentProfile.AWS_REGION }
+                { name: 'AWS_REGION', message: 'AWS Region', default: currentProfile.AWS_REGION },
+                { name: 'GNAR_CLOUD_PROJECT_ID', message: 'Gnar Cloud project id (blank for none)', default: currentProfile.GNAR_CLOUD_PROJECT_ID },
+                { name: 'GNAR_CLOUD_ENVIRONMENT_ID', message: 'Gnar Cloud environment id (blank for none)', default: currentProfile.GNAR_CLOUD_ENVIRONMENT_ID }
             ]);
 
             // update profile
@@ -161,7 +163,11 @@ export function registerProfileCommand(program) {
                     PROJECT_DIR: answers.PROJECT_DIR || process.cwd(),
                     AWS_ACCESS_KEY_ID: answers.AWS_ACCESS_KEY_ID,
                     AWS_SECRET_ACCESS_KEY: answers.AWS_SECRET_ACCESS_KEY,
-                    AWS_REGION: answers.AWS_REGION
+                    AWS_REGION: answers.AWS_REGION,
+                    // Which Gnar Cloud environment this profile speaks for.
+                    // Left null until the developer pairs it with one.
+                    GNAR_CLOUD_PROJECT_ID: answers.GNAR_CLOUD_PROJECT_ID || null,
+                    GNAR_CLOUD_ENVIRONMENT_ID: answers.GNAR_CLOUD_ENVIRONMENT_ID || null
                 }
             });
         });

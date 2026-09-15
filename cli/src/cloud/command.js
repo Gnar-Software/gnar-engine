@@ -43,8 +43,6 @@ export function registerCloudCommands(program) {
                 delete answers.key;
             }
 
-            // The address is stored without its trailing slash so that a path
-            // can be joined onto it without doubling up.
             answers.apiUrl = answers.apiUrl.replace(/\/+$/, '');
 
             const saved = cloud.saveSettings(answers);
@@ -52,7 +50,7 @@ export function registerCloudCommands(program) {
             console.log(`✅ Saved to ${cloud.configLocation()}`);
             console.log(`   api url: ${saved.apiUrl}`);
             console.log(`   email:   ${saved.email}`);
-            console.log(`   key:     ${'*'.repeat(12)}`);
+            console.log(`   key:     ${cloud.maskKey(saved.key)}`);
         });
 
     // cloud show
@@ -69,7 +67,24 @@ export function registerCloudCommands(program) {
 
             console.log(`   api url: ${settings.apiUrl || '(not set)'}`);
             console.log(`   email:   ${settings.email || '(not set)'}`);
-            console.log(`   key:     ${settings.key ? '*'.repeat(12) : '(not set)'}`);
+            console.log(`   key:     ${cloud.maskKey(settings.key)}`);
+        });
+
+    // cloud login
+    cloudCommand
+        .command('login')
+        .description('Trade the stored email and key for a session token')
+        .action(async () => {
+            try {
+                await cloud.authenticate();
+
+                const settings = cloud.getSettings();
+
+                console.log(`✅ Signed in to ${settings.apiUrl} as ${settings.email}`);
+            } catch (err) {
+                console.error(`❌ ${err.message}`);
+                process.exitCode = 1;
+            }
         });
 
     program.addCommand(cloudCommand);

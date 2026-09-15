@@ -144,6 +144,64 @@ export const cloud = {
     },
 
     /**
+     * The Gnar Cloud environment the active profile speaks for.
+     *
+     * @returns {Object} projectId and environmentId, both null when unpaired
+     */
+    getLinkedEnvironment() {
+        const active = profiles.getActiveProfile();
+
+        if (!active?.profile) {
+            throw new Error('No active profile. Set one with: gnar profile set-active <name>');
+        }
+
+        return {
+            profileName: active.name,
+            projectDir: active.profile.PROJECT_DIR,
+            projectId: active.profile.GNAR_CLOUD_PROJECT_ID || null,
+            environmentId: active.profile.GNAR_CLOUD_ENVIRONMENT_ID || null
+        };
+    },
+
+    /**
+     * The linked environment, refusing to guess when the profile has none.
+     *
+     * @returns {Object} As getLinkedEnvironment returns, both ids present
+     */
+    requireLinkedEnvironment() {
+        const linked = cloud.getLinkedEnvironment();
+
+        if (!linked.projectId || !linked.environmentId) {
+            throw new Error(`Profile "${linked.profileName}" is not paired with a Gnar Cloud environment. Take the project and environment ids from the environment page and run: gnar profile update ${linked.profileName}`);
+        }
+
+        return linked;
+    },
+
+    /**
+     * The name Gnar Cloud knows the paired environment by.
+     *
+     * The secret is addressed by environment name rather than id, and the file
+     * on disk is named after it too, so the name is read back from the project
+     * the profile points at.
+     *
+     * @returns {Promise<Object>} projectId, environmentId, environmentName, projectDir
+     */
+    async resolveEnvironment() {
+        const linked = cloud.requireLinkedEnvironment();
+        const project = await cloud.request(`/projects/${linked.projectId}`);
+
+        const environments = project?.project?.environments || project?.environments || [];
+        const environment = environments.find(row => row.id === linked.environmentId);
+
+        if (!environment) {
+            throw new Error(`Gnar Cloud project ${linked.projectId} has no environment ${linked.environmentId}. Check the ids on the environment page.`);
+        }
+
+        return { ...linked, environmentName: environment.name };
+    },
+
+    /**
      * The settings needed to reach Gnar Cloud, or a reason they are not there.
      *
      * @returns {Object} settings and a message naming what is missing

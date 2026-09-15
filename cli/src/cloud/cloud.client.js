@@ -42,6 +42,79 @@ export const cloud = {
     },
 
     /**
+     * Trade the stored email and key for a session token.
+     *
+     * The token belongs to the Gnar Cloud user rather than to any project, so
+     * one is held for the machine and reused until Gnar Cloud stops accepting
+     * it.
+     *
+     * @returns {Promise<string>} The session token
+     */
+    async authenticate() {
+        const settings = cloud.requireSettings();
+
+        const response = await fetch(`${settings.apiUrl}/authenticate/`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: settings.email, apiKey: settings.key })
+        });
+
+        if (!response.ok) {
+            const detail = await response.text().catch(() => '');
+
+            throw new Error(`Gnar Cloud refused the email and key for ${settings.email} (${response.status}). ${detail}`.trim());
+        }
+
+        const { token } = await response.json();
+
+        if (!token) {
+            throw new Error('Gnar Cloud accepted the sign in but returned no session token');
+        }
+
+        cloud.saveSettings({ sessionToken: token });
+
+        return token;
+    },
+
+    /**
+     * Call Gnar Cloud with the session token attached.
+     *
+     * A token that is no longer accepted is replaced once and the call tried
+     * again, so an expired one does not need to be dealt with by hand.
+     *
+     * @param {string} path Path below the api address
+     * @param {Object} [options] As fetch takes
+     * @returns {Promise<Object>} The decoded response body
+     */
+    async request(path, options = {}) {
+        const settings = cloud.requireSettings();
+        const token = settings.sessionToken || await cloud.authenticate();
+
+        const send = async (sessionToken) => fetch(`${settings.apiUrl}${path}`, {
+            ...options,
+            headers: {
+                'content-type': 'application/json',
+                ...options.headers,
+                authorization: `Bearer ${sessionToken}`
+            }
+        });
+
+        let response = await send(token);
+
+        if (response.status === 401 || response.status === 403) {
+            response = await send(await cloud.authenticate());
+        }
+
+        if (!response.ok) {
+            const detail = await response.text().catch(() => '');
+
+            throw new Error(`Gnar Cloud answered ${response.status} for ${path}. ${detail}`.trim());
+        }
+
+        return await response.json().catch(() => ({}));
+    },
+
+    /**
      * The settings needed to reach Gnar Cloud, or a reason they are not there.
      *
      * @returns {Object} settings and a message naming what is missing

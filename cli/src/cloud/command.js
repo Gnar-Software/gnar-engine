@@ -72,5 +72,22 @@ export function registerCloudCommands(program) {
             console.log(`   key:     ${settings.key ? '*'.repeat(12) : '(not set)'}`);
         });
 
+    // cloud login
+    cloudCommand
+        .command('login')
+        .description('Trade the stored email and key for a session token')
+        .action(async () => {
+            try {
+                await cloud.authenticate();
+
+                const settings = cloud.getSettings();
+
+                console.log(`✅ Signed in to ${settings.apiUrl} as ${settings.email}`);
+            } catch (err) {
+                console.error(`❌ ${err.message}`);
+                process.exitCode = 1;
+            }
+        });
+
     program.addCommand(cloudCommand);
 }

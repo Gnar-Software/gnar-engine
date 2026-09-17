@@ -3,7 +3,6 @@ import Docker from "dockerode";
 import process from "process";
 import fs from "fs/promises";
 import path from "path";
-import os from "os";
 import { fileURLToPath } from 'url';
 import yaml from "js-yaml";
 import { gnarEngineCliConfig } from "../config.js";
@@ -452,21 +451,14 @@ async function buildAndUpContainers({
             serviceVolumes.push(`${gnarEngineCliConfig.coreDevPath}:${gnarEngineCliConfig.corePath}`);
         }
 
-        if (svc.extra_binds) {
-            svc.extra_binds.forEach((bind, index) => {
-                bind = `${gnarHiddenDir}/data/${svc.name}-data/bind-${index}/:${bind}`;
-                serviceVolumes.push(bind);
-            })
-        }
-
-        // mounts of a path on this machine, taken as they are written
-        for (const bind of svc.host_binds || []) {
-            serviceVolumes.push(resolveHostBind({
+        (svc.extra_binds || []).forEach((bind, index) => {
+            serviceVolumes.push(resolveExtraBind({
                 bind: bind,
+                index: index,
                 serviceName: svc.name,
-                projectDir: projectDir
+                gnarHiddenDir: gnarHiddenDir
             }));
-        }
+        });
 
         // split from "port:port" to { port: port }
         const ports = {};
@@ -604,39 +596,48 @@ async function assertGnarEngineHiddenDir(gnarHiddenDir) {
 }
 
 /**
- * Resolve one host_binds entry into a docker bind.
+ * Resolve one extra_binds entry into a docker bind.
+ *
+ * Written as "container" for a directory the cli makes and owns, or as
+ * "host:container" with docker's optional mode suffix to mount a path that is
+ * already on this machine.
  *
  * @param {object} options
  * @param {string} options.bind - The entry as written in deploy.<env>.yml
+ * @param {number} options.index - Its position in the service's extra_binds
  * @param {string} options.serviceName - The service the entry belongs to
- * @param {string} options.projectDir - The project directory
+ * @param {string} options.gnarHiddenDir - The .gnarengine directory
  * @returns {string} A bind docker accepts, as "host:container[:mode]"
  */
-function resolveHostBind({ bind, serviceName, projectDir }) {
+function resolveExtraBind({ bind, index, serviceName, gnarHiddenDir }) {
 
-    const parts = String(bind).split(':');
+    const value = String(bind);
 
-    if (parts.length < 2 || parts.length > 3) {
-        throw new Error(`Service ${serviceName} has a host_binds entry that is not "host:container": ${bind}`);
+    // no host side, so the cli supplies one of its own
+    if (!value.includes(':')) {
+        return `${gnarHiddenDir}/data/${serviceName}-data/bind-${index}/:${value}`;
+    }
+
+    const parts = value.split(':');
+
+    if (parts.length > 3) {
+        throw new Error(`Service ${serviceName} has an extra_binds entry that is not "host:container": ${bind}`);
     }
 
     const [hostPath, containerPath, mode] = parts;
 
     if (!hostPath || !containerPath) {
-        throw new Error(`Service ${serviceName} has a host_binds entry with an empty path: ${bind}`);
+        throw new Error(`Service ${serviceName} has an extra_binds entry with an empty path: ${bind}`);
+    }
+
+    if (!hostPath.startsWith('/')) {
+        throw new Error(`Service ${serviceName} has an extra_binds entry whose host path is not absolute: ${bind}`);
     }
 
     if (!containerPath.startsWith('/')) {
-        throw new Error(`Service ${serviceName} has a host_binds entry whose container path is not absolute: ${bind}`);
+        throw new Error(`Service ${serviceName} has an extra_binds entry whose container path is not absolute: ${bind}`);
     }
 
-    let resolvedHostPath = hostPath;
-
-    if (hostPath.startsWith('~')) {
-        resolvedHostPath = path.join(os.homedir(), hostPath.slice(1));
-    } else if (!path.isAbsolute(hostPath)) {
-        resolvedHostPath = path.resolve(projectDir, hostPath);
-    }
-
-    return [resolvedHostPath, containerPath, mode].filter(Boolean).join(':');
+    return [hostPath, containerPath, mode].filter(Boolean).join(':');
 }
+

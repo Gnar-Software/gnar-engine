@@ -51,6 +51,68 @@ export async function buildImage({ context, dockerfile, imageTag, nocache = true
 }
 
 /**
+ * Pull a Docker image, unless it is already in the local image store
+ *
+ * The engine API does not do this for us. `docker run` pulls what it is missing
+ * before it starts, but the create endpoint underneath it does not: it answers
+ * a 404 and leaves the caller to work out that the image was the problem. So
+ * every image we do not build ourselves -- nginx, mysql, mongo, rabbitmq -- has
+ * to be asked for here first, or a machine that has never run the stack before
+ * fails on the first container it reaches.
+ *
+ * @param {Object} options
+ * @param {string} options.image - The image to pull, with or without a tag
+ */
+export async function pullImage({ image }) {
+
+    // Already here, from a previous run or a build. Skipped rather than pulled
+    // again so a rebuild does not go back to the registry for every base image.
+    try {
+        await docker.getImage(image).inspect();
+        return;
+    } catch (err) {
+        if (err.statusCode !== 404) {
+            throw err;
+        }
+    }
+
+    console.log('Pulling image...', image);
+
+    const stream = await docker.pull(image);
+
+    await new Promise((resolve, reject) => {
+        docker.modem.followProgress(
+            stream,
+            (err, res) => {
+                if (err) return reject(err);
+
+                // A pull that fails part way through still ends the stream
+                // cleanly, and says so in an event rather than in the error. A
+                // tag that does not exist reads as a successful pull without
+                // this, and the 404 lands on createContainer instead.
+                const failed = res.find(event => event.error);
+
+                if (failed) {
+                    return reject(new Error(`Failed to pull ${image}: ${failed.error}`));
+                }
+
+                resolve(res);
+            },
+            (event) => {
+                // Layer by layer progress carries an id and arrives thousands of
+                // times. The handful of lines without one are the ones worth
+                // reading: what is being pulled, and what came of it.
+                if (event.status && !event.id) {
+                    console.log(event.status);
+                }
+            }
+        );
+    });
+
+    console.log('Pulled image:', image);
+}
+
+/**
  * Create docker container
  *
  * @param {Object} options
@@ -63,9 +125,17 @@ export async function buildImage({ context, dockerfile, imageTag, nocache = true
  * @param {string} [options.restart] - Restart policy
  * @param {boolean} [options.attach] - Whether to attach to container output
  * @param {string} [options.network] - Network name
+ * @param {boolean} [options.pull=false] - Whether to pull the image first. For images we do not build ourselves
  * @returns {Promise<Docker.Container>} - The started container
  */
-export async function createContainer({ name, image, command = [], env = {}, ports = {}, binds = [], restart = 'always', attach = true, network, aliases = [] }) {
+export async function createContainer({ name, image, command = [], env = {}, ports = {}, binds = [], restart = 'always', attach = true, network, aliases = [], pull = false }) {
+
+    // Images we build carry a tag of ours and are never pulled: a missing one
+    // means the build did not run, and saying so beats a registry lookup that
+    // was always going to fail.
+    if (pull) {
+        await pullImage({ image });
+    }
 
     // remove container first
     try {

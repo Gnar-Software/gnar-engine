@@ -96,7 +96,7 @@ export function registerCloudCommands(program) {
         .action(async () => {
             try {
                 const { projectId, environmentName, projectDir } = await cloud.resolveEnvironment();
-                const file = path.join(projectDir, `deploy.${environmentName}.yml`);
+                const file = path.join(projectDir, `secrets.${environmentName}.yml`);
 
                 if (!fs.existsSync(file)) {
                     console.error(`❌ ${file} does not exist`);
@@ -139,7 +139,7 @@ export function registerCloudCommands(program) {
                     return;
                 }
 
-                const file = path.join(projectDir, `deploy.${environmentName}.yml`);
+                const file = path.join(projectDir, `secrets.${environmentName}.yml`);
 
                 console.log(contents);
 

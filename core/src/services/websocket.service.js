@@ -118,53 +118,20 @@ export const wsManager = {
                     // Wait 1 second before trying
                     await new Promise(resolve => setTimeout(resolve, 2000));
 
-                    loggerService.info('Checking for missing peer connections...');
-
-                    for (const [serviceName, peer] of Object.entries(peerAddresses)) {
-                        if (peer.hostname || serviceName == config.serviceName || (this.wsConnections[serviceName] && Object.keys(this.wsConnections[serviceName]).length > 0)) {
-                            continue;
-                        }
-
-                        try {
-                            loggerService.info('Missing ' + serviceName + ' peer connection - requesting new peer from control service.', serviceName + ' / ', config.serviceName);
-                            const newPeer = await commandBus.execute('controlService.newPeerForService', {
-                                requestingHostname: config.hostname,
-                                serviceName: serviceName
-                            });
-
-                            if (!newPeer) {
-                                continue;
-                            }
-
-                            peerAddresses[serviceName] = newPeer;
-
-                            await this.connect({ peer: newPeer, config });
-                        } catch (err) {
-                            loggerService.error(`Failed to get and connect to new peer for ${serviceName}: ${err.message}`);
-                        }
-                    }
-
-                    // Check if we now have all peers
-                    const checkedAllPeers = Object.entries(peerAddresses).every(([serviceName, peer]) => {
-                        if (peer.hostname || serviceName == config.serviceName || (this.wsConnections[serviceName] && Object.keys(this.wsConnections[serviceName]).length > 0)) {
-                            return true;
-                        } else if (!peer.hostname) {
-                            // return true, because we're never going to find it from this side
-                            loggerService.error('Peer information is missing for failed connection. This can occur if a service is down for a prolonged period. This service will now wait for an inbound connection.');
-                            return true;
-                        } else {
-                            loggerService.info(`Still missing peer connection for ${serviceName}, due to ${peer}`);
-                        }
-                    });
-
-                    if (checkedAllPeers) {
-                        haveAllPeers = true;
-                        break;
-                    }
-
+                    haveAllPeers = await this.connectMissingPeers({ peerAddresses, config });
                 }
 
                 loggerService.info(`Initial peer connections established to: `, Object.keys(peerAddresses));
+
+                // A peer that restarts leaves this side holding an address that
+                // no longer answers, and the side that restarted asks the
+                // control service for peers only once. Without this sweep both
+                // wait for the other and the mesh stays broken until a restart.
+                setInterval(() => {
+                    this.connectMissingPeers({ peerAddresses, config }).catch(err => {
+                        loggerService.error(`Peer sweep failed: ${err.message}`);
+                    });
+                }, config.peerSweepInterval || 15000);
             }
         }
 
@@ -185,6 +152,60 @@ export const wsManager = {
                 });
             });
         }, 10000);
+    },
+
+    /**
+     * Connect to any peer this service is not connected to
+     *
+     * Asks the control service for a fresh address each time rather than
+     * reusing the one held, since a peer that restarted answers on another.
+     *
+     * @param {Object} params
+     * @param {Object} params.peerAddresses Addresses held for each service
+     * @param {Object} params.config This service's config
+     * @returns {Promise<boolean>} Whether every peer is now connected
+     */
+    async connectMissingPeers({ peerAddresses, config }) {
+        const connected = (serviceName) => serviceName === config.serviceName
+            || Object.keys(this.wsConnections[serviceName] || {}).length > 0;
+
+        // A service the control service holds no address for cannot be reached
+        // from this side. Startup carries on and waits for it to connect
+        // inbound, while the sweep keeps asking in case it comes back.
+        const unreachable = [];
+
+        for (const [serviceName] of Object.entries(peerAddresses)) {
+            if (connected(serviceName)) {
+                continue;
+            }
+
+            try {
+                loggerService.info('Missing ' + serviceName + ' peer connection - requesting new peer from control service.', serviceName + ' / ', config.serviceName);
+
+                const newPeer = await commandBus.execute('controlService.newPeerForService', {
+                    requestingHostname: config.hostname,
+                    serviceName: serviceName
+                });
+
+                if (!newPeer?.hostname) {
+                    unreachable.push(serviceName);
+                    continue;
+                }
+
+                peerAddresses[serviceName] = newPeer;
+
+                await this.connect({ peer: newPeer, config });
+            } catch (err) {
+                unreachable.push(serviceName);
+                loggerService.error(`Failed to get and connect to new peer for ${serviceName}: ${err.message}`);
+            }
+        }
+
+        if (unreachable.length) {
+            loggerService.info(`No address to reach ${unreachable.join(', ')}. Waiting for them to connect inbound.`);
+        }
+
+        return Object.keys(peerAddresses).every(name => connected(name) || unreachable.includes(name));
     },
 
     /**
@@ -383,7 +404,7 @@ export const wsManager = {
             // only request a replacement peer if we aren't already connected to that service through another replica
             let getNewPeer = false;
 
-            if (this.wsConnections[peer.name]?.length < 1) {
+            if (Object.keys(this.wsConnections[peer.name] || {}).length < 1) {
                 getNewPeer = true;
             }
 

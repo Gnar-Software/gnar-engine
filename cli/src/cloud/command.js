@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
+import fs from 'fs';
+import path from 'path';
 import { cloud } from './cloud.client.js';
 
 export function registerCloudCommands(program) {
@@ -81,6 +83,69 @@ export function registerCloudCommands(program) {
                 const settings = cloud.getSettings();
 
                 console.log(`✅ Signed in to ${settings.apiUrl} as ${settings.email}`);
+            } catch (err) {
+                console.error(`❌ ${err.message}`);
+                process.exitCode = 1;
+            }
+        });
+
+    // cloud put-secrets
+    cloudCommand
+        .command('put-secrets')
+        .description("Send this environment's yml to Gnar Cloud")
+        .action(async () => {
+            try {
+                const { projectId, environmentName, projectDir } = await cloud.resolveEnvironment();
+                const file = path.join(projectDir, `secrets.${environmentName}.yml`);
+
+                if (!fs.existsSync(file)) {
+                    console.error(`❌ ${file} does not exist`);
+                    process.exitCode = 1;
+                    return;
+                }
+
+                const contents = fs.readFileSync(file, 'utf8');
+
+                const result = await cloud.request(`/secrets/${projectId}/${environmentName}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ secrets: contents })
+                });
+
+                console.log(`✅ Sent ${file} to ${environmentName}`);
+
+                if (result?.arn || result?.secret?.arn) {
+                    console.log(`   stored as ${result.arn || result.secret.arn}`);
+                }
+            } catch (err) {
+                console.error(`❌ ${err.message}`);
+                process.exitCode = 1;
+            }
+        });
+
+    // cloud get-secrets
+    cloudCommand
+        .command('get-secrets')
+        .description("Fetch this environment's yml from Gnar Cloud and write it out")
+        .action(async () => {
+            try {
+                const { projectId, environmentName, projectDir } = await cloud.resolveEnvironment();
+
+                const result = await cloud.request(`/secrets/${projectId}/${environmentName}`);
+                const contents = result?.secrets ?? result?.secret ?? '';
+
+                if (!contents) {
+                    console.error(`❌ Gnar Cloud holds nothing for ${environmentName}`);
+                    process.exitCode = 1;
+                    return;
+                }
+
+                const file = path.join(projectDir, `secrets.${environmentName}.yml`);
+
+                console.log(contents);
+
+                fs.writeFileSync(file, contents);
+
+                console.log(`✅ Written to ${file}`);
             } catch (err) {
                 console.error(`❌ ${err.message}`);
                 process.exitCode = 1;

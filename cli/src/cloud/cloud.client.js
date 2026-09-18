@@ -159,7 +159,12 @@ export const cloud = {
             profileName: active.name,
             projectDir: active.profile.PROJECT_DIR,
             projectId: active.profile.GNAR_CLOUD_PROJECT_ID || null,
-            environmentId: active.profile.GNAR_CLOUD_ENVIRONMENT_ID || null
+            environmentId: active.profile.GNAR_CLOUD_ENVIRONMENT_ID || null,
+            // Only the name resolved for the environment the profile is paired
+            // with now, so re-pairing does not carry the old one over
+            environmentName: active.profile.GNAR_CLOUD_ENVIRONMENT_NAME_FOR === active.profile.GNAR_CLOUD_ENVIRONMENT_ID
+                ? active.profile.GNAR_CLOUD_ENVIRONMENT_NAME || null
+                : null
         };
     },
 
@@ -189,6 +194,14 @@ export const cloud = {
      */
     async resolveEnvironment() {
         const linked = cloud.requireLinkedEnvironment();
+
+        // The profile is paired by id, and both the file and the address are
+        // named after the environment, so the name is looked up once and kept
+        // on the profile rather than fetched on every command
+        if (linked.environmentName) {
+            return linked;
+        }
+
         const project = await cloud.request(`/projects/${linked.projectId}`);
 
         const environments = project?.project?.environments || project?.environments || [];
@@ -198,7 +211,32 @@ export const cloud = {
             throw new Error(`Gnar Cloud project ${linked.projectId} has no environment ${linked.environmentId}. Check the ids on the environment page.`);
         }
 
+        cloud.rememberEnvironmentName(environment.name);
+
         return { ...linked, environmentName: environment.name };
+    },
+
+    /**
+     * Keep the environment's name on the profile it was resolved for
+     *
+     * @param {string} environmentName What Gnar Cloud calls the environment
+     * @returns {void}
+     */
+    rememberEnvironmentName(environmentName) {
+        const active = profiles.getActiveProfile();
+
+        if (!active?.profile) {
+            return;
+        }
+
+        profiles.updateProfile({
+            profileName: active.name,
+            config: {
+                ...active.profile,
+                GNAR_CLOUD_ENVIRONMENT_NAME: environmentName,
+                GNAR_CLOUD_ENVIRONMENT_NAME_FOR: active.profile.GNAR_CLOUD_ENVIRONMENT_ID
+            }
+        });
     },
 
     /**

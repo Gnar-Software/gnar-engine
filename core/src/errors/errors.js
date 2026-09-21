@@ -1,13 +1,30 @@
 import { loggerService } from '../services/logger.service.js';
 
 if (process.env.NODE_ENV !== "development") {
-	process.on("uncaughtException", (error) => {
+	process.on("uncaughtException", async (error) => {
 		loggerService.error("Uncaught Exception: " + error);
+
+		// Once logs are shipped rather than written to stdout, the crash log exists only in
+		// the in-memory buffer. Best effort: a failure draining it must not stop the exit.
+		try {
+			await loggerService.close();
+		} catch (err) {
+			console.error('[gnar-logger] flush on fatal error failed:', err);
+		}
+
 		process.exit(1);
 	});
 
-	process.on("unhandledRejection", (reason, promise) => {
+	process.on("unhandledRejection", async (reason, promise) => {
 		loggerService.error("Unhandled Rejection at: " + promise + ". Reason: " + reason);
+
+		// As above - drain the buffer so the reason the service died is not lost with it.
+		try {
+			await loggerService.close();
+		} catch (err) {
+			console.error('[gnar-logger] flush on fatal error failed:', err);
+		}
+
 		process.exit(1);
 	});
 }

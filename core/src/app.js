@@ -10,6 +10,7 @@ import { decorators } from './utils/decorators.js';
 import { migrations } from './services/migration.service.js';
 import { seeders } from './services/seeder.service.js';
 import { loggerService } from './services/logger.service.js';
+import { httpTransport } from './drivers/transport/http.transport.js';
 import { setRabbitConnectionUrl } from './services/rabbit.js';
 import { messageAwaitResponse, messageAndForget } from './services/message.service.js';
 import { wsManager } from './services/websocket.service.js';
@@ -113,12 +114,57 @@ const GnarEngine = {
 		GnarEngine.schema = schemaService;
 
 		// Logger
+		// Aggregation activates from the environment rather than from service config, so an
+		// existing service starts shipping logs on redeploy with no code change. A
+		// config.cloud.logger block overrides the tuning values but does not switch it on;
+		// anything left unset falls back to the defaults held by the logger and the transport.
 		GnarEngine.logger = loggerService;
+
+        // In export mode the host platform injects the endpoint, a token and the tenant
+        // context. The core ships logs to whatever collector it is pointed at. Anything missing degrades to stdout
+        // with a loud warning rather than throwing: a token that failed to mint must never
+        // crash-loop a service, and the container's logs still show everything.
+        const loggerTransports = [];
+        const loggerIsExporting = process.env.GLOBAL_LOGGER_MODE === 'export';
+        const loggerIsConfigured = process.env.GLOBAL_LOGGER_ENDPOINT
+            && process.env.GLOBAL_LOGGER_TOKEN
+            && process.env.ACCOUNT_ID
+            && process.env.PROJECT_ID
+            && process.env.ENVIRONMENT_NAME
+            && process.env.SOURCE_TYPE;
+
+        if (loggerIsExporting && loggerIsConfigured) {
+            httpTransport.init({
+                url: process.env.GLOBAL_LOGGER_ENDPOINT,
+                token: process.env.GLOBAL_LOGGER_TOKEN,
+                tokenHeader: 'X-Gnar-Logger-Token',
+                timeoutMs: config.cloud?.logger?.timeoutMs,
+                maxRetries: config.cloud?.logger?.maxRetries
+            });
+
+            loggerTransports.push(httpTransport);
+        }
+
+        if (loggerIsExporting && !loggerIsConfigured) {
+            console.error('[gnar-logger] GLOBAL_LOGGER_MODE is export but the endpoint, token or tenant context is incomplete - falling back to stdout');
+        }
+
         GnarEngine.logger.init({
-            cloudProjectId: config.cloud?.projectId || '',
-            serviceName: config.serviceName,
-            flushIntervalMs: config.cloud?.logger.flushIntervalMs || 5000,
-            transports: config.cloud?.logger || []
+            // The platform injects SERVICE_NAME from the deploy config, which is the name
+            // tenants query their logs by.
+            serviceName: process.env.SERVICE_NAME || config.serviceName,
+            transports: loggerTransports,
+            flushIntervalMs: config.cloud?.logger?.flushIntervalMs,
+            batchSize: config.cloud?.logger?.batchSize,
+            maxBatchBytes: config.cloud?.logger?.maxBatchBytes,
+            maxBufferSize: config.cloud?.logger?.maxBufferSize,
+            context: {
+                accountId: process.env.ACCOUNT_ID,
+                projectId: process.env.PROJECT_ID,
+                environmentName: process.env.ENVIRONMENT_NAME,
+                sourceType: process.env.SOURCE_TYPE,
+                deploymentId: process.env.DEPLOYMENT_ID
+            }
         });
 
 		// Errors
@@ -231,3 +277,8 @@ await GnarEngine.init(config);
 
 export default GnarEngine;
 export const { commands, http, message, db, schema, logger, error, utils, registerService, webSockets, test, storage, rabbit, manifest } = GnarEngine;
+
+// Exported so an application can wire the transport at its own collector by hand, rather than
+// only through GLOBAL_LOGGER_MODE. Nothing in it is tied to a particular platform - the url,
+// header name and token are all parameters.
+export { httpTransport };

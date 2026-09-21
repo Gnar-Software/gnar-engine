@@ -75,4 +75,18 @@ export const config = {
     },
 
     hashNameSpace: '8a07b16c-327f-45c5-9484-8d843f57bb4b',
+
+    // Log export
+    // Log aggregation switches on from GLOBAL_LOGGER_MODE=export and the context the host
+    // platform injects, not from this block. These are optional overrides for the batching.
+    cloud: {
+        logger: {
+            flushIntervalMs: 2000,
+            batchSize: 500,
+            maxBatchBytes: 800 * 1024,
+            maxBufferSize: 10000,
+            timeoutMs: 5000,
+            maxRetries: 3
+        }
+    }
 }

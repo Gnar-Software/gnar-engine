@@ -380,12 +380,16 @@ export const wsManager = {
                 return
             }
 
-            // only request a replacement peer if we aren't already connected to that service through another replica
-            let getNewPeer = false;
-
-            if (this.wsConnections[peer.name]?.length < 1) {
-                getNewPeer = true;
-            }
+            // only request a replacement peer if we aren't already connected to
+            // that service through another replica. Connections are held by
+            // hostname under the service name, so how many there are is the
+            // count of those keys. Asking an object for its length gives
+            // nothing, and nothing is never below one, so a replacement was
+            // never asked for: a service whose peer went away reported the
+            // loss and then waited to be called. Where both ends did that,
+            // neither called, and the two stayed apart until one was restarted.
+            const connections = this.wsConnections[peer.name];
+            const getNewPeer = !connections || Object.keys(connections).length < 1;
 
             // report failure to control service
             setTimeout(async () => {

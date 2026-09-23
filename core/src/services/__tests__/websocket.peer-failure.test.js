@@ -17,6 +17,9 @@ const askedForAnother = () => execute.mock.calls
     .filter(([name]) => name === 'controlService.peerConnectionDropped')
     .map(([, args]) => args.getNewPeer);
 
+const timesAsked = () => execute.mock.calls
+    .filter(([name]) => name === 'controlService.peerConnectionDropped').length;
+
 describe('a peer connection that drops', () => {
 
     beforeEach(() => {
@@ -50,5 +53,30 @@ describe('a peer connection that drops', () => {
         await jest.advanceTimersByTimeAsync(3500);
 
         expect(askedForAnother()).toEqual([false]);
+    });
+
+    it('keeps asking while the control service cannot answer', async () => {
+        // the control service is still coming up, as it is after a restart
+        execute.mockRejectedValue(new Error('No replicas connected for service controlService'));
+
+        wsManager.peerRetryDelays = [10, 10, 10];
+        wsManager.handlePeerFailure(peer, config);
+        await jest.advanceTimersByTimeAsync(100);
+
+        expect(timesAsked()).toBe(3);
+    });
+
+    it('stops asking as soon as somebody connects in', async () => {
+        execute.mockImplementation(async () => {
+            // an inbound connection arrives after the first attempt
+            wsManager.wsConnections.projectService = { 'project-2': {} };
+            return {};
+        });
+
+        wsManager.peerRetryDelays = [10, 10, 10];
+        wsManager.handlePeerFailure(peer, config);
+        await jest.advanceTimersByTimeAsync(100);
+
+        expect(timesAsked()).toBe(1);
     });
 });

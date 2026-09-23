@@ -9,6 +9,11 @@ import os from 'os';
  */
 export const wsManager = {
 
+    // How long to wait before each attempt at replacing a lost peer. Backs off
+    // so a service coming up is not hammered, and keeps trying for long enough
+    // to outlast one restarting.
+    peerRetryDelays: [3000, 5000, 10000, 15000, 30000, 30000, 60000, 60000],
+
     // websocket map: { [serviceName]: { [hostname]: WebSocket } }
     wsConnections: {},
 
@@ -391,36 +396,63 @@ export const wsManager = {
             const connections = this.wsConnections[peer.name];
             const getNewPeer = !connections || Object.keys(connections).length < 1;
 
-            // report failure to control service
-            setTimeout(async () => {
-                try {
-                    loggerService.info('Reporting peer connection failure to control service', peer);
-
-                    if (!peer.hostname) {
-                        throw new Error('Peer information is missing for failed connection. This can occur if a service is down for a prolonged period. This service will now wait for an inbound connection.');
-                    }
-
-                    const newPeer = await commandBus.execute('controlService.peerConnectionDropped', {
-                        requestingHostname: config.hostname,
-                        requestingServicename: config.serviceName,
-                        droppedPeerHostname: peer.hostname,
-                        getNewPeer: getNewPeer
-                    });
-
-                    // connect to replacement peer if returned
-                    if (newPeer?.hostname) {
-                        this.connect({ 
-                            peer: newPeer,
-                            config: config
-                        });
-                    }
-                } catch (err) {
-                    loggerService.error(`Failed to report peer connection failure to control service for ${peer.hostname}: ${err.message}`);
-                }
-            }, 3000);
+            // Report the loss and ask for somewhere else to go. This used to be
+            // tried once, a few seconds after the connection went, and a failure
+            // was written to the log and left there. The moment it is most
+            // likely to fail is the one that matters most: the control service
+            // restarting takes every connection with it, and the one attempt
+            // lands while it is still coming up. Nothing tried again, since the
+            // sweep that looks for missing peers only runs at startup and the
+            // keep alive only closes connections. So it keeps asking while it
+            // has nowhere to go, and stops as soon as it has.
+            this.findAnotherPeer({ peer, config, getNewPeer });
         } catch (err) {
             loggerService.error(`Failed to report peer connection failure to control service for ${peer.hostname}: ${err.message}`);
         }
+    },
+
+    /**
+     * Keep asking for a peer until there is one, or until we are told of none
+     *
+     * @param {Object} params
+     * @param {Object} params.peer - The peer whose connection went
+     * @param {Object} params.config - This service's config
+     * @param {boolean} params.getNewPeer - Whether a replacement is wanted
+     */
+    async findAnotherPeer({ peer, config, getNewPeer }) {
+        for (const [attempt, wait] of this.peerRetryDelays.entries()) {
+            await new Promise(resolve => setTimeout(resolve, wait));
+
+            // The control service is told the connection went whatever else is
+            // true, so its register does not keep a replica that is no longer
+            // there. Only the asking again is worth stopping, once somebody has
+            // called us in the meantime or another replica has answered.
+            const connections = this.wsConnections[peer.name];
+
+            if (attempt > 0 && connections && Object.keys(connections).length > 0) {
+                return;
+            }
+
+            try {
+                loggerService.info('Reporting peer connection failure to control service', peer);
+
+                const newPeer = await commandBus.execute('controlService.peerConnectionDropped', {
+                    requestingHostname: config.hostname,
+                    requestingServicename: config.serviceName,
+                    droppedPeerHostname: peer.hostname,
+                    getNewPeer: getNewPeer
+                });
+
+                if (newPeer?.hostname) {
+                    await this.connect({ peer: newPeer, config: config });
+                    return;
+                }
+            } catch (err) {
+                loggerService.error(`Could not ask the control service for a peer to replace ${peer.name}: ${err.message}`);
+            }
+        }
+
+        loggerService.error(`Gave up looking for a peer for ${peer.name}. This service will now wait for an inbound connection.`);
     },
 
     /**

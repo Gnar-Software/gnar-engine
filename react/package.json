@@ -1,0 +1,25 @@
+{
+  "name": "@gnar-engine/react",
+  "version": "1.0.0",
+  "description": "Gnar Engine - React Front-end Framework",
+  "type": "module",
+  "main": "dist/core.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "bundle": "esbuild src/app.js --bundle --minify --outfile=dist/core.js --format=esm",
+    "build": "npm run bundle"
+  },
+  "author": "Gnar Software Ltd.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gnar-Software/gnar-engine"
+  },
+  "keywords": [
+    "gnar",
+    "engine",
+    "react"
+  ]
+}

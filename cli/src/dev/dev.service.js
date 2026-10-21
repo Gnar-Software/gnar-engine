@@ -190,6 +190,7 @@ export async function createDynamicNginxConf({ config, serviceConfDir, projectDi
             server {
                 listen 80;
                 server_name ${config.namespace};
+                client_max_body_size 10m;
                 include /etc/nginx/service_conf/*.conf;
 
     `;

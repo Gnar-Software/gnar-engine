@@ -20,6 +20,7 @@ export const httpController = {
             origin: config.allowedOrigins || [],
             methods: config.allowedMethods || ['GET', 'POST', 'PUT', 'DELETE'],
             allowedHeaders: config.allowedHeaders || ['Content-Type', 'Authorization'],
+            bodyLimit: config.bodyLimit || 1 * 1024 * 1024,
             preflight: true,
             optionsSuccessStatus: 204,
             credentials: true

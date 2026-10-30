@@ -19,6 +19,7 @@ export function registerDevCommands(program) {
         .option('--reset-databases, --reset-databases', 'Drop all service databases, re-running all migrations and seeders *NOT IMPLEMENTED')
         .option('--reset-database <service>', 'Drop the specified service database, re-running all migrations and seeders (e.g. --reset-database user)')
         .addOption(new Option('--core-dev').hideHelp())
+        .addOption(new Option('--react-dev').hideHelp())
         .addOption(new Option('--bootstrap-dev').hideHelp())
         .action(async (options) => {
 			let response = {};
@@ -44,6 +45,7 @@ export function registerDevCommands(program) {
                     build: options.build || false,
                     detach: options.detach || false,
                     coreDev: options.coreDev || false,
+                    reactDev: options.reactDev || false,
                     bootstrapDev: options.bootstrapDev || false,
                     test: options.test || false,
                     testService: options.testService || '',

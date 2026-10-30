@@ -6,11 +6,11 @@ const __dirname = path.dirname(__filename);
 
 export const gnarEngineCliConfig = {
 
-    // The path the Gnar Engine service core should be found in the service containers
     corePath: '/usr/gnar_engine/app/node_modules/@gnar-engine/core',
+    reactPath: '/usr/gnar_engine/app/node_modules/@gnar-engine/react',
 
-    // The path to the core source code on the host machine (core dev mode)
     coreDevPath: path.join(__dirname, '../../core'),
+    reactDevPath: path.join(__dirname, '../../react'),
 }
 
 export const directories = {

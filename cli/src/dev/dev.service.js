@@ -24,6 +24,7 @@ const execAsync = promisify(exec);
  * @param {boolean} [options.build=false] - Whether to re-build images
  * @param {boolean} [options.detach=false] - Whether to run containers in background
  * @param {boolean} [options.coreDev=false] - Whether to run in core development mode (requires access to core source)
+ * @param {boolean} [options.reactDev=false] - Whether to run in react development mode (requires access to react source)
  * @param {boolean} [options.bootstrapDev=false] - Whether to set the cli/src/bootstrap directory as the project directory
  * @param {boolean} [options.test=false] - Whether to run tests with ephemeral databases
  * @param {string} [options.testService=''] - The service to run tests for (only applicable if test=true)
@@ -37,6 +38,7 @@ export async function up({
         build = false,
         detach = false, 
         coreDev = false, 
+        reactDev = false,
         bootstrapDev = false, 
         test = false, 
         testService = '',
@@ -84,6 +86,7 @@ export async function up({
         gnarHiddenDir: gnarHiddenDir,
         projectDir: projectDir,
         coreDev: coreDev,
+        reactDev: reactDev,
         bootstrapDev: bootstrapDev,
         test: test,
         testService: testService,
@@ -248,6 +251,7 @@ export async function createDynamicNginxConf({ config, serviceConfDir, projectDi
  * @param {string} gnarHiddenDir
  * @param {string} projectDir
  * @param {boolean} coreDev - Whether to volume mount the core source code
+ * @param {boolean} reactDev - Whether to volume mount the react source code
  * @param {boolean} bootstrapDev - Whether to set the cli/src/bootstrap directory as the project directory
  * @param {boolean} build - Whether to re-build images
  * @param {boolean} test - Whether to run tests with ephemeral databases
@@ -261,7 +265,8 @@ async function buildAndUpContainers({
         secrets, 
         gnarHiddenDir, 
         projectDir, 
-        coreDev = false, 
+        coreDev = false,
+        reactDev = false,
         bootstrapDev = false, 
         build = false, 
         test = false, 
@@ -447,6 +452,10 @@ async function buildAndUpContainers({
 
         if (coreDev) {
             serviceVolumes.push(`${gnarEngineCliConfig.coreDevPath}:${gnarEngineCliConfig.corePath}`);
+        }
+
+        if (reactDev) {
+            serviceVolumes.push(`${gnarEngineCliConfig.reactDevPath}:${gnarEngineCliConfig.reactPath}`);
         }
 
         if (svc.extra_binds) {

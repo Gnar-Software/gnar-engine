@@ -1,0 +1,97 @@
+import { db, utils } from '@gnar-engine/core';
+
+export const mcp = {
+    async getById({ id }) {
+        const [result] = await db.query('SELECT * FROM mcps WHERE id = ?', [id]);
+
+        if (!result) {
+            return null;
+        }
+
+        return db.sql.helpers.objectToCamelCase(result[0]);
+    },
+
+    async getAll({ pageSize = 100, pageNum = 1 }) {
+        pageSize = Number(pageSize);
+        pageNum  = Number(pageNum);
+        const offset = (pageNum - 1) * pageSize;
+
+        const [rows] = await db.query(
+            'SELECT * FROM mcps LIMIT ? OFFSET ?',
+            [pageSize, offset]
+        );
+
+        const [[{ total }]] = await db.query(
+            'SELECT COUNT(*) AS total FROM mcps'
+        );
+
+        return {
+            data: rows.map(row => db.sql.helpers.objectToCamelCase(row)),
+            pagination: {
+                pageSize,
+                pageNum,
+                total
+            }
+        }
+    },
+
+    async create(data) {
+        const id = utils.uuid();
+
+        // map columns and insert
+        const columns = ['id', ...Object.keys(data).map(db.sql.helpers.toSnake)];
+        const placeholders = columns.map(() => '?');
+        const values = [id, ...Object.values(data)];
+
+        const sql = `
+            INSERT INTO mcps (
+                ${columns.join(', ')},
+                created_at,
+                updated_at
+            )
+            VALUES (
+                ${placeholders.join(', ')},
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        `;
+        await db.query(sql, [...values, id]);
+
+        // return result
+        const newItem = await this.getById({ id });
+        return db.sql.helpers.objectToCamelCase(newItem);
+    },
+
+    async update({ id, updatedData }) {
+        if (!Object.keys(updatedData).length) {
+            return this.getById({ id });
+        }
+
+        // Handle many to many relations
+        const newOwnerIds = updatedData.ownerIds ? updatedData.ownerIds : null;
+        delete updatedData.ownerIds;
+
+        // map columns and update
+        const columns = Object.keys(updatedData).map((key) => db.sql.helpers.toSnake(key));
+        const assignments = columns.map(col => `${col} = ?`);
+        const values = Object.values(updatedData);
+
+        const sql = `
+            UPDATE mcps
+            SET
+                ${assignments.join(', ')},
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `;
+        await db.query(sql, [...values, id]);
+
+        // return result
+        const newItem = await this.getById({ id });
+        return db.sql.helpers.objectToCamelCase(newItem);
+    },
+
+    async delete({ id }) {
+        await db.query('DELETE FROM mcps WHERE id = ?', [id]);
+        return true;
+    },
+};

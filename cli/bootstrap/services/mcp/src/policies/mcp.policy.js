@@ -3,16 +3,23 @@ import { config } from '../config.js';
 export const authorise = {
 
     /**
-     * Initial policy to enable MCP access for a user
+     * Authorise use of the MCP server
      */
-    getSingle: async (request, reply) => {
+    canUseMcp: async (request, reply) => {
 
-        // initial check if users are logged in
-        if (!request.user) {
-            reply.code(403).send({error: 'not authorised'});
+        // validate origin to prevent DNS rebinding attacks (required by the MCP spec)
+        if (request.headers.origin && !config.http.allowedOrigins.includes(request.headers.origin)) {
+            return reply.code(403).send({ error: 'origin not allowed' });
         }
 
-        // further role based access control here
+        // user must be logged in (OAuth to follow in the user service)
+        if (!request.user) {
+            return reply.code(401).send({ error: 'not authenticated' });
+        }
 
+        // service admins only until per tool access control is added
+        if (request.user.role !== 'service_admin') {
+            return reply.code(403).send({ error: 'not authorised' });
+        }
     }
 }

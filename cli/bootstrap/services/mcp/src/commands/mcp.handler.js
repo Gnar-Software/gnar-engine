@@ -15,6 +15,7 @@ import { validateInitializeParams, validateToolCallParams, validateResourceReadP
  *     mcp: { description: 'Get a single user', inputSchema: { type: 'object', properties: {...} } }
  * });
  * See mcpService.toolMetadataSchema for the full metadata schema.
+
  *
  * Schemas registered in service manifests are exposed as resources.
  *

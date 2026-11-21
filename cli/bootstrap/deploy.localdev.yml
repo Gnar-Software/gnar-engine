@@ -77,3 +77,15 @@ config:
         - '4005:3000'
       depends_on:
         - db-mysql
+    - name: mcp
+      listener_rules:
+        paths:
+          - /mcp
+      min_tasks: 1
+      max_tasks: 1
+      command:
+        - npm
+        - run
+        - start:dev
+      ports:
+        - '4006:3000'

@@ -36,7 +36,7 @@ const serviceAdminUserSchema = {
 };
 
 // User update schema
-const userUpdateSchema = {
+export const userUpdateSchema = {
     schemaName: 'userService.userUpdateSchema',
     schema: {
         type: 'object',

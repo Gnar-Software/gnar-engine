@@ -7,6 +7,10 @@ import { emailNotification } from '../services/emailNotification.service.js';
 import { sesService } from '../services/ses.service.js';
 import { config } from '../config.js';
 import { validateEmailNotification, validateEmailNotificationUpdate } from '../schema/emailNotification.schema.js';
+import {
+    getSingleEmailNotificationInputSchema,
+    getManyEmailNotificationsInputSchema
+} from '../schema/emailNotification.input.schema.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +35,13 @@ commands.register('notificationService.getSingleEmailNotification', async ({ id 
     }
 
     return await emailNotification.getById({ id });
+}, {
+    mcp: {
+        title: 'Get email notification',
+        description: 'Get a single email notification by id, including recipient, subject, HTML content and send status (pending, sent or failed).',
+        inputSchema: getSingleEmailNotificationInputSchema,
+        annotations: { readOnlyHint: true }
+    }
 });
 
 /**
@@ -38,6 +49,13 @@ commands.register('notificationService.getSingleEmailNotification', async ({ id 
  */
 commands.register('notificationService.getManyEmailNotifications', async ({ pageSize, pageNum } = {}) => {
     return await emailNotification.getAll({ pageSize, pageNum });
+}, {
+    mcp: {
+        title: 'List email notifications',
+        description: 'List email notifications, newest first, paginated, including recipient, subject, content, send status and the parent notificationId. Returns { data: emailNotifications[], pagination: { pageSize, pageNum, total } }.',
+        inputSchema: getManyEmailNotificationsInputSchema,
+        annotations: { readOnlyHint: true }
+    }
 });
 
 /**

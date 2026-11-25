@@ -1,0 +1,45 @@
+import { message, http, logger, registerService, webSockets, test } from '@gnar-engine/core';
+import { config } from './config.js';
+import { messageHandlers } from './controllers/message.controller.js';
+import { httpController as mcpPlatformHttpController } from './controllers/http.controller.js';
+
+/**
+ * Initialise service
+ */
+export const initService = async () => {
+
+	// Import command handlers after the command bus is initialised
+	await import('./commands/mcp.handler.js');
+	// Add more handlers as needed
+
+	// Initialise and register message handlers
+	await message.init({
+		config: config.message,
+		handlers: messageHandlers
+	});
+
+    // Initialise websocket client & server
+    await webSockets.init(config.webSockets, config.serviceName);
+
+	// Register http routes
+	await http.registerRoutes({
+		controllers: [
+			mcpPlatformHttpController,
+		]
+	});
+
+	// Start the HTTP server
+	await http.start();
+
+    // Register service with control service
+    await registerService();
+
+	logger.info('G n a r  E n g i n e | Mcp Service initialised successfully.');
+
+    // Tests
+    if (config.environment === 'test' && config.runTests) {
+        test.runCommandTests({config});
+    }
+}
+
+initService();

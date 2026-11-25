@@ -1,6 +1,11 @@
 import { commands, logger, error } from '@gnar-engine/core';
 import { notification } from '../services/notification.service.js';
 import { validateNotification, validateNotificationUpdate } from '../schema/notification.schema.js';
+import {
+    getSingleNotificationInputSchema,
+    getManyNotificationsInputSchema,
+    createNotificationsInputSchema
+} from '../schema/notification.input.schema.js';
 
 /**
  * Get single notification
@@ -11,6 +16,13 @@ commands.register('notificationService.getSingleNotification', async ({ id }) =>
     }
 
     return await notification.getById({ id });
+}, {
+    mcp: {
+        title: 'Get notification',
+        description: 'Get a single notification by id. Returns the parent notification (id, type, userId, idempotencyKey, timestamps). Use the email notification tools for the email content and send status.',
+        inputSchema: getSingleNotificationInputSchema,
+        annotations: { readOnlyHint: true }
+    }
 });
 
 /**
@@ -18,6 +30,13 @@ commands.register('notificationService.getSingleNotification', async ({ id }) =>
  */
 commands.register('notificationService.getManyNotifications', async ({ pageSize, pageNum } = {}) => {
     return await notification.getAll({ pageSize, pageNum });
+}, {
+    mcp: {
+        title: 'List notifications',
+        description: 'List notifications, newest first, paginated. Returns { data: notifications[], pagination: { pageSize, pageNum, total } }.',
+        inputSchema: getManyNotificationsInputSchema,
+        annotations: { readOnlyHint: true }
+    }
 });
 
 /**
@@ -106,6 +125,13 @@ commands.register('notificationService.createNotifications', async ({ notificati
     // and sent again. A repeat that needed nothing doing is not in here, so an
     // empty return means every one of them had already been dealt with.
     return createdNewNotifications;
+}, {
+    mcp: {
+        title: 'Create notifications',
+        description: 'Create and store one or more notifications. Email notifications are scheduled to be sent straight away. A notification repeated with the same idempotencyKey is not sent twice, but a failed send is retried. Returns the notifications acted on.',
+        inputSchema: createNotificationsInputSchema,
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }
+    }
 });
 
 /**

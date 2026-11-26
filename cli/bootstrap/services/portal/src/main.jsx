@@ -4,6 +4,7 @@ import './css/style.css'
 import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import LoginPage from './pages/LoginPage/LoginPage.jsx'
+import OAuthConsentPage from './pages/OAuthConsentPage/OAuthConsentPage.jsx'
 import PortalLayout from './layouts/PortalLayout/PortalLayout.jsx'
 import DashboardPage from './pages/DashboardPage/DashboardPage.jsx'
 import UsersPage from './pages/UsersPage/UsersPage.jsx'
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
             {
                 path: "login",
                 element: <LoginPage />,
+            },
+            {
+                path: "oauth/consent",
+                element: <OAuthConsentPage />,
             },
             {
                 path: "",

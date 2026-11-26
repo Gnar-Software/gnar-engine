@@ -60,6 +60,7 @@ const resourceReadParamsSchema = {
 };
 
 // MCP tool metadata schema, provided in command registration metadata as `mcp`
+// hasPolicy is set by core 1.0.29+ when the command registers an mcp.policy, so tools from older cores are never listed
 const toolMetadataSchema = {
     schemaName: 'mcpService.toolMetadataSchema',
     schema: {
@@ -70,9 +71,10 @@ const toolMetadataSchema = {
             inputSchema: { type: 'object' },
             outputSchema: { type: 'object' },
             annotations: { type: 'object' },
-            timeout: { type: 'integer', default: config.mcp.toolTimeout }
+            timeout: { type: 'integer', default: config.mcp.toolTimeout },
+            hasPolicy: { type: 'boolean', const: true }
         },
-        required: ['description', 'inputSchema'],
+        required: ['description', 'inputSchema', 'hasPolicy'],
         additionalProperties: false
     }
 };

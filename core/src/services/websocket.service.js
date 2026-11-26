@@ -1,6 +1,7 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { loggerService } from '../services/logger.service.js';
 import { commandBus } from '../commands/command-bus.js';
+import { manifest } from '../commands/command-manifest.js';
 import { v4 as uuidv4 } from 'uuid';
 import os from 'os';
 
@@ -59,7 +60,8 @@ export const wsManager = {
                                     serviceName: config.serviceName,
                                     replicaSlot: config.replicaSlot, 
                                     replicaHostname: config.hostname,
-                                    replicaIp: config.ip
+                                    replicaIp: config.ip,
+                                    manifest: manifest.manifest
                                 });
                             }, 1000);
                         } catch (err) {
@@ -79,7 +81,8 @@ export const wsManager = {
                     serviceName: config.serviceName,
                     replicaSlot: config.replicaSlot, 
                     replicaHostname: config.hostname,
-                    replicaIp: config.ip
+                    replicaIp: config.ip,
+                    manifest: manifest.manifest
                 });
             } catch (error) {
                 loggerService.error(`Failed to register service ${config.serviceName} with control service: ${error.message}`);
@@ -439,7 +442,7 @@ export const wsManager = {
         // request from peer
         if (msg.type === 'request' && msg.commandName) {
             try {
-                const result = await commandBus.execute(msg.commandName, msg.payload);
+                const result = await commandBus.execute(msg.commandName, msg.payload, { mcpAuth: msg.mcpAuth });
                 this.sendResponse({ 
                     ws: ws,
                     messageId: msg.messageId,
@@ -479,8 +482,16 @@ export const wsManager = {
 
     /**
      * Send a request and wait for response
+     *
+     * @param {string} serviceName - Name of the peer service
+     * @param {string} commandName - Full command name
+     * @param {Object} payload - Command input
+     * @param {Object} [options]
+     * @param {number} [options.timeout=10000] - Response timeout in ms
+     * @param {Object} [options.mcpAuth] - MCP authenticated caller, checked by the peer
      */
-    async send(serviceName, commandName, payload, timeoutMs = 10000) {
+    async send(serviceName, commandName, payload, options = {}) {
+        const timeoutMs = options.timeout || 10000;
 
         // randomly select any replica of the peer
         const nodes = this.wsConnections[serviceName];
@@ -502,7 +513,7 @@ export const wsManager = {
         }
 
         const messageId = uuidv4();
-        const msg = { type: 'request', messageId, commandName, payload };
+        const msg = { type: 'request', messageId, commandName, payload, mcpAuth: options.mcpAuth };
 
         ws.send(JSON.stringify(msg));
 

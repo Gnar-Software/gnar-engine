@@ -1,7 +1,10 @@
+import { useSearchParams } from "react-router-dom";
 import LoginForm from "../../components/LoginForm/LoginForm";
 import gnarEngineLogo from '../../assets/gnar-engine-white-logo.svg';
 
 function LoginPage() {
+
+    const [searchParams] = useSearchParams();
 
     return (
         <div className="login-page flex-row">
@@ -11,7 +14,7 @@ function LoginPage() {
             <div className="login-right-panel">
                 <div>
                     <h1>Admin Login</h1>
-                    <LoginForm />
+                    <LoginForm returnTo={searchParams.get('returnTo')} />
                 </div>
             </div>
         </div>

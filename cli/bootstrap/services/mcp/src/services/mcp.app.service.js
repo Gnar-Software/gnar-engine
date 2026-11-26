@@ -54,15 +54,16 @@ export const mcp = {
         const tools = {};
 
         for (const service of services) {
-            for (const implementation of Object.values(service.manifest.commandImplementations)) {
+            // a service is listed before it has registered its manifest
+            for (const implementation of Object.values(service.manifest?.commandImplementations || {})) {
                 if (!implementation.mcp) {
                     continue;
                 }
 
-                // skip incorrectly implemented tool metadata so other tools remain available
+                // skip commands with no MCP policy or invalid tool metadata so other tools remain available
                 const { errors } = validateToolMetadata(implementation.mcp);
                 if (errors) {
-                    logger.error(`Invalid MCP metadata for command ${implementation.commandName}: ${errors}`);
+                    logger.error(`Skipping MCP tool for command ${implementation.commandName}, no MCP policy or invalid metadata: ${errors}`);
                     continue;
                 }
 
@@ -91,7 +92,7 @@ export const mcp = {
         const resources = {};
 
         for (const service of services) {
-            for (const [schemaName, schema] of Object.entries(service.manifest.schemas)) {
+            for (const [schemaName, schema] of Object.entries(service.manifest?.schemas || {})) {
                 const uri = config.mcp.schemaResourceUriPrefix + schemaName;
 
                 resources[uri] = {
@@ -174,16 +175,17 @@ export const mcp = {
      * @param {Object} params
      * @param {Object} params.tool - Tool
      * @param {Object} params.toolArguments - Tool arguments, used as the command payload
+     * @param {Object} params.mcpAuth - MCP authenticated caller, checked by the command's MCP policy in the owning service
      * @returns {Promise<Object>} MCP tools/call result { content, structuredContent, isError }
      */
-    async executeTool({ tool, toolArguments }) {
+    async executeTool({ tool, toolArguments, mcpAuth }) {
 
         // execute the tool command
         let result;
         try {
-            result = await commands.execute(tool.commandName, toolArguments, { timeout: tool.timeout });
+            result = await commands.execute(tool.commandName, toolArguments, { timeout: tool.timeout, mcpAuth });
         } catch (commandError) {
-            logger.error(`MCP tool ${tool.name} failed: ${commandError.message}`);
+            logger.error(`MCP tool ${tool.name} failed for user ${mcpAuth.user.id} (token ${mcpAuth.tokenId}): ${commandError.message}`);
 
             return {
                 content: [{ type: 'text', text: commandError.message }],

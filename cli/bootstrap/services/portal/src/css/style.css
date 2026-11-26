@@ -1653,6 +1653,27 @@ button.secondary-btn {
   justify-content: flex-end;
   margin-bottom: 20px;
 }
+.oauth-consent-page .oauth-consent {
+  max-width: 400px;
+}
+.oauth-consent-page .oauth-consent-details {
+  margin: 0 0 25px;
+}
+.oauth-consent-page .oauth-consent-details dt {
+  margin-top: 15px;
+  opacity: 0.6;
+}
+.oauth-consent-page .oauth-consent-details dd {
+  margin: 4px 0 0;
+}
+.oauth-consent-page .oauth-consent-actions {
+  display: flex;
+  gap: 15px;
+}
+.oauth-consent-page .oauth-consent-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 #MagiCSS-bookmarklet span {
   color: black !important;
 }

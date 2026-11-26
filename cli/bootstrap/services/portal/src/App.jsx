@@ -20,7 +20,7 @@ function App() {
 
             if (!authToken || !authUser) {
                 setCanRender(false);
-                window.location.href = '/portal/login';
+                window.location.href = `/portal/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`;
                 return;
             }
         }

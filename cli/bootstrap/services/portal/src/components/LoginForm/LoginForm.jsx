@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../../slices/authSlice";
 
-function LoginForm() {
+function LoginForm({ returnTo }) {
 
     const dispatch = useDispatch();
     const [username, setUsername] = useState("");
@@ -18,7 +18,7 @@ function LoginForm() {
             return;
         }
         try {
-            dispatch(login({username, password}));
+            dispatch(login({username, password, returnTo}));
         } catch (error) {
             setLoginMessage("Error logging in: " + error.response?.data?.message || "Unknown error");
             console.error('Error logging in:', error);

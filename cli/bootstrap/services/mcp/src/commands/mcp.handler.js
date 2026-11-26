@@ -95,9 +95,10 @@ commands.register('mcpService.listTools', async ({}) => {
  * @param {Object} params.params - MCP tools/call params
  * @param {string} params.params.name - Tool name
  * @param {Object} [params.params.arguments] - Tool arguments
+ * @param {Object} params.mcpAuth - MCP authenticated caller { user: { id, role }, clientId, tokenId }, checked by the command's MCP policy
  * @returns {Promise<Object>} MCP tools/call result { content, structuredContent, isError }
  */
-commands.register('mcpService.callTool', async ({ params }) => {
+commands.register('mcpService.callTool', async ({ params, mcpAuth }) => {
 
     // validate params
     const { errors } = validateToolCallParams(params);
@@ -112,7 +113,7 @@ commands.register('mcpService.callTool', async ({ params }) => {
     }
 
     // execute tool
-    return await mcp.executeTool({ tool, toolArguments: params.arguments });
+    return await mcp.executeTool({ tool, toolArguments: params.arguments, mcpAuth });
 });
 
 

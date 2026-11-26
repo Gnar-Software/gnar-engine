@@ -49,7 +49,7 @@ export const httpController = {
 						result = await commands.execute('mcpService.listTools', {});
 						break;
 					case 'tools/call':
-						result = await commands.execute('mcpService.callTool', { params: request.body.params });
+						result = await commands.execute('mcpService.callTool', { params: request.body.params, mcpAuth: request.mcpAuth });
 						break;
 					case 'resources/list':
 						result = await commands.execute('mcpService.listResources', {});

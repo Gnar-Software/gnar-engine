@@ -65,7 +65,7 @@ export const user = {
             let passwordHash = null;
 
             if (password) {
-                passwordHash = utils.hash(password, config.hashNameSpace);
+                passwordHash = await utils.hash(password, config.hashNameSpace);
             }
             console.log('creating user');
             const [result] = await db.execute(
@@ -73,16 +73,7 @@ export const user = {
                 [id, email, passwordHash, username, role, apiKey]
             );
 
-            const [newUser] = await db.execute(
-                'SELECT * FROM `users` WHERE `id` = ?',
-                [id]
-            );
-
-            // sanitize
-            const userObj = newUser[0];
-            const { password, apiKey, ...rest } = userObj;
-
-            return rest;
+            return await user.getById({ id });
         } catch (error) {
             logger.error("Error creating user:", error);
             throw error;
@@ -104,7 +95,7 @@ export const user = {
 
             // sanitize
             const userObj = result[0];
-            const { password, apiKey, ...rest } = userObj;
+            const { password, api_key: apiKey, ...rest } = userObj;
 
             return rest;
         } catch (error) {
@@ -127,7 +118,7 @@ export const user = {
 
             // sanitize
             const userObj = result[0];
-            const { password, apiKey, ...rest } = userObj;
+            const { password, api_key: apiKey, ...rest } = userObj;
 
             return rest;
         } catch (error) {
@@ -151,7 +142,7 @@ export const user = {
 
             // sanitize
             const userObj = updatedUser[0];
-            const { password, apiKey, ...rest } = userObj;
+            const { password, api_key: apiKey, ...rest } = userObj;
 
             return rest;
         } catch (error) {

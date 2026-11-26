@@ -50,9 +50,10 @@ commands.register('controlService.registerAndGetPeers', async ({ config }) => {
  * @param {Object} params.replicaSlot
  * @param {Object} params.replicaHostname
  * @param {Object} params.replicaIp
+ * @param {Object} [params.manifest] The service's commands and schemas
  * @returns {Promise<Object>} The service data
  */
-commands.register('controlService.registerServiceAndReplica', async ({ serviceName, replicaSlot = '', replicaHostname, replicaIp }) => {
+commands.register('controlService.registerServiceAndReplica', async ({ serviceName, replicaSlot = '', replicaHostname, replicaIp, manifest }) => {
 
     // register the service
     let service;
@@ -71,10 +72,16 @@ commands.register('controlService.registerServiceAndReplica', async ({ serviceNa
 
         if (!service) {
             service = await registry.registerService({
-                name: serviceName
+                name: serviceName,
+                manifest
             });
 
             logger.info(`Service registered: ${service.serviceName}`);
+        } else if (manifest) {
+            await registry.updateService({
+                name: serviceName,
+                manifest
+            });
         }
     } catch (error) {
         throw error;

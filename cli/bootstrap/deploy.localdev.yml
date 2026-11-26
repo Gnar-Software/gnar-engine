@@ -81,6 +81,8 @@ config:
       listener_rules:
         paths:
           - /mcp
+          - /.well-known/oauth-protected-resource
+          - /.well-known/oauth-authorization-server
       min_tasks: 1
       max_tasks: 1
       command:
@@ -89,3 +91,5 @@ config:
         - start:dev
       ports:
         - '4006:3000'
+      depends_on:
+        - db-mysql

@@ -57,8 +57,9 @@ export const authSlice = createSlice({
                     });
                     setAuthUser(JSON.stringify(action.payload.user));
 
-                    // redirect to portal
-                    window.location.href= '/portal/dashboard';
+                    // redirect back to where the user was sent from, only within the portal
+                    const returnTo = action.meta.arg.returnTo;
+                    window.location.href = typeof returnTo === 'string' && returnTo.startsWith('/portal/') ? returnTo : '/portal/dashboard';
                 }
             })
             .addCase(logout, (state, action) => {

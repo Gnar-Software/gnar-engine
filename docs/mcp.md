@@ -61,9 +61,25 @@ Both open the portal to approve the sign-in.
 
 ## Exposing a command as a tool
 
-Register the command with an `mcp` block and name the MCP policy that guards
-it. The policy lives in `policies/<entity>.mcp.policy.js`, next to the HTTP
-policy, and exports `authoriseMcp`:
+Keep the MCP definition out of the command handler. Each entity has an MCP
+module in `src/mcp/`, named after the handler: `user.handler.js` has
+`mcp/user.mcp.js`. It exports one object, named `<entity>Mcp`, with a property
+for each command the entity exposes. The property name is the command name
+without the service prefix (`userService.getSingleUser` is `getSingleUser`),
+and its value holds everything MCP needs to know about the command: title,
+description, input schema, annotations and policy.
+
+The policy lives in `policies/<entity>.mcp.policy.js`, next to the HTTP
+policy, and exports `authoriseMcp`. The input schemas live in
+`schema/<entity>.input.schema.js`.
+
+```
+src/
+  commands/user.handler.js          the command, with no MCP detail
+  mcp/user.mcp.js                   userMcp: title, description, schema, annotations, policy
+  policies/user.mcp.policy.js       authoriseMcp: who may call it
+  schema/user.input.schema.js       the tool's input schemas
+```
 
 ```js
 // policies/notification.mcp.policy.js
@@ -81,19 +97,68 @@ export const authoriseMcp = {
 ```
 
 ```js
-// commands/notification.handler.js
-commands.register('notificationService.getSingleNotification', async ({ id }) => {
-    // ...
-}, {
-    mcp: {
+// mcp/notification.mcp.js
+import { authoriseMcp } from '../policies/notification.mcp.policy.js';
+import { getSingleNotificationInputSchema } from '../schema/notification.input.schema.js';
+
+export const notificationMcp = {
+
+    getSingleNotification: {
         title: 'Get notification',
         description: 'Get a single notification by id.',
         inputSchema: getSingleNotificationInputSchema,
         annotations: { readOnlyHint: true },
         policy: authoriseMcp.getSingle
     }
+};
+```
+
+Each entry takes these fields:
+
+| Field | Required | What it is |
+|-------|----------|------------|
+| `description` | Yes | What the tool does and what it returns. The model reads this to decide when to call it, so be specific. |
+| `inputSchema` | Yes | JSON Schema for the tool's arguments, from `schema/<entity>.input.schema.js`. The arguments are passed to the command as its payload. |
+| `policy` | Yes | The `authoriseMcp` function that guards the command. Core strips it from the manifest and marks the entry `hasPolicy: true`. |
+| `title` | No | Short display name shown by MCP clients. |
+| `outputSchema` | No | JSON Schema for the result. When set, the result is also returned as structured content. |
+| `annotations` | No | MCP hints for clients: `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`. |
+| `timeout` | No | How long the MCP service waits for the command, in ms. Defaults to 10000. |
+
+No other fields are allowed: the MCP service skips a tool whose entry does not
+match.
+
+A fuller entry, for a command that changes data:
+
+```js
+updateUser: {
+    title: 'Update user',
+    description: 'Update a user by id. Only the provided fields in newUserData are changed. Emails must be unique. Returns the updated user.',
+    inputSchema: updateUserInputSchema,
+    annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false
+    },
+    timeout: 15000,
+    policy: authoriseMcp.update
+}
+```
+
+```js
+// commands/notification.handler.js
+import { notificationMcp } from '../mcp/notification.mcp.js';
+
+commands.register('notificationService.getSingleNotification', async ({ id }) => {
+    // ...
+}, {
+    mcp: notificationMcp.getSingleNotification
 });
 ```
+
+The handler only points at its entry. Commands that are not exposed have no
+entry and no `mcp` option.
 
 `user` is the signed-in user (`{ id, role }`) and `payload` is the tool's
 arguments. Throwing refuses the call, and the client sees the message as an
